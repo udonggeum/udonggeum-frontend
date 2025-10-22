@@ -155,12 +155,53 @@ export default function ApiDemo() {
           <h1 className="text-4xl font-bold text-slate-800 mb-2">
             API Testing Console
           </h1>
-          <p className="text-slate-600">
-            Test your backend API endpoints • Base URL:{' '}
-            <code className="px-2 py-1 bg-slate-200 rounded text-sm font-mono">
-              {API_BASE_URL}
-            </code>
-          </p>
+          <div className="flex flex-wrap gap-4 items-center text-sm">
+            {/* Priority 1: Mock Mode */}
+            {import.meta.env.VITE_MOCK_API === 'true' ? (
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-slate-600">Active Mode:</span>
+                <div className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm font-semibold flex items-center gap-2">
+                  🎭 Mock API (MSW)
+                </div>
+              </div>
+            ) : !API_BASE_URL ? (
+              /* Priority 2: Vite Proxy */
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-slate-600">Active Mode:</span>
+                <div className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold flex items-center gap-2">
+                  🔧 Vite Proxy
+                  <span className="font-normal">→</span>
+                  <code className="px-2 py-0.5 bg-blue-50 rounded text-xs">
+                    {import.meta.env.VITE_PROXY_TARGET || 'http://192.168.71.112:8080'}
+                  </code>
+                </div>
+              </div>
+            ) : (
+              /* Priority 3: Direct API URL */
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-slate-600">Active Mode:</span>
+                <div className="px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-sm font-semibold flex items-center gap-2">
+                  🌐 Direct API
+                  <span className="font-normal">→</span>
+                  <code className="px-2 py-0.5 bg-purple-50 rounded text-xs">
+                    {API_BASE_URL}
+                  </code>
+                </div>
+              </div>
+            )}
+
+            {/* Documentation Link */}
+            <div className="flex items-center gap-2 text-slate-600">
+              <span className="font-medium">📖</span>
+              <a
+                href="/docs/MOCKING.md"
+                target="_blank"
+                className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs hover:bg-slate-200 transition-colors"
+              >
+                Mock API Guide
+              </a>
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
