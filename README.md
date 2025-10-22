@@ -14,20 +14,17 @@
 
 ### 1. Environment Setup
 
-Create a `.env.development` file from the template:
+The project uses separate environment configurations for development and production.
 
+**Quick Start**:
 ```bash
-cp .env.example .env.development
+# Development already configured - just run:
+npm run dev
 ```
 
-Update the environment variables in `.env.development`:
+**For detailed configuration**, see [Environment Setup Guide](./docs/ENVIRONMENT_SETUP.md)
 
-```env
-# Backend API base URL
-VITE_API_BASE_URL=http://localhost:8080
-```
-
-For production builds, create `.env.production` with production API endpoints.
+The development environment uses a Vite proxy to avoid CORS issues. Production environment uses direct API URLs.
 
 ### 2. Install Dependencies & Run
 

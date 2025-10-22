@@ -9,6 +9,18 @@ export default defineConfig({
     tailwindcss(),
     react(),
   ],
+  server: {
+    // Proxy configuration for development only
+    // Proxies /api/* requests to backend server to avoid CORS
+    proxy: {
+      '/api': {
+        target: 'http://192.168.71.112:8080',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path, // Keep the path as is
+      }
+    }
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

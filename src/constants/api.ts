@@ -1,9 +1,9 @@
 /**
  * API Base URL
- * Use environment variable or fallback to localhost
+ * Use environment variable or fallback to empty string (uses Vite proxy in development)
  */
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+  import.meta.env.VITE_API_BASE_URL || '';
 
 /**
  * API Endpoints
