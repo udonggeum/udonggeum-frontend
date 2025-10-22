@@ -12,6 +12,25 @@
 
 ## Getting Started
 
+### 1. Environment Setup
+
+Create a `.env.development` file from the template:
+
+```bash
+cp .env.example .env.development
+```
+
+Update the environment variables in `.env.development`:
+
+```env
+# Backend API base URL
+VITE_API_BASE_URL=http://localhost:8080
+```
+
+For production builds, create `.env.production` with production API endpoints.
+
+### 2. Install Dependencies & Run
+
 ```bash
 npm install
 npm run dev
