@@ -1,73 +1,32 @@
-# React + TypeScript + Vite
+# 우동금 (Udonggeum) Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**우동금(Udonggeum)**은 동네 금은방들의 매물을 한눈에 볼 수 있는 로컬 주얼리 플랫폼입니다.
+사용자는 지역 기반으로 금은방 상품을 탐색하고, 상세정보와 결제까지 진행할 수 있습니다.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- React 19
+- TypeScript
+- Vite
+- TailwindCSS
 
-## React Compiler
+## Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Project Structure
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Main Pages
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- **홈 (Home)**: 지역 기반 상품 탐색 및 검색
+- **상품상세 (Product Detail)**: 상품 정보 및 구매 옵션
+- **금은방상세 (Store Detail)**: 금은방 정보 및 등록 상품 목록
+- **장바구니 (Cart)**: 담긴 상품 관리
+- **결제 (Checkout)**: 배송지 입력 및 결제 진행
+- **마이페이지 (My Page)**: 주문 내역 및 찜 목록
+- **금은방관리 (Store Admin)**: 점주용 상품 등록 및 매출 관리
+
+자세한 페이지 흐름은 [와이어프레임 문서](./docs/우동금_FigJam_페이지별_와이어프레임_흐름도.md)를 참고하세요.
