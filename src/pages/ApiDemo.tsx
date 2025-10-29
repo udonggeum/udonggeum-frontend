@@ -1,5 +1,5 @@
 // 1. Imports (외부 → 내부 순서)
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios, { type AxiosResponse } from 'axios';
 import { apiClient } from '@/api/client';
 import { API_BASE_URL } from '@/constants/api';
@@ -22,9 +22,53 @@ export default function ApiDemo() {
   const [endpoint, setEndpoint] = useState<string>('/');
   const [requestBody, setRequestBody] = useState<string>('{\n  \n}');
   const [customHeaders, setCustomHeaders] = useState<string>('{}');
+  const [bearerToken, setBearerToken] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [response, setResponse] = useState<ApiResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Bearer token을 customHeaders에 자동 동기화
+  useEffect(() => {
+    if (bearerToken.trim()) {
+      try {
+        // 기존 헤더 파싱
+        const existingHeaders = customHeaders.trim()
+          ? (JSON.parse(customHeaders) as Record<string, string>)
+          : {};
+
+        // Authorization 헤더 추가/업데이트
+        const updatedHeaders = {
+          ...existingHeaders,
+          Authorization: `Bearer ${bearerToken.trim()}`,
+        };
+
+        setCustomHeaders(JSON.stringify(updatedHeaders, null, 2));
+      } catch {
+        // JSON 파싱 실패시 새로운 헤더로 덮어쓰기
+        setCustomHeaders(
+          JSON.stringify({ Authorization: `Bearer ${bearerToken.trim()}` }, null, 2)
+        );
+      }
+    } else {
+      // Bearer token이 비어있으면 Authorization 헤더 제거
+      try {
+        const existingHeaders = customHeaders.trim()
+          ? (JSON.parse(customHeaders) as Record<string, string>)
+          : {};
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { Authorization, ...rest } = existingHeaders as { Authorization?: string; [key: string]: string | undefined };
+
+        setCustomHeaders(
+          Object.keys(rest).length > 0 ? JSON.stringify(rest, null, 2) : '{}'
+        );
+      } catch {
+        // 파싱 실패시 빈 객체로 설정
+        setCustomHeaders('{}');
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bearerToken]);
 
   // 핸들러
   const handleSendRequest = async () => {
@@ -65,21 +109,33 @@ export default function ApiDemo() {
       // 5️⃣ [API 요청 실행]
       let result: AxiosResponse;
 
+      // Check if this is an auth endpoint that should block redirects
+      const authEndpoints = ['/auth/login', '/auth/register', '/auth/me'];
+      const shouldBlockRedirect = authEndpoints.some((authPath) =>
+        endpoint.includes(authPath)
+      );
+
+      // Configure request options
+      const requestConfig = {
+        headers,
+        ...(shouldBlockRedirect && { maxRedirects: 0 }),
+      };
+
       switch (method) {
         case 'GET':
-          result = await apiClient.get(endpoint, { headers });
+          result = await apiClient.get(endpoint, requestConfig);
           break;
         case 'POST':
-          result = await apiClient.post(endpoint, body, { headers });
+          result = await apiClient.post(endpoint, body, requestConfig);
           break;
         case 'PUT':
-          result = await apiClient.put(endpoint, body, { headers });
+          result = await apiClient.put(endpoint, body, requestConfig);
           break;
         case 'PATCH':
-          result = await apiClient.patch(endpoint, body, { headers });
+          result = await apiClient.patch(endpoint, body, requestConfig);
           break;
         case 'DELETE':
-          result = await apiClient.delete(endpoint, { headers });
+          result = await apiClient.delete(endpoint, requestConfig);
           break;
       }
 
@@ -146,32 +202,51 @@ export default function ApiDemo() {
     }
   };
 
+  const copyToClipboard = async (text: string): Promise<boolean> => {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleCopyToken = async (token: string) => {
+    const success = await copyToClipboard(token);
+    if (success) {
+      // Optional: Show a toast or temporary message
+      alert('토큰이 클립보드에 복사되었습니다! 🎉');
+    } else {
+      alert('복사에 실패했습니다. 수동으로 선택해 복사하세요.');
+    }
+  };
+
   // 렌더링
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-slate-800 mb-2">
+          <h1 className="text-4xl font-bold text-slate-900 mb-2">
             API Testing Console
           </h1>
           <div className="flex flex-wrap gap-4 items-center text-sm">
             {/* Priority 1: Mock Mode */}
             {import.meta.env.VITE_MOCK_API === 'true' ? (
               <div className="flex items-center gap-2">
-                <span className="font-medium text-slate-600">Active Mode:</span>
-                <div className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm font-semibold flex items-center gap-2">
+                <span className="font-medium text-slate-800">Active Mode:</span>
+                <div className="px-3 py-1.5 bg-green-100 text-green-800 rounded-lg text-sm font-semibold flex items-center gap-2">
                   🎭 Mock API (MSW)
                 </div>
               </div>
             ) : !API_BASE_URL ? (
               /* Priority 2: Vite Proxy */
               <div className="flex items-center gap-2">
-                <span className="font-medium text-slate-600">Active Mode:</span>
-                <div className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold flex items-center gap-2">
+                <span className="font-medium text-slate-800">Active Mode:</span>
+                <div className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-lg text-sm font-semibold flex items-center gap-2">
                   🔧 Vite Proxy
                   <span className="font-normal">→</span>
-                  <code className="px-2 py-0.5 bg-blue-50 rounded text-xs">
+                  <code className="px-2 py-0.5 bg-blue-50 rounded text-xs text-blue-900">
                     {import.meta.env.VITE_PROXY_TARGET || 'http://192.168.71.112:8080'}
                   </code>
                 </div>
@@ -179,11 +254,11 @@ export default function ApiDemo() {
             ) : (
               /* Priority 3: Direct API URL */
               <div className="flex items-center gap-2">
-                <span className="font-medium text-slate-600">Active Mode:</span>
-                <div className="px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-sm font-semibold flex items-center gap-2">
+                <span className="font-medium text-slate-800">Active Mode:</span>
+                <div className="px-3 py-1.5 bg-purple-100 text-purple-800 rounded-lg text-sm font-semibold flex items-center gap-2">
                   🌐 Direct API
                   <span className="font-normal">→</span>
-                  <code className="px-2 py-0.5 bg-purple-50 rounded text-xs">
+                  <code className="px-2 py-0.5 bg-purple-50 rounded text-xs text-purple-900">
                     {API_BASE_URL}
                   </code>
                 </div>
@@ -191,12 +266,12 @@ export default function ApiDemo() {
             )}
 
             {/* Documentation Link */}
-            <div className="flex items-center gap-2 text-slate-600">
+            <div className="flex items-center gap-2 text-slate-800">
               <span className="font-medium">📖</span>
               <a
                 href="/docs/MOCKING.md"
                 target="_blank"
-                className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs hover:bg-slate-200 transition-colors"
+                className="px-2 py-1 bg-slate-100 text-slate-800 rounded text-xs hover:bg-slate-200 transition-colors font-medium"
               >
                 Mock API Guide
               </a>
@@ -204,36 +279,65 @@ export default function ApiDemo() {
           </div>
         </div>
 
+        {/* Bearer Token Quick Input */}
+        <div className="mb-6 bg-white rounded-xl shadow-lg p-6">
+          <div className="flex items-start gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-slate-900 mb-2">
+                🔑 Bearer Token (Quick Input)
+              </label>
+              <input
+                type="text"
+                value={bearerToken}
+                onChange={(e) => setBearerToken(e.target.value)}
+                placeholder="Paste your access token here..."
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm text-slate-900"
+              />
+              <p className="mt-2 text-xs text-slate-600">
+                토큰을 입력하면 자동으로 Custom Headers에 <code className="px-1 py-0.5 bg-slate-100 rounded">Authorization: Bearer ...</code> 형식으로 추가됩니다.
+              </p>
+            </div>
+            {bearerToken && (
+              <button
+                onClick={() => setBearerToken('')}
+                className="mt-7 px-4 py-2 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 rounded-lg text-sm font-medium transition-colors"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Request Panel */}
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-semibold text-slate-800 mb-6">
+            <h2 className="text-2xl font-semibold text-slate-900 mb-6">
               Request
             </h2>
 
             {/* HTTP Method & Endpoint */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-slate-900 mb-2">
                 Method & Endpoint
               </label>
               <div className="flex gap-2">
                 <select
                   value={method}
                   onChange={(e) => setMethod(e.target.value as HttpMethod)}
-                  className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold"
+                  className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-slate-900 bg-white"
                 >
-                  <option value="GET">GET</option>
-                  <option value="POST">POST</option>
-                  <option value="PUT">PUT</option>
-                  <option value="PATCH">PATCH</option>
-                  <option value="DELETE">DELETE</option>
+                  <option value="GET" className="text-slate-900">GET</option>
+                  <option value="POST" className="text-slate-900">POST</option>
+                  <option value="PUT" className="text-slate-900">PUT</option>
+                  <option value="PATCH" className="text-slate-900">PATCH</option>
+                  <option value="DELETE" className="text-slate-900">DELETE</option>
                 </select>
                 <input
                   type="text"
                   value={endpoint}
                   onChange={(e) => setEndpoint(e.target.value)}
                   placeholder="/api/endpoint"
-                  className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                  className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm text-slate-900"
                 />
               </div>
             </div>
@@ -241,14 +345,14 @@ export default function ApiDemo() {
             {/* Request Body */}
             {method !== 'GET' && (
               <div className="mb-4">
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="block text-sm font-medium text-slate-900 mb-2">
                   Request Body (JSON)
                 </label>
                 <textarea
                   value={requestBody}
                   onChange={(e) => setRequestBody(e.target.value)}
                   rows={8}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm text-slate-900"
                   placeholder='{\n  "key": "value"\n}'
                 />
               </div>
@@ -256,14 +360,14 @@ export default function ApiDemo() {
 
             {/* Custom Headers */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-slate-900 mb-2">
                 Custom Headers (JSON)
               </label>
               <textarea
                 value={customHeaders}
                 onChange={(e) => setCustomHeaders(e.target.value)}
                 rows={4}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm text-slate-900"
                 placeholder='{\n  "Authorization": "Bearer token"\n}'
               />
             </div>
@@ -290,15 +394,15 @@ export default function ApiDemo() {
 
           {/* Response Panel */}
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-semibold text-slate-800 mb-6">
+            <h2 className="text-2xl font-semibold text-slate-900 mb-6">
               Response
             </h2>
 
             {!response && !error && !isLoading && (
-              <div className="flex items-center justify-center h-64 text-slate-400">
+              <div className="flex items-center justify-center h-64 text-slate-500">
                 <div className="text-center">
                   <div className="text-6xl mb-4">📡</div>
-                  <p>No request sent yet</p>
+                  <p className="font-medium">No request sent yet</p>
                 </div>
               </div>
             )}
@@ -307,7 +411,7 @@ export default function ApiDemo() {
               <div className="flex items-center justify-center h-64">
                 <div className="text-center">
                   <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                  <p className="text-slate-600">Loading...</p>
+                  <p className="text-slate-800 font-medium">Loading...</p>
                 </div>
               </div>
             )}
@@ -346,6 +450,54 @@ export default function ApiDemo() {
                   </div>
                 </div>
 
+                {/* Success Login/Register - Show Token Copy Button */}
+                {response.status >= 200 &&
+                  response.status < 300 &&
+                  response.data &&
+                  typeof response.data === 'object' &&
+                  'tokens' in response.data &&
+                  response.data.tokens &&
+                  typeof response.data.tokens === 'object' &&
+                  'access_token' in response.data.tokens && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-green-800 mb-1 flex items-center gap-2">
+                            <span>✅</span>
+                            인증 성공!
+                          </h3>
+                          <p className="text-green-700 text-sm mb-3">
+                            로그인/회원가입이 완료되었습니다. Bearer Token을 복사하여 사용하세요.
+                          </p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() =>
+                                void handleCopyToken(
+                                  (response.data as { tokens: { access_token: string } })
+                                    .tokens.access_token
+                                )
+                              }
+                              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                            >
+                              📋 Copy Access Token
+                            </button>
+                            <button
+                              onClick={() => {
+                                const token = (
+                                  response.data as { tokens: { access_token: string } }
+                                ).tokens.access_token;
+                                setBearerToken(token);
+                              }}
+                              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                            >
+                              🔑 Use Token
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                 {error && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                     <p className="text-red-700 text-sm font-medium">{error}</p>
@@ -354,20 +506,20 @@ export default function ApiDemo() {
 
                 {/* Response Body */}
                 <div>
-                  <h3 className="text-sm font-medium text-slate-700 mb-2">
+                  <h3 className="text-sm font-medium text-slate-900 mb-2">
                     Response Body
                   </h3>
-                  <pre className="bg-slate-50 border border-slate-200 rounded-lg p-4 overflow-auto max-h-96 text-xs font-mono">
+                  <pre className="bg-slate-50 border border-slate-200 rounded-lg p-4 overflow-auto max-h-96 text-xs font-mono text-slate-900">
                     {formatJson(response.data)}
                   </pre>
                 </div>
 
                 {/* Response Headers */}
                 <div>
-                  <h3 className="text-sm font-medium text-slate-700 mb-2">
+                  <h3 className="text-sm font-medium text-slate-900 mb-2">
                     Response Headers
                   </h3>
-                  <pre className="bg-slate-50 border border-slate-200 rounded-lg p-4 overflow-auto max-h-48 text-xs font-mono">
+                  <pre className="bg-slate-50 border border-slate-200 rounded-lg p-4 overflow-auto max-h-48 text-xs font-mono text-slate-900">
                     {formatJson(response.headers)}
                   </pre>
                 </div>
@@ -378,16 +530,16 @@ export default function ApiDemo() {
 
         {/* Quick Test Endpoints */}
         <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-2xl font-semibold text-slate-800 mb-4">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">
             Quick Test Endpoints
           </h2>
-          <p className="text-slate-600 mb-4 text-sm">
+          <p className="text-slate-800 mb-4 text-sm font-medium">
             빠른 테스트를 위한 실제 API 엔드포인트 (UDONGGEUM API v1)
           </p>
 
           {/* Auth Endpoints */}
           <div className="mb-6">
-            <h3 className="text-sm font-semibold text-slate-700 mb-3 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-slate-900 mb-3 uppercase tracking-wide">
               🔐 Authentication
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -429,7 +581,7 @@ export default function ApiDemo() {
 
           {/* Stores Endpoints */}
           <div className="mb-6">
-            <h3 className="text-sm font-semibold text-slate-700 mb-3 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-slate-900 mb-3 uppercase tracking-wide">
               🏪 Stores
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -459,7 +611,7 @@ export default function ApiDemo() {
 
           {/* Products Endpoints */}
           <div className="mb-6">
-            <h3 className="text-sm font-semibold text-slate-700 mb-3 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-slate-900 mb-3 uppercase tracking-wide">
               💍 Products
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -489,7 +641,7 @@ export default function ApiDemo() {
 
           {/* Cart Endpoints */}
           <div className="mb-6">
-            <h3 className="text-sm font-semibold text-slate-700 mb-3 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-slate-900 mb-3 uppercase tracking-wide">
               🛒 Cart
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -531,7 +683,7 @@ export default function ApiDemo() {
 
           {/* Orders Endpoints */}
           <div>
-            <h3 className="text-sm font-semibold text-slate-700 mb-3 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-slate-900 mb-3 uppercase tracking-wide">
               📦 Orders
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -565,14 +717,22 @@ export default function ApiDemo() {
             </div>
           </div>
 
-          <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <p className="text-xs text-amber-800">
-              <strong>💡 Tip:</strong> 🔒 표시는 인증이 필요한 엔드포인트입니다.
-              먼저 로그인하여 받은 Access Token을 Custom Headers에 추가하세요:
-              <code className="ml-1 px-1 py-0.5 bg-amber-100 rounded text-xs">
-                {`{"Authorization": "Bearer <token>"}`}
-              </code>
-            </p>
+          <div className="mt-4 space-y-2">
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-xs text-amber-800">
+                <strong>💡 Tip:</strong> 🔒 표시는 인증이 필요한 엔드포인트입니다.
+                먼저 로그인하여 받은 Access Token을 Custom Headers에 추가하세요:
+                <code className="ml-1 px-1 py-0.5 bg-amber-100 rounded text-xs">
+                  {`{"Authorization": "Bearer <token>"}`}
+                </code>
+              </p>
+            </div>
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-xs text-blue-800">
+                <strong>🚫 Redirect Blocking:</strong> 로그인, 회원가입, 사용자 정보 엔드포인트는
+                자동 리다이렉트가 차단됩니다. 실제 서버 응답 상태 코드(301/302 등)를 확인할 수 있습니다.
+              </p>
+            </div>
           </div>
         </div>
       </div>
