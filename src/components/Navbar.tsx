@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import { LogIn, User } from 'lucide-react';
+import { useAuthStore } from '../stores/useAuthStore';
 import type { NavigationItem } from '../types';
 
 interface NavbarProps {
@@ -13,6 +15,7 @@ interface NavbarProps {
  * Mobile (<1024px): Hamburger menu with dropdown
  */
 export default function Navbar({ navigationItems }: NavbarProps) {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const sortedItems = [...navigationItems].sort(
     (a, b) => a.displayOrder - b.displayOrder
   );
@@ -54,6 +57,24 @@ export default function Navbar({ navigationItems }: NavbarProps) {
                 </Link>
               </li>
             ))}
+            <li className="menu-title mt-2">
+              <span>계정</span>
+            </li>
+            {!isAuthenticated ? (
+              <li>
+                <Link to="/login" className="text-base">
+                  <LogIn className="w-4 h-4" />
+                  로그인
+                </Link>
+              </li>
+            ) : (
+              <li>
+                <Link to="/mypage" className="text-base">
+                  <User className="w-4 h-4" />
+                  마이페이지
+                </Link>
+              </li>
+            )}
           </ul>
         </div>
 
@@ -81,28 +102,6 @@ export default function Navbar({ navigationItems }: NavbarProps) {
 
       {/* Right Side Actions */}
       <div className="navbar-end gap-2">
-        {/* Search Icon (optional - for future enhancement) */}
-        <button
-          type="button"
-          className="btn btn-ghost btn-circle"
-          aria-label="검색"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-        </button>
-
         {/* Cart Badge (optional - for future enhancement) */}
         <button
           type="button"
@@ -127,6 +126,25 @@ export default function Navbar({ navigationItems }: NavbarProps) {
             <span className="badge badge-sm badge-primary indicator-item">0</span>
           </div>
         </button>
+
+        {/* Auth Buttons - Conditional based on auth state */}
+        {!isAuthenticated ? (
+          <Link
+            to="/login"
+            className="btn btn-ghost btn-circle"
+            aria-label="로그인"
+          >
+            <LogIn className="w-5 h-5" />
+          </Link>
+        ) : (
+          <Link
+            to="/mypage"
+            className="btn btn-ghost btn-circle"
+            aria-label="마이페이지"
+          >
+            <User className="w-5 h-5" />
+          </Link>
+        )}
       </div>
     </nav>
   );
