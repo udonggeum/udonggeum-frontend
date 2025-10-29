@@ -1,18 +1,21 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import Navbar from '../components/Navbar';
 import SearchSection from '../components/SearchSection';
 import HeroCarousel from '../components/HeroCarousel';
 import PopularProducts from '../components/PopularProducts';
 import ProductCard from '../components/ProductCard';
+import ProductsLoadingSkeleton from '../components/ProductsLoadingSkeleton';
+import ProductsError from '../components/ProductsError';
 import Footer from '../components/Footer';
+import { useProducts } from '../hooks/queries/useProductsQueries';
+import { useStoreLocations } from '../hooks/queries/useStoresQueries';
+import { transformProductsFromAPI, uiCategoryToAPICategory } from '../utils/apiAdapters';
 import {
-  MOCK_REGIONS,
   MOCK_CATEGORIES,
-  MOCK_PRODUCTS,
   MOCK_CAROUSEL_SLIDES,
   MOCK_NAV_ITEMS,
 } from '../constants/mockData';
-import type { SearchFilters } from '../types';
+import type { SearchFilters, Region } from '../types';
 
 /**
  * MainPage Component
@@ -26,16 +29,53 @@ export default function MainPage() {
     categoryId: null,
   });
 
-  // Client-side filtering logic
-  const filteredProducts = useMemo(() => {
-    return MOCK_PRODUCTS.filter((product) => {
-      const matchesRegion =
-        !filters.regionId || product.regionId === filters.regionId;
-      const matchesCategory =
-        !filters.categoryId || product.categoryId === filters.categoryId;
-      return matchesRegion && matchesCategory;
-    });
-  }, [filters]);
+  // Fetch store locations for regions (API call)
+  const {
+    data: locationsData,
+    // isLoading and error states not currently used for locations
+    // but available for future implementation
+  } = useStoreLocations();
+
+  // Convert UI filters to API parameters
+  const apiCategory = uiCategoryToAPICategory(filters.categoryId);
+
+  // TODO: Convert regionId to region/district
+  // For now, we'll fetch all products and let the backend handle filtering
+  // when proper region mapping is implemented
+
+  // Fetch products with server-side filtering (API call)
+  const {
+    data: productsData,
+    isLoading: productsLoading,
+    error: productsError,
+    refetch: refetchProducts,
+  } = useProducts({
+    category: apiCategory,
+    page: 1,
+    page_size: 20,
+  });
+
+  // Transform API products to UI format
+  const products = productsData
+    ? transformProductsFromAPI(productsData.products)
+    : [];
+
+  // Transform API regions to UI format
+  const regions: Region[] = locationsData
+    ? locationsData.regions.flatMap((regionGroup) =>
+        regionGroup.districts.map((district, index) => ({
+          id: `${regionGroup.region}-${district}`.toLowerCase().replace(/\s+/g, '-'),
+          name: `${regionGroup.region} ${district}`,
+          city: regionGroup.region,
+          displayOrder: index + 1,
+        }))
+      )
+    : [];
+
+  // Client-side region filtering (until backend supports it)
+  const filteredProducts = filters.regionId
+    ? products.filter((product) => product.regionId === filters.regionId)
+    : products;
 
   const handleSearch = (newFilters: SearchFilters) => {
     setFilters(newFilters);
@@ -52,7 +92,7 @@ export default function MainPage() {
   };
 
   // Get filter labels for display
-  const selectedRegion = MOCK_REGIONS.find((r) => r.id === filters.regionId);
+  const selectedRegion = regions.find((r) => r.id === filters.regionId);
   const selectedCategory = MOCK_CATEGORIES.find(
     (c) => c.id === filters.categoryId
   );
@@ -66,7 +106,7 @@ export default function MainPage() {
       <main className="flex-grow">
         {/* Search Section */}
         <SearchSection
-          regions={MOCK_REGIONS}
+          regions={regions}
           categories={MOCK_CATEGORIES}
           onSearch={handleSearch}
         />
@@ -90,8 +130,19 @@ export default function MainPage() {
           </div>
         )}
 
-        {/* Empty State */}
-        {filteredProducts.length === 0 ? (
+        {/* Loading State */}
+        {productsLoading ? (
+          <ProductsLoadingSkeleton count={8} />
+        ) : productsError ? (
+          /* Error State */
+          <ProductsError
+            error={productsError}
+            onRetry={() => {
+              void refetchProducts();
+            }}
+          />
+        ) : filteredProducts.length === 0 ? (
+          /* Empty State */
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -145,7 +196,6 @@ export default function MainPage() {
 
         {/* Popular Products Section */}
         <PopularProducts
-          products={MOCK_PRODUCTS}
           categories={MOCK_CATEGORIES}
           onWishlist={handleWishlist}
           onAddToCart={handleAddToCart}

@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import ProductCard from './ProductCard';
-import type { Product, ProductCategory } from '../types';
+import ProductsLoadingSkeleton from './ProductsLoadingSkeleton';
+import { usePopularProducts } from '../hooks/queries/useProductsQueries';
+import { transformProductsFromAPI, uiCategoryToAPICategory } from '../utils/apiAdapters';
+import type { ProductCategory } from '../types';
 
 interface PopularProductsProps {
-  products: Product[];
   categories: ProductCategory[];
   onWishlist?: (productId: string) => void;
   onAddToCart?: (productId: string) => void;
@@ -16,7 +18,6 @@ interface PopularProductsProps {
  * Shows 3-4 products per category in a responsive grid.
  */
 export default function PopularProducts({
-  products,
   categories,
   onWishlist,
   onAddToCart,
@@ -31,7 +32,20 @@ export default function PopularProducts({
     featuredCategories[0]?.id || 'rings'
   );
 
-  // Filter products by selected category and limit to 3-4 items
+  // Convert UI category to API category
+  const apiCategory = uiCategoryToAPICategory(activeCategory);
+
+  // Fetch popular products for active category (API call)
+  const { data, isLoading, error } = usePopularProducts({
+    category: apiCategory,
+    page: 1,
+    page_size: 4,
+  });
+
+  // Transform API products to UI format
+  const products = data ? transformProductsFromAPI(data.products) : [];
+
+  // Filter by categoryId for UI (temporary until API supports exact matching)
   const filteredProducts = products
     .filter((product) => product.categoryId === activeCategory)
     .slice(0, 4);
@@ -72,7 +86,16 @@ export default function PopularProducts({
         </div>
 
         {/* Products Grid */}
-        {filteredProducts.length > 0 ? (
+        {isLoading ? (
+          <ProductsLoadingSkeleton count={4} />
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="text-error mb-2">인기 상품을 불러올 수 없습니다.</p>
+            <p className="text-base-content/50 text-sm">
+              {error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'}
+            </p>
+          </div>
+        ) : filteredProducts.length > 0 ? (
           <div
             id={`panel-${activeCategory}`}
             role="tabpanel"
