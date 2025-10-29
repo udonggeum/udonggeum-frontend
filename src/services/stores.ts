@@ -25,9 +25,21 @@ interface StoresResponse {
 }
 
 /**
- * Locations response type
+ * Locations response type (actual backend format)
  */
 interface LocationsResponse {
+  count: number;
+  locations: Array<{
+    region: string;
+    district: string;
+    store_count: number;
+  }>;
+}
+
+/**
+ * Transformed locations type (for UI consumption)
+ */
+export interface RegionsData {
   regions: Array<{
     region: string;
     districts: string[];
@@ -64,13 +76,31 @@ class StoresService {
 
   /**
    * Get store locations (regions and districts)
-   * @returns Available regions and districts
+   * @returns Available regions and districts grouped by region
    */
-  async getStoreLocations(): Promise<LocationsResponse> {
+  async getStoreLocations(): Promise<RegionsData> {
     const response = await apiClient.get<LocationsResponse>(
       ENDPOINTS.STORES.LOCATIONS
     );
-    return response.data;
+
+    // Transform backend format to UI format
+    // Group locations by region
+    const regionsMap = new Map<string, Set<string>>();
+
+    response.data.locations.forEach((location) => {
+      if (!regionsMap.has(location.region)) {
+        regionsMap.set(location.region, new Set());
+      }
+      regionsMap.get(location.region)!.add(location.district);
+    });
+
+    // Convert to array format
+    const regions = Array.from(regionsMap.entries()).map(([region, districts]) => ({
+      region,
+      districts: Array.from(districts).sort(),
+    }));
+
+    return { regions };
   }
 
   /**
