@@ -428,37 +428,38 @@ export default function ApiDemo() {
               </div>
             )}
 
-            {response && (
-              <div className="space-y-4">
-                {/* Status */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                        response.status >= 200 && response.status < 300
-                          ? 'bg-green-100 text-green-800'
-                          : response.status >= 400
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}
-                    >
-                      {response.status} {response.statusText}
-                    </span>
-                    <span className="text-sm text-slate-600">
-                      {response.duration.toFixed(0)}ms
-                    </span>
+            {response ? (
+              <>
+                <div className="space-y-4">
+                  {/* Status */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                          response.status >= 200 && response.status < 300
+                            ? 'bg-green-100 text-green-800'
+                            : response.status >= 400
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}
+                      >
+                        {response.status} {response.statusText}
+                      </span>
+                      <span className="text-sm text-slate-600">
+                        {response.duration.toFixed(0)}ms
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                {/* Success Login/Register - Show Token Copy Button */}
-                {response.status >= 200 &&
+                  {/* Success Login/Register - Show Token Copy Button */}
+                  {response.status >= 200 &&
                   response.status < 300 &&
                   response.data &&
                   typeof response.data === 'object' &&
                   'tokens' in response.data &&
                   response.data.tokens &&
                   typeof response.data.tokens === 'object' &&
-                  'access_token' in response.data.tokens && (
+                  'access_token' in response.data.tokens ? (
                     <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
@@ -496,7 +497,7 @@ export default function ApiDemo() {
                         </div>
                       </div>
                     </div>
-                  )}
+                  ) : null}
 
                 {error && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-3">
@@ -524,7 +525,7 @@ export default function ApiDemo() {
                   </pre>
                 </div>
               </div>
-            )}
+            </>) : null}
           </div>
         </div>
 
