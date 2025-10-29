@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import MainPage from '@/pages/MainPage';
 import Home from '@/pages/Home';
 import ApiDemo from '@/pages/ApiDemo';
+import ComponentsDemo from '@/pages/ComponentsDemo';
 import LoginPage from '@/pages/LoginPage';
 import MyPage from '@/pages/MyPage';
 import LogoutPage from '@/pages/LogoutPage';
@@ -16,6 +17,7 @@ export default function App() {
         <Route path="/" element={<MainPage />} />
         <Route path="/old-home" element={<Home />} />
         <Route path="/apidemo" element={<ApiDemo />} />
+        <Route path="/components-demo" element={<ComponentsDemo />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/mypage" element={<MyPage />} />
         <Route path="/logout" element={<LogoutPage />} />
