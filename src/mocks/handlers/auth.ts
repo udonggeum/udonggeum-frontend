@@ -57,7 +57,7 @@ export const authHandlers = [
     const refresh_token = generateMockToken(newUser.id);
 
     // Remove password from response
-    const { password: _, ...userWithoutPassword } = newUser;
+    const { password: _password, ...userWithoutPassword } = newUser;
 
     const response: AuthResponse = {
       message: '회원가입이 완료되었습니다.',
@@ -111,7 +111,7 @@ export const authHandlers = [
     const refresh_token = generateMockToken(user.id);
 
     // Remove password from response
-    const { password: _, ...userWithoutPassword } = user;
+    const { password: _password, ...userWithoutPassword } = user;
 
     const response: AuthResponse = {
       message: '로그인에 성공했습니다.',
@@ -151,7 +151,7 @@ export const authHandlers = [
     }
 
     // Remove password from response
-    const { password: _, ...userWithoutPassword } = user;
+    const { password: _password, ...userWithoutPassword } = user;
 
     const response: MeResponse = {
       user: userWithoutPassword,

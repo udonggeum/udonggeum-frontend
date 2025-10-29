@@ -12,9 +12,10 @@ export default defineConfig({
   server: {
     // Proxy configuration for development only
     // Proxies /api/* requests to backend server to avoid CORS
+    // NOTE: Use '^/api/' pattern to avoid matching /apidemo route
     proxy: {
-      '/api': {
-        target: 'http://192.168.71.112:8080',
+      '^/api/': {
+        target: 'http://localhost:8080',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path, // Keep the path as is
