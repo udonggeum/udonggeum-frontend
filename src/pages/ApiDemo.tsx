@@ -5,6 +5,7 @@ import { apiClient } from '@/api/client';
 import { API_BASE_URL } from '@/constants/api';
 
 // 2. Types/Interfaces
+
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 interface ApiResponse {

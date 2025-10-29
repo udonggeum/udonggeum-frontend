@@ -20,9 +20,6 @@ export default function Footer() {
           <Link to="/stores" className="link link-hover">
             매장안내
           </Link>
-          <Link to="/careers" className="link link-hover">
-            채용정보
-          </Link>
         </nav>
 
         {/* Customer Support Column */}
@@ -111,7 +108,7 @@ export default function Footer() {
       <div className="footer footer-center p-4 bg-base-300 text-base-content border-t border-base-300">
         <aside>
           <p className="text-sm">
-            Copyright © 2024 우리동네금은방. All rights reserved.
+            Copyright © 2025 우리동네금은방. All rights reserved.
           </p>
         </aside>
       </div>
