@@ -13,8 +13,8 @@ import { transformProductsFromAPI, uiCategoryToAPICategory } from '../utils/apiA
 import {
   MOCK_CATEGORIES,
   MOCK_CAROUSEL_SLIDES,
-  MOCK_NAV_ITEMS,
 } from '../constants/mockData';
+import { NAV_ITEMS } from '../constants/navigation';
 import type { SearchFilters, Region } from '../types';
 
 /**
@@ -100,7 +100,7 @@ export default function MainPage() {
   return (
     <div className="min-h-screen bg-base-100 flex flex-col">
       {/* Navigation Bar */}
-      <Navbar navigationItems={MOCK_NAV_ITEMS} />
+      <Navbar navigationItems={NAV_ITEMS} />
 
       {/* Main Content */}
       <main className="flex-grow">
