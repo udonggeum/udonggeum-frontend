@@ -38,6 +38,27 @@ const CATEGORY_REVERSE_MAPPING: Record<string, '반지' | '목걸이' | '팔찌'
 };
 
 /**
+ * Convert API category identifier to UI category ID
+ * Handles Korean labels, English keywords, and lowercase variants.
+ */
+export function apiCategoryToUICategory(
+  category: string | null | undefined
+): string | undefined {
+  if (!category) return undefined;
+
+  const raw = category.toString().trim();
+  if (!raw) return undefined;
+
+  const directMatch = CATEGORY_MAPPING[raw];
+  if (directMatch) {
+    return directMatch;
+  }
+
+  const normalized = raw.toLowerCase();
+  return CATEGORY_MAPPING[normalized];
+}
+
+/**
  * Generate region ID from store location
  * Converts "서울 강남구" → "seoul-gangnam"
  */
