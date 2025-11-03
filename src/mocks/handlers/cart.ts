@@ -30,15 +30,20 @@ export const cartHandlers = [
       const product = mockProducts.find((p) => p.id === item.product_id);
       const option = mockProductOptions.find((o) => o.id === item.product_option_id);
 
+      const productPrice = product?.price ?? 0;
+      const optionPrice = option?.additional_price ?? 0;
+      const optionLabel = option ? `${option.name}: ${option.value}` : '';
+
       return {
         id: item.id,
         product_id: item.product_id,
         product_name: product?.name || 'Unknown',
-        product_price: product?.price || 0,
+        product_price: productPrice,
         product_option_id: item.product_option_id,
-        option_value: option?.option_value || '',
+        option_value: optionLabel,
+        option_additional_price: optionPrice,
         quantity: item.quantity,
-        subtotal: (product?.price || 0) * item.quantity,
+        subtotal: (productPrice + optionPrice) * item.quantity,
         created_at: item.created_at,
       };
     });

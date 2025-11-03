@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+const ProductCategorySchema = z.string().min(1);
+const ProductMaterialSchema = z.string().min(1);
+
 /**
  * Store schema (minimal)
  * Store information embedded in product responses
@@ -9,6 +12,8 @@ export const StoreSchema = z.object({
   name: z.string().min(1),
   region: z.string().optional(),
   district: z.string().optional(),
+  address: z.string().optional().nullable(),
+  phone_number: z.string().optional().nullable(),
 });
 
 export type Store = z.infer<typeof StoreSchema>;
@@ -21,9 +26,9 @@ export const ProductOptionSchema = z.object({
   id: z.number().int().positive(),
   name: z.string().min(1),
   value: z.string(),
-  additional_price: z.number().nonnegative(),
-  stock_quantity: z.number().int().nonnegative(),
-  is_default: z.boolean(),
+  additional_price: z.number().nonnegative().default(0),
+  stock_quantity: z.number().int().nonnegative().default(0),
+  is_default: z.boolean().default(false),
 });
 
 export type ProductOption = z.infer<typeof ProductOptionSchema>;
@@ -35,15 +40,17 @@ export type ProductOption = z.infer<typeof ProductOptionSchema>;
 export const ProductSchema = z.object({
   id: z.number().int().positive(),
   name: z.string().min(1),
-  price: z.number().positive('가격은 0보다 커야 합니다'),
-  category: z.enum(['gold', 'silver', 'jewelry']),
-  stock_quantity: z.number().int().nonnegative(),
-  popularity_score: z.number().nonnegative(),
+  price: z.number().nonnegative(),
+  category: ProductCategorySchema,
+  material: ProductMaterialSchema.optional(),
+  stock_quantity: z.number().int().nonnegative().default(0),
+  popularity_score: z.number().nonnegative().default(0),
   description: z.string().optional(),
-  weight: z.number().positive().optional(),
+  weight: z.number().nonnegative().optional(),
   purity: z.string().optional(),
   image_url: z.string().url().optional(),
-  store: StoreSchema,
+  store_id: z.number().int().positive().optional(),
+  store: StoreSchema.optional(),
   options: z.array(ProductOptionSchema).optional(),
 });
 
@@ -55,8 +62,8 @@ export type Product = z.infer<typeof ProductSchema>;
  */
 export const ProductsResponseSchema = z.object({
   count: z.number().int().nonnegative(),
-  page_size: z.number().int().positive(),
-  offset: z.number().int().nonnegative(),
+  page_size: z.number().int().positive().default(20),
+  offset: z.number().int().nonnegative().default(0),
   products: z.array(ProductSchema),
 });
 
@@ -71,11 +78,19 @@ export const ProductsRequestSchema = z.object({
   page_size: z.number().int().positive().optional(),
   region: z.string().optional(),
   district: z.string().optional(),
-  category: z.enum(['gold', 'silver', 'jewelry']).optional(),
+  category: ProductCategorySchema.optional(),
+  material: ProductMaterialSchema.optional(),
   store_id: z.number().int().positive().optional(),
   search: z.string().optional(),
   sort: z
-    .enum(['popularity', 'price_asc', 'price_desc', 'latest'])
+    .enum([
+      'popularity',
+      'price_asc',
+      'price_desc',
+      'latest',
+      'created_at_asc',
+      'created_at_desc',
+    ])
     .optional(),
   popular_only: z.boolean().optional(),
   include_options: z.boolean().optional(),

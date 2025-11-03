@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import type { Product } from '../types';
 
 interface ProductCardProps {
@@ -18,22 +19,48 @@ export default function ProductCard({
   onAddToCart,
 }: ProductCardProps) {
   const formattedPrice = product.price.toLocaleString('ko-KR');
+  const PLACEHOLDER_IMAGE = '/images/base-image.png';
+  const [imageSrc, setImageSrc] = useState(product.imageUrl || PLACEHOLDER_IMAGE);
+
+  useEffect(() => {
+    setImageSrc(product.imageUrl || PLACEHOLDER_IMAGE);
+  }, [product.imageUrl]);
 
   return (
     <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
       <figure className="aspect-square overflow-hidden">
         <img
-          src={product.imageUrl}
+          src={imageSrc}
           alt={product.imageAlt}
           className="w-full h-full object-cover"
           loading="lazy"
+          onError={() => {
+            if (imageSrc !== PLACEHOLDER_IMAGE) {
+              setImageSrc(PLACEHOLDER_IMAGE);
+            }
+          }}
         />
       </figure>
       <div className="card-body">
         <h3 className="card-title text-lg">{product.name}</h3>
         <p className="text-2xl font-bold text-primary">₩{formattedPrice}</p>
         {product.storeName && (
-          <p className="text-sm text-base-content/70">{product.storeName}</p>
+          <p className="text-sm text-base-content/70">
+            {product.storeName}
+            {product.storeLocation ? ` · ${product.storeLocation}` : ''}
+          </p>
+        )}
+        {product.options && product.options.length > 0 && (
+          <ul className="mt-2 space-y-1">
+            {product.options.slice(0, 3).map((option) => (
+              <li key={`option-${product.id}-${option}`} className="text-sm text-base-content/60">
+                • {option}
+              </li>
+            ))}
+            {product.options.length > 3 && (
+              <li className="text-xs text-base-content/50">+ 추가 옵션 {product.options.length - 3}개</li>
+            )}
+          </ul>
         )}
         <div className="card-actions justify-end mt-4">
           <button

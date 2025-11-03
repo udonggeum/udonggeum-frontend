@@ -7,6 +7,7 @@ import ComponentsDemo from '@/pages/ComponentsDemo';
 import LoginPage from '@/pages/LoginPage';
 import MyPage from '@/pages/MyPage';
 import LogoutPage from '@/pages/LogoutPage';
+import ProductsPage from '@/pages/ProductsPage';
 
 // 2. Component
 export default function App() {
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/mypage" element={<MyPage />} />
         <Route path="/logout" element={<LogoutPage />} />
+        <Route path="/products" element={<ProductsPage />} />
       </Routes>
     </BrowserRouter>
   );
