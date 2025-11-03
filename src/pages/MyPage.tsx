@@ -11,13 +11,13 @@ const MyPage: React.FC = () => {
 
   const handleLogout = () => {
     clearAuth();
-    navigate('/');
+    void navigate('/');
   };
 
   React.useEffect(() => {
     // Redirect to login if not authenticated
     if (!isAuthenticated) {
-      navigate('/login');
+      void navigate('/login');
     }
   }, [isAuthenticated, navigate]);
 

@@ -10,6 +10,7 @@ import LogoutPage from '@/pages/LogoutPage';
 import ProductsPage from '@/pages/ProductsPage';
 import ProductDetailPage from '@/pages/ProductDetailPage';
 import CartPage from '@/pages/CartPage';
+import RegisterPage from '@/pages/RegisterPage';
 
 // 2. Component
 export default function App() {
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="/apidemo" element={<ApiDemo />} />
         <Route path="/components-demo" element={<ComponentsDemo />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/mypage" element={<MyPage />} />
         <Route path="/logout" element={<LogoutPage />} />
         <Route path="/products" element={<ProductsPage />} />

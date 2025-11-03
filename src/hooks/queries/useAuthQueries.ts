@@ -45,15 +45,18 @@ export function useLogin() {
  * const { mutate: register, isPending } = useRegister();
  * register({ email: 'user@example.com', password: 'password123', name: '홍길동', phone: '010-1234-5678' });
  */
-export function useRegister() {
+export function useRegister(options?: { autoLogin?: boolean }) {
+  const { autoLogin = true } = options ?? {};
   const setAuth = useAuthStore((state) => state.setAuth);
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (data: RegisterRequest) => authService.register(data),
     onSuccess: (response) => {
-      // Update auth store with user and tokens
-      setAuth(response.user, response.tokens);
+      if (autoLogin) {
+        // Update auth store with user and tokens
+        setAuth(response.user, response.tokens);
+      }
 
       // Invalidate and refetch user data
       void queryClient.invalidateQueries({ queryKey: authKeys.me() });

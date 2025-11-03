@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
-import { API_BASE_URL, ERROR_MESSAGES } from '@/constants/api';
+import { API_BASE_URL, ERROR_MESSAGES, ENDPOINTS } from '@/constants/api';
 import { ApiError, NetworkError } from '@/utils/errors';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { apiLogger } from '@/utils/apiLogger';
@@ -102,8 +102,13 @@ apiClient.interceptors.response.use(
       duration
     );
 
-    // 401 Unauthorized - Clear auth and redirect to login
-    if (status === 401) {
+    const requestUrl = error.config?.url;
+    const isAuthEndpoint =
+      requestUrl === ENDPOINTS.AUTH.LOGIN ||
+      requestUrl === ENDPOINTS.AUTH.REGISTER;
+
+    // 401 Unauthorized - Clear auth and redirect to login (except auth endpoints that intentionally return 401)
+    if (status === 401 && !isAuthEndpoint) {
       // Clear auth store
       useAuthStore.getState().clearAuth();
 

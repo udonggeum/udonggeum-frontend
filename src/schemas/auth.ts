@@ -1,5 +1,48 @@
 import { z } from 'zod';
 
+const PHONE_REGEX = /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/;
+
+/**
+ * Optional phone schema
+ * Trims input and allows empty strings/nullish values to be treated as undefined
+ */
+const OptionalPhoneSchema = z.preprocess(
+  (value) => {
+    if (typeof value !== 'string') {
+      return value ?? undefined;
+    }
+    const trimmed = value.trim();
+    return trimmed.length === 0 ? undefined : trimmed;
+  },
+  z
+    .string()
+    .regex(PHONE_REGEX, '올바른 전화번호 형식이 아닙니다')
+    .optional()
+);
+
+/**
+ * Timestamp schema
+ * Accepts string/number/Date and normalizes to ISO string
+ */
+const TimestampSchema = z
+  .union([z.string(), z.number(), z.date(), z.null()])
+  .optional()
+  .transform((value) => {
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+    if (typeof value === 'number') {
+      return new Date(value).toISOString();
+    }
+    if (typeof value === 'string') {
+      const parsed = new Date(value);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed.toISOString();
+      }
+    }
+    return new Date().toISOString();
+  });
+
 /**
  * User schema
  * Validates user data from API responses and localStorage
@@ -8,16 +51,10 @@ export const UserSchema = z.object({
   id: z.number().int().positive(),
   email: z.string().email('유효한 이메일을 입력하세요'),
   name: z.string().min(1, '이름을 입력하세요'),
-  phone: z
-    .string()
-    .regex(
-      /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/,
-      '올바른 전화번호 형식이 아닙니다'
-    )
-    .optional(),
+  phone: OptionalPhoneSchema,
   role: z.enum(['user', 'admin']),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
+  created_at: TimestampSchema,
+  updated_at: TimestampSchema,
 });
 
 export type User = z.infer<typeof UserSchema>;
@@ -64,13 +101,7 @@ export const RegisterRequestSchema = z.object({
   email: z.string().email('유효한 이메일을 입력하세요'),
   password: z.string().min(6, '비밀번호는 최소 6자 이상이어야 합니다'),
   name: z.string().min(1, '이름을 입력하세요'),
-  phone: z
-    .string()
-    .regex(
-      /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/,
-      '올바른 전화번호 형식이 아닙니다'
-    )
-    .optional(),
+  phone: OptionalPhoneSchema,
 });
 
 export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;
@@ -84,3 +115,8 @@ export const MeResponseSchema = z.object({
 });
 
 export type MeResponse = z.infer<typeof MeResponseSchema>;
+
+/**
+ * Logout response schema
+ * Validates response from /auth/logout endpoint
+ */

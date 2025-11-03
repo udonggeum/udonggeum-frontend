@@ -90,6 +90,7 @@ class AuthService {
     // Validate response
     return MeResponseSchema.parse(response.data);
   }
+
 }
 
 export const authService = new AuthService();
