@@ -1,16 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { storesService } from '@/services/stores';
-
-/**
- * Stores request params (copied from stores service)
- * TODO: Move to a shared types file or create Zod schema
- */
-interface StoresRequest {
-  region?: string;
-  district?: string;
-  page?: number;
-  page_size?: number;
-}
+import { storesService, type StoresRequest } from '@/services/stores';
 
 /**
  * Stores Query Keys Factory
