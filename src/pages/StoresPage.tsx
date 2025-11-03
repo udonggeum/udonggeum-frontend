@@ -10,15 +10,13 @@ import {
 import { useStores, useStoreLocations } from '@/hooks/queries/useStoresQueries';
 import { NAV_ITEMS } from '@/constants/navigation';
 import { MOCK_CATEGORIES } from '@/constants/mockData';
-import { uiCategoryToAPICategory, apiCategoryToUICategory } from '@/utils/apiAdapters';
-import type { StoreSummary, StoreCategoryCount } from '@/types';
-import type { StoreDetail } from '@/services/stores';
+import { uiCategoryToAPICategory } from '@/utils/apiAdapters';
+import { buildCategoryLabelMap, mapStoreDetailToSummary } from '@/utils/storeAdapters';
+import type { StoreSummary } from '@/types';
 
 const PAGE_SIZE = 12;
 
-const CATEGORY_LABEL_MAP = new Map(
-  MOCK_CATEGORIES.map((category) => [category.id, category.name])
-);
+const CATEGORY_LABEL_MAP = buildCategoryLabelMap(MOCK_CATEGORIES);
 
 interface RegionOption {
   id: string;
@@ -29,84 +27,6 @@ interface RegionOption {
 
 function toSlug(value: string) {
   return value.toLowerCase().replace(/\s+/g, '-');
-}
-
-function extractCategoryCounts(
-  rawCounts: StoreDetail['category_counts']
-): StoreCategoryCount[] | undefined {
-  if (!rawCounts) {
-    return undefined;
-  }
-
-  const entries: Array<[string, number]> = [];
-
-  if (Array.isArray(rawCounts)) {
-    rawCounts.forEach((item) => {
-      if (!item || typeof item !== 'object') {
-        return;
-      }
-
-      const key =
-        (typeof item.category === 'string' && item.category) ||
-        (typeof item.name === 'string' && item.name) ||
-        (typeof item.key === 'string' && item.key) ||
-        (typeof item.code === 'string' && item.code);
-
-      const value =
-        typeof item.count === 'number'
-          ? item.count
-          : typeof item.total === 'number'
-            ? item.total
-            : undefined;
-
-      if (key && typeof value === 'number') {
-        entries.push([key, value]);
-      }
-    });
-  } else if (typeof rawCounts === 'object') {
-    Object.entries(rawCounts).forEach(([key, value]) => {
-      if (typeof value === 'number') {
-        entries.push([key, value]);
-      }
-    });
-  }
-
-  const normalized = entries
-    .map(([key, value]) => {
-      const uiId = apiCategoryToUICategory(key);
-      if (!uiId || value <= 0) {
-        return null;
-      }
-      const name = CATEGORY_LABEL_MAP.get(uiId) ?? key;
-      return { id: uiId, name, count: value };
-    })
-    .filter((entry): entry is StoreCategoryCount => Boolean(entry))
-    .sort((a, b) => b.count - a.count);
-
-  return normalized.length > 0 ? normalized : undefined;
-}
-
-function mapStoreToSummary(store: StoreDetail): StoreSummary {
-  const categoryCounts = extractCategoryCounts(store.category_counts);
-  const productCount =
-    typeof store.product_count === 'number'
-      ? store.product_count
-      : Array.isArray(store.products)
-        ? store.products.length
-        : categoryCounts?.reduce((sum, item) => sum + item.count, 0);
-
-  return {
-    id: store.id,
-    name: store.name,
-    region: store.region,
-    district: store.district,
-    address: store.address,
-    phone: store.phone ?? store.phone_number,
-    businessHours: store.business_hours,
-    productCount,
-    imageUrl: store.image_url ?? store.logo_url ?? store.thumbnail_url,
-    categoryCounts,
-  };
 }
 
 export default function StoresPage() {
@@ -175,7 +95,9 @@ export default function StoresPage() {
     if (!storesData?.stores) {
       return [];
     }
-    return storesData.stores.map(mapStoreToSummary);
+    return storesData.stores.map((store) =>
+      mapStoreDetailToSummary(store, CATEGORY_LABEL_MAP)
+    );
   }, [storesData?.stores]);
 
   const totalCount = storesData?.count ?? 0;

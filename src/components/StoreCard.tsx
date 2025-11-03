@@ -1,4 +1,5 @@
-import { MapPin, Phone, PackageSearch, Clock } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { MapPin, Phone, PackageSearch, Clock, ArrowUpRight } from 'lucide-react';
 import FallbackImage from './FallbackImage';
 import type { StoreSummary } from '@/types';
 
@@ -34,18 +35,28 @@ export default function StoreCard({ store }: StoreCardProps) {
 
   return (
     <div className="card bg-base-100 shadow-xl transition-shadow hover:shadow-2xl">
-      <figure className="aspect-video overflow-hidden bg-base-200">
-        <FallbackImage
-          src={store.imageUrl}
-          alt={`${store.name} 매장 이미지`}
-          className="h-full w-full object-cover"
-          loading="lazy"
-        />
-      </figure>
+      <Link
+        to={`/stores/${store.id}`}
+        className="group"
+        aria-label={`${store.name} 상세 페이지로 이동`}
+      >
+        <figure className="aspect-video overflow-hidden bg-base-200">
+          <FallbackImage
+            src={store.imageUrl}
+            alt={`${store.name} 매장 이미지`}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
+          />
+        </figure>
+      </Link>
 
       <div className="card-body gap-4">
         <div className="space-y-2">
-          <h3 className="card-title text-xl">{store.name}</h3>
+          <h3 className="card-title text-xl">
+            <Link to={`/stores/${store.id}`} className="link-hover">
+              {store.name}
+            </Link>
+          </h3>
 
           {locationText && (
             <p className="flex items-center gap-2 text-sm text-base-content/70">
@@ -97,27 +108,38 @@ export default function StoreCard({ store }: StoreCardProps) {
         )}
 
         <div className="card-actions mt-2 flex items-center justify-between">
-          {store.phone ? (
-            <>
-              <span className="flex items-center gap-2 text-sm text-base-content/70">
-                <Phone className="h-4 w-4" aria-hidden="true" />
-                {store.phone}
-              </span>
-              {sanitizedPhone ? (
-                <a
-                  href={`tel:${sanitizedPhone}`}
-                  className="btn btn-sm btn-primary"
-                  aria-label={`${store.name}에 전화하기`}
-                >
-                  전화하기
-                </a>
-              ) : (
-                <span className="text-xs text-base-content/50">전화 연결 불가</span>
-              )}
-            </>
-          ) : (
-            <span className="text-sm text-base-content/50">연락처 정보가 준비 중입니다.</span>
-          )}
+          <div className="flex items-center gap-3">
+            {store.phone ? (
+              <>
+                <span className="flex items-center gap-2 text-sm text-base-content/70">
+                  <Phone className="h-4 w-4" aria-hidden="true" />
+                  {store.phone}
+                </span>
+                {sanitizedPhone ? (
+                  <a
+                    href={`tel:${sanitizedPhone}`}
+                    className="btn btn-sm btn-primary"
+                    aria-label={`${store.name}에 전화하기`}
+                  >
+                    전화하기
+                  </a>
+                ) : (
+                  <span className="text-xs text-base-content/50">전화 연결 불가</span>
+                )}
+              </>
+            ) : (
+              <span className="text-sm text-base-content/50">연락처 정보가 준비 중입니다.</span>
+            )}
+          </div>
+
+          <Link
+            to={`/stores/${store.id}`}
+            className="btn btn-sm btn-outline"
+            aria-label={`${store.name} 상세보기`}
+          >
+            상세보기
+            <ArrowUpRight className="ml-1 h-4 w-4" aria-hidden="true" />
+          </Link>
         </div>
       </div>
     </div>
