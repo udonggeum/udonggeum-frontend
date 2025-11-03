@@ -287,3 +287,10 @@ JWT 토큰 기반 인증을 사용합니다.
 - `docs/COMMIT_CONVENTION.md` - Commit message format
 - `docs/ENVIRONMENT_SETUP.md` - Environment variable configuration
 - `docs/우동금_FigJam_페이지별_와이어프레임_흐름도.md` - Page flow wireframes
+
+## Active Technologies
+- TypeScript 5.9 (React 19) + React 19, TanStack Query v5, Zustand v5, Zod v3, Axios, React Router v6, TailwindCSS 4, DaisyUI (001-auth-pages)
+- localStorage (via Zustand persist middleware) for auth tokens and user data (001-auth-pages)
+
+## Recent Changes
+- 001-auth-pages: Added TypeScript 5.9 (React 19) + React 19, TanStack Query v5, Zustand v5, Zod v3, Axios, React Router v6, TailwindCSS 4, DaisyUI
