@@ -126,6 +126,53 @@ export const authHandlers = [
   }),
 
   /**
+   * POST /api/v1/auth/logout
+   * Logout user (clears session on backend)
+   */
+  http.post(`${BASE_URL}/auth/logout`, () => {
+    // Return 204 No Content for successful logout
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  /**
+   * POST /api/v1/auth/refresh
+   * Refresh access token using refresh token
+   */
+  http.post(`${BASE_URL}/auth/refresh`, async ({ request }) => {
+    const body = (await request.json()) as { refresh_token: string };
+
+    // Validate refresh token format
+    if (!body.refresh_token) {
+      return HttpResponse.json(
+        { error: '세션이 만료되었습니다. 다시 로그인해주세요' },
+        { status: 401 }
+      );
+    }
+
+    // Extract user ID from token
+    const userId = getUserIdFromAuth(`Bearer ${body.refresh_token}`);
+
+    if (!userId) {
+      return HttpResponse.json(
+        { error: '세션이 만료되었습니다. 다시 로그인해주세요' },
+        { status: 401 }
+      );
+    }
+
+    // Generate new tokens
+    const access_token = generateMockToken(userId);
+    const refresh_token = generateMockToken(userId);
+
+    return HttpResponse.json(
+      {
+        access_token,
+        refresh_token,
+      },
+      { status: 200 }
+    );
+  }),
+
+  /**
    * GET /api/v1/auth/me
    * Get current user (requires authentication)
    */

@@ -18,6 +18,7 @@ interface AuthState {
 interface AuthActions {
   setAuth: (user: User, tokens: Tokens) => void;
   updateUser: (user: User) => void;
+  updateTokens: (tokens: Tokens) => void;
   clearAuth: () => void;
 }
 
@@ -62,6 +63,14 @@ export const useAuthStore = create<AuthStore>()(
         set((state) => ({
           user,
           // Keep isAuthenticated if user is updated
+          isAuthenticated: state.isAuthenticated,
+        })),
+
+      updateTokens: (tokens) =>
+        set((state) => ({
+          tokens,
+          // Keep user and isAuthenticated when tokens are refreshed
+          user: state.user,
           isAuthenticated: state.isAuthenticated,
         })),
 

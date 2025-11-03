@@ -18,6 +18,8 @@ export const ENDPOINTS = {
   AUTH: {
     REGISTER: '/api/v1/auth/register',
     LOGIN: '/api/v1/auth/login',
+    LOGOUT: '/api/v1/auth/logout',
+    REFRESH: '/api/v1/auth/refresh',
     ME: '/api/v1/auth/me',
   },
 

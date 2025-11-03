@@ -7,10 +7,12 @@ import {
   RegisterRequestSchema,
   AuthResponseSchema,
   MeResponseSchema,
+  TokensSchema,
   type LoginRequest,
   type RegisterRequest,
   type AuthResponse,
   type MeResponse,
+  type Tokens,
 } from '@/schemas/auth';
 
 /**
@@ -89,6 +91,34 @@ class AuthService {
 
     // Validate response
     return MeResponseSchema.parse(response.data);
+  }
+
+  /**
+   * Logout user
+   * Optional backend cleanup - clears auth state
+   */
+  async logout(): Promise<void> {
+    try {
+      await apiClient.post(ENDPOINTS.AUTH.LOGOUT);
+    } catch (error) {
+      // Logout should succeed even if backend call fails
+      // Client-side state will be cleared regardless
+      console.warn('Logout API call failed, proceeding with client-side cleanup', error);
+    }
+  }
+
+  /**
+   * Refresh access token
+   * @param refreshToken - Refresh token from auth store
+   * @returns New tokens
+   */
+  async refreshToken(refreshToken: string): Promise<Tokens> {
+    const response = await apiClient.post(ENDPOINTS.AUTH.REFRESH, {
+      refresh_token: refreshToken,
+    });
+
+    // Validate response
+    return TokensSchema.parse(response.data);
   }
 }
 

@@ -50,8 +50,8 @@ export type AuthResponse = z.infer<typeof AuthResponseSchema>;
  * Validates user input for login
  */
 export const LoginRequestSchema = z.object({
-  email: z.string().email('유효한 이메일을 입력하세요'),
-  password: z.string().min(6, '비밀번호는 최소 6자 이상이어야 합니다'),
+  email: z.string().min(1, '이메일을 입력하세요').email('유효한 이메일을 입력하세요'),
+  password: z.string().min(1, '비밀번호를 입력하세요').min(6, '비밀번호는 최소 6자 이상이어야 합니다'),
 });
 
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
@@ -61,8 +61,8 @@ export type LoginRequest = z.infer<typeof LoginRequestSchema>;
  * Validates user input for registration
  */
 export const RegisterRequestSchema = z.object({
-  email: z.string().email('유효한 이메일을 입력하세요'),
-  password: z.string().min(6, '비밀번호는 최소 6자 이상이어야 합니다'),
+  email: z.string().min(1, '이메일을 입력하세요').email('유효한 이메일을 입력하세요'),
+  password: z.string().min(1, '비밀번호를 입력하세요').min(6, '비밀번호는 최소 6자 이상이어야 합니다'),
   name: z.string().min(1, '이름을 입력하세요'),
   phone: z
     .string()
