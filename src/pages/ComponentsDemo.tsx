@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, ErrorAlert, LoadingSpinner } from '../components';
+import { Button, ErrorAlert, LoadingSpinner, FallbackImage } from '../components';
 import ProductCard from '../components/ProductCard';
 import ProductsLoadingSkeleton from '../components/ProductsLoadingSkeleton';
 import type { Product } from '../types';
@@ -407,7 +407,7 @@ function CardsTab({ product }: { product: Product }) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="card bg-base-100 shadow-xl">
               <figure>
-                <img
+                <FallbackImage
                   src="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400"
                   alt="Jewelry"
                   className="w-full h-48 object-cover"
@@ -434,7 +434,7 @@ function CardsTab({ product }: { product: Product }) {
 
             <div className="card bg-base-100 shadow-xl image-full">
               <figure>
-                <img
+                <FallbackImage
                   src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400"
                   alt="Gold"
                   className="w-full h-full object-cover"

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import FallbackImage from './FallbackImage';
 import type { CarouselSlide } from '../types';
 
 interface HeroCarouselProps {
@@ -13,7 +14,6 @@ interface HeroCarouselProps {
  */
 export default function HeroCarousel({ slides }: HeroCarouselProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
 
   const sortedSlides = [...slides].sort((a, b) => a.displayOrder - b.displayOrder);
 
@@ -42,10 +42,6 @@ export default function HeroCarousel({ slides }: HeroCarouselProps) {
     setCurrentSlide((prev) => (prev + 1) % sortedSlides.length);
   };
 
-  const handleImageError = (slideId: string) => {
-    setImageErrors((prev) => new Set(prev).add(slideId));
-  };
-
   if (sortedSlides.length === 0) {
     return (
       <div className="w-full h-96 bg-base-200 flex items-center justify-center">
@@ -58,64 +54,41 @@ export default function HeroCarousel({ slides }: HeroCarouselProps) {
     <section className="relative w-full" aria-label="프로모션 캐러셀">
       {/* Carousel Container */}
       <div className="carousel w-full h-96 md:h-[500px] relative overflow-hidden">
-        {sortedSlides.map((slide, index) => {
-          const hasError = imageErrors.has(slide.id);
+        {sortedSlides.map((slide, index) => (
+          <div
+            key={slide.id}
+            id={`slide-${slide.id}`}
+            className={`carousel-item relative w-full transition-opacity duration-500 ${
+              index === currentSlide ? 'opacity-100' : 'opacity-0 absolute inset-0'
+            }`}
+          >
+            <FallbackImage
+              src={slide.imageUrl}
+              alt={slide.altText}
+              className="w-full h-full object-cover"
+            />
 
-          return (
-            <div
-              key={slide.id}
-              id={`slide-${slide.id}`}
-              className={`carousel-item relative w-full transition-opacity duration-500 ${
-                index === currentSlide ? 'opacity-100' : 'opacity-0 absolute inset-0'
-              }`}
-            >
-              {/* Slide Content */}
-              {hasError ? (
-                // Fallback for image load failures
-                <div
-                  className="w-full h-full flex items-center justify-center"
-                  style={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  }}
-                >
-                  {slide.overlayText && (
-                    <h2 className="text-4xl md:text-6xl font-bold text-white text-center px-4">
-                      {slide.overlayText}
-                    </h2>
-                  )}
-                </div>
-              ) : (
-                <>
-                  <img
-                    src={slide.imageUrl}
-                    alt={slide.altText}
-                    className="w-full h-full object-cover"
-                    onError={() => handleImageError(slide.id)}
-                  />
-                  {/* Overlay Text */}
-                  {slide.overlayText && (
-                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                      <h2 className="text-4xl md:text-6xl font-bold text-white text-center px-4 drop-shadow-lg">
-                        {slide.overlayText}
-                      </h2>
-                    </div>
-                  )}
-                </>
-              )}
+            {/* Overlay Text */}
+            {slide.overlayText && (
+              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                <h2 className="text-4xl md:text-6xl font-bold text-white text-center px-4 drop-shadow-lg">
+                  {slide.overlayText}
+                </h2>
+              </div>
+            )}
 
-              {/* Optional Link Wrapper */}
-              {slide.linkUrl && !hasError && (
-                <a
-                  href={slide.linkUrl}
-                  className="absolute inset-0"
-                  aria-label={`${slide.altText} 자세히 보기`}
-                >
-                  <span className="sr-only">자세히 보기</span>
-                </a>
-              )}
-            </div>
-          );
-        })}
+            {/* Optional Link Wrapper */}
+            {slide.linkUrl && (
+              <a
+                href={slide.linkUrl}
+                className="absolute inset-0"
+                aria-label={`${slide.altText} 자세히 보기`}
+              >
+                <span className="sr-only">자세히 보기</span>
+              </a>
+            )}
+          </div>
+        ))}
       </div>
 
       {/* Navigation Buttons */}

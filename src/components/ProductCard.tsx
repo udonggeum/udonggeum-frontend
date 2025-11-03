@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import FallbackImage from './FallbackImage';
 import type { Product } from '../types';
 
 interface ProductCardProps {
@@ -19,30 +20,24 @@ export default function ProductCard({
   onAddToCart,
 }: ProductCardProps) {
   const formattedPrice = product.price.toLocaleString('ko-KR');
-  const PLACEHOLDER_IMAGE = '/images/base-image.png';
-  const [imageSrc, setImageSrc] = useState(product.imageUrl || PLACEHOLDER_IMAGE);
-
-  useEffect(() => {
-    setImageSrc(product.imageUrl || PLACEHOLDER_IMAGE);
-  }, [product.imageUrl]);
-
   return (
     <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
       <figure className="aspect-square overflow-hidden">
-        <img
-          src={imageSrc}
-          alt={product.imageAlt}
-          className="w-full h-full object-cover"
-          loading="lazy"
-          onError={() => {
-            if (imageSrc !== PLACEHOLDER_IMAGE) {
-              setImageSrc(PLACEHOLDER_IMAGE);
-            }
-          }}
-        />
+        <Link to={`/products/${product.id}`} aria-label={`${product.name} 상세보기`} className="block h-full w-full">
+          <FallbackImage
+            src={product.imageUrl}
+            alt={product.imageAlt}
+            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+            loading="lazy"
+          />
+        </Link>
       </figure>
       <div className="card-body">
-        <h3 className="card-title text-lg">{product.name}</h3>
+        <h3 className="card-title text-lg">
+          <Link to={`/products/${product.id}`} className="link-hover">
+            {product.name}
+          </Link>
+        </h3>
         <p className="text-2xl font-bold text-primary">₩{formattedPrice}</p>
         {product.storeName && (
           <p className="text-sm text-base-content/70">

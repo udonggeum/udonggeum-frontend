@@ -9,6 +9,7 @@
 export { default as Button } from './Button';
 export { default as ErrorAlert } from './ErrorAlert';
 export { default as LoadingSpinner } from './LoadingSpinner';
+export { default as FallbackImage } from './FallbackImage';
 
 // Product Components
 export { default as ProductCard } from './ProductCard';
