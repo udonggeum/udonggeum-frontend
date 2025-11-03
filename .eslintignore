@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+dist-ssr/
+
+# Coverage
+coverage/
+
+# Minified files
+*.min.js
+*.min.css
+
+# Environment
+.env*
+
+# Generated files
+*.d.ts.map
+
+# Test artifacts
+.nyc_output/
+
+# Cache
+.eslintcache
