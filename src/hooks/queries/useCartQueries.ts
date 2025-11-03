@@ -65,8 +65,8 @@ export function useUpdateCartItem() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, quantity }: { id: number; quantity: UpdateCartItemRequest }) =>
-      cartService.updateCartItem(id, quantity),
+    mutationFn: ({ id, payload }: { id: number; payload: UpdateCartItemRequest }) =>
+      cartService.updateCartItem(id, payload),
     onSuccess: () => {
       // Invalidate and refetch cart
       void queryClient.invalidateQueries({ queryKey: cartKeys.detail() });

@@ -44,6 +44,7 @@ export type AddToCartRequest = z.infer<typeof AddToCartRequestSchema>;
  */
 export const UpdateCartItemRequestSchema = z.object({
   quantity: z.number().int().positive('수량은 최소 1개 이상이어야 합니다'),
+  product_option_id: z.number().int().positive().optional(),
 });
 
 export type UpdateCartItemRequest = z.infer<
