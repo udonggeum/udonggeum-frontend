@@ -103,10 +103,10 @@ export default function Navbar({ navigationItems }: NavbarProps) {
       {/* Right Side Actions */}
       <div className="navbar-end gap-2">
         {/* Cart Badge (optional - for future enhancement) */}
-        <button
-          type="button"
+        <Link
+          to="/cart"
           className="btn btn-ghost btn-circle"
-          aria-label="장바구니"
+          aria-label="장바구니로 이동"
         >
           <div className="indicator">
             <svg
@@ -125,7 +125,7 @@ export default function Navbar({ navigationItems }: NavbarProps) {
             </svg>
             <span className="badge badge-sm badge-primary indicator-item">0</span>
           </div>
-        </button>
+        </Link>
 
         {/* Auth Buttons - Conditional based on auth state */}
         {!isAuthenticated ? (

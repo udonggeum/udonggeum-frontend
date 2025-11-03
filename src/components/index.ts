@@ -9,12 +9,15 @@
 export { default as Button } from './Button';
 export { default as ErrorAlert } from './ErrorAlert';
 export { default as LoadingSpinner } from './LoadingSpinner';
+export { default as FallbackImage } from './FallbackImage';
 
 // Product Components
 export { default as ProductCard } from './ProductCard';
 export { default as ProductsError } from './ProductsError';
 export { default as ProductsLoadingSkeleton } from './ProductsLoadingSkeleton';
 export { default as PopularProducts } from './PopularProducts';
+export { default as ProductsFilterBar } from './ProductsFilterBar';
+export { default as PaginationControls } from './PaginationControls';
 
 // Layout Components
 export { default as Navbar } from './Navbar';

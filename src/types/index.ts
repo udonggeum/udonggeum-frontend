@@ -120,6 +120,16 @@ export interface Product {
    * Store name offering this product (for future use)
    */
   storeName?: string;
+
+  /**
+   * Optional list of option display labels (e.g., size, length)
+   */
+  options?: string[];
+
+  /**
+   * Human-readable store location (e.g., "서울 강남구")
+   */
+  storeLocation?: string;
 }
 
 /**

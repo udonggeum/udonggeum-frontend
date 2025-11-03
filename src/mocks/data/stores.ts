@@ -11,6 +11,7 @@ export const mockStores = [
     district: '강남구',
     address: '서울시 강남구 테헤란로 123',
     phone: '02-1234-5678',
+    phone_number: '02-1234-5678',
     business_hours: '평일 10:00-20:00, 주말 10:00-18:00',
   },
   {
@@ -20,6 +21,7 @@ export const mockStores = [
     district: '마포구',
     address: '서울시 마포구 양화로 456',
     phone: '02-2345-6789',
+    phone_number: '02-2345-6789',
     business_hours: '매일 11:00-21:00',
   },
   {
@@ -29,6 +31,7 @@ export const mockStores = [
     district: '해운대구',
     address: '부산시 해운대구 센텀로 789',
     phone: '051-3456-7890',
+    phone_number: '051-3456-7890',
     business_hours: '평일 10:00-20:00, 주말 10:00-19:00',
   },
   {
@@ -38,6 +41,7 @@ export const mockStores = [
     district: '중구',
     address: '대구시 중구 동성로 321',
     phone: '053-4567-8901',
+    phone_number: '053-4567-8901',
     business_hours: '매일 10:30-20:30',
   },
   {
@@ -47,6 +51,7 @@ export const mockStores = [
     district: '연수구',
     address: '인천시 연수구 송도국제대로 654',
     phone: '032-5678-9012',
+    phone_number: '032-5678-9012',
     business_hours: '평일 10:00-20:00, 주말 10:00-18:00',
   },
 ];

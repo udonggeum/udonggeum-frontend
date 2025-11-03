@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+import FallbackImage from './FallbackImage';
 import type { Product } from '../types';
 
 interface ProductCardProps {
@@ -18,22 +20,42 @@ export default function ProductCard({
   onAddToCart,
 }: ProductCardProps) {
   const formattedPrice = product.price.toLocaleString('ko-KR');
-
   return (
     <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
       <figure className="aspect-square overflow-hidden">
-        <img
-          src={product.imageUrl}
-          alt={product.imageAlt}
-          className="w-full h-full object-cover"
-          loading="lazy"
-        />
+        <Link to={`/products/${product.id}`} aria-label={`${product.name} 상세보기`} className="block h-full w-full">
+          <FallbackImage
+            src={product.imageUrl}
+            alt={product.imageAlt}
+            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+            loading="lazy"
+          />
+        </Link>
       </figure>
       <div className="card-body">
-        <h3 className="card-title text-lg">{product.name}</h3>
+        <h3 className="card-title text-lg">
+          <Link to={`/products/${product.id}`} className="link-hover">
+            {product.name}
+          </Link>
+        </h3>
         <p className="text-2xl font-bold text-primary">₩{formattedPrice}</p>
         {product.storeName && (
-          <p className="text-sm text-base-content/70">{product.storeName}</p>
+          <p className="text-sm text-base-content/70">
+            {product.storeName}
+            {product.storeLocation ? ` · ${product.storeLocation}` : ''}
+          </p>
+        )}
+        {product.options && product.options.length > 0 && (
+          <ul className="mt-2 space-y-1">
+            {product.options.slice(0, 3).map((option) => (
+              <li key={`option-${product.id}-${option}`} className="text-sm text-base-content/60">
+                • {option}
+              </li>
+            ))}
+            {product.options.length > 3 && (
+              <li className="text-xs text-base-content/50">+ 추가 옵션 {product.options.length - 3}개</li>
+            )}
+          </ul>
         )}
         <div className="card-actions justify-end mt-4">
           <button

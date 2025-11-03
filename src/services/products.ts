@@ -51,9 +51,17 @@ class ProductsService {
    */
   async getProductDetail(id: number): Promise<Product> {
     const response = await apiClient.get(ENDPOINTS.PRODUCTS.DETAIL(id));
+    const data: unknown = response.data;
+
+    const rawData =
+      typeof data === 'object' && data !== null && 'data' in data
+        ? (data as Record<'data', unknown>).data
+        : typeof data === 'object' && data !== null && 'product' in data
+          ? (data as Record<'product', unknown>).product
+          : data;
 
     // Validate response
-    return ProductSchema.parse(response.data);
+    return ProductSchema.parse(rawData);
   }
 }
 

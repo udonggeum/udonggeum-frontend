@@ -11,23 +11,30 @@ import type { Product as UIProduct } from '@/types';
  * Category mapping: API enum → UI category IDs
  */
 const CATEGORY_MAPPING: Record<string, string> = {
-  gold: 'gold',
-  silver: 'silver',
-  jewelry: 'jewelry',
-  // Add more mappings as needed
+  반지: 'rings',
+  목걸이: 'necklaces',
+  팔찌: 'bracelets',
+  귀걸이: 'earrings',
+  기타: 'anklets',
+  ring: 'rings',
+  necklace: 'necklaces',
+  bracelet: 'bracelets',
+  earring: 'earrings',
+  others: 'anklets',
+  other: 'anklets',
+  anklet: 'anklets',
 };
 
 /**
  * Reverse mapping: UI category IDs → API enum
  */
-const CATEGORY_REVERSE_MAPPING: Record<string, 'gold' | 'silver' | 'jewelry'> = {
-  gold: 'gold',
-  silver: 'silver',
-  jewelry: 'jewelry',
-  rings: 'jewelry',
-  necklaces: 'jewelry',
-  bracelets: 'jewelry',
-  earrings: 'jewelry',
+const CATEGORY_REVERSE_MAPPING: Record<string, '반지' | '목걸이' | '팔찌' | '귀걸이' | '기타'> = {
+  rings: '반지',
+  necklaces: '목걸이',
+  bracelets: '팔찌',
+  earrings: '귀걸이',
+  anklets: '기타',
+  others: '기타',
 };
 
 /**
@@ -49,9 +56,19 @@ function generateRegionId(region?: string, district?: string): string {
  */
 export function transformProductFromAPI(apiProduct: APIProduct): UIProduct {
   const regionId = generateRegionId(
-    apiProduct.store.region,
-    apiProduct.store.district
+    apiProduct.store?.region,
+    apiProduct.store?.district
   );
+
+  const categoryRaw = apiProduct.category?.toString().trim();
+  const categoryKey = categoryRaw?.toLowerCase();
+
+  const storeLocation = [
+    apiProduct.store?.region,
+    apiProduct.store?.district,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' ');
 
   return {
     id: String(apiProduct.id), // number → string
@@ -59,11 +76,31 @@ export function transformProductFromAPI(apiProduct: APIProduct): UIProduct {
     price: apiProduct.price,
     imageUrl: apiProduct.image_url || '', // snake_case → camelCase, with fallback
     imageAlt: `${apiProduct.name} 상품 이미지`, // Generate alt text
-    categoryId: CATEGORY_MAPPING[apiProduct.category] || apiProduct.category,
+    categoryId:
+      (categoryRaw && CATEGORY_MAPPING[categoryRaw]) ||
+      (categoryKey && CATEGORY_MAPPING[categoryKey]) ||
+      'others',
     regionId,
     isWishlisted: false, // Client-side state (default false)
     isInCart: false, // Client-side state (default false)
-    storeName: apiProduct.store.name,
+    storeName: apiProduct.store?.name,
+    storeLocation: storeLocation || undefined,
+    options: apiProduct.options
+      ?.map((option) => {
+        const baseLabel =
+          option.name && option.value
+            ? `${option.name}: ${option.value}`
+            : option.value || option.name || '';
+
+        if (!baseLabel) return null;
+
+        if (option.additional_price && option.additional_price > 0) {
+          const formattedPrice = option.additional_price.toLocaleString('ko-KR');
+          return `${baseLabel} (+₩${formattedPrice})`;
+        }
+        return baseLabel;
+      })
+      .filter((value): value is string => Boolean(value)),
   };
 }
 
@@ -80,7 +117,7 @@ export function transformProductsFromAPI(apiProducts: APIProduct[]): UIProduct[]
  */
 export function uiCategoryToAPICategory(
   categoryId: string | null
-): 'gold' | 'silver' | 'jewelry' | undefined {
+): '반지' | '목걸이' | '팔찌' | '귀걸이' | '기타' | undefined {
   if (!categoryId) return undefined;
   return CATEGORY_REVERSE_MAPPING[categoryId];
 }
