@@ -7,7 +7,6 @@ import ComponentsDemo from '@/pages/ComponentsDemo';
 import LoginPage from '@/pages/LoginPage';
 import RegisterPage from '@/pages/RegisterPage';
 import MyPage from '@/pages/MyPage';
-import LogoutPage from '@/pages/LogoutPage';
 import ProductsPage from '@/pages/ProductsPage';
 import ProductDetailPage from '@/pages/ProductDetailPage';
 import StoresPage from '@/pages/StoresPage';
@@ -51,7 +50,6 @@ export default function App() {
         <Route path="/old-home" element={<Home />} />
         <Route path="/apidemo" element={<ApiDemo />} />
         <Route path="/components-demo" element={<ComponentsDemo />} />
-        <Route path="/logout" element={<LogoutPage />} />
         <Route path="/products" element={<ProductsPage />} />
         <Route path="/products/:productId" element={<ProductDetailPage />} />
         <Route path="/stores" element={<StoresPage />} />
