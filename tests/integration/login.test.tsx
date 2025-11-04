@@ -11,6 +11,7 @@ import LoginPage from '@/pages/LoginPage';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { mockDB } from '@/mocks/utils/db';
 import { STORAGE_KEYS } from '@/constants/api';
+import { AUTH_ERRORS } from '@/constants/errors';
 import type { LoginRequest } from '@/schemas/auth';
 
 describe('Integration: Login Flow', () => {
@@ -127,7 +128,7 @@ describe('Integration: Login Flow', () => {
       () => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
         expect(
-          screen.getByText(/이메일 또는 비밀번호가 올바르지 않습니다/i)
+          screen.getByText(AUTH_ERRORS.INVALID_CREDENTIALS)
         ).toBeInTheDocument();
       },
       { timeout: 5000 }
@@ -196,8 +197,8 @@ describe('Integration: Login Flow', () => {
 
     // Wait for validation errors to appear
     await waitFor(() => {
-      expect(screen.getByText(/이메일을 입력하세요/i)).toBeInTheDocument();
-      expect(screen.getByText(/비밀번호를 입력하세요/i)).toBeInTheDocument();
+      expect(screen.getByText(AUTH_ERRORS.EMAIL_REQUIRED)).toBeInTheDocument();
+      expect(screen.getByText(AUTH_ERRORS.PASSWORD_REQUIRED)).toBeInTheDocument();
     });
 
     // Verify no API call was made (auth store should remain empty)

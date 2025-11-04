@@ -10,6 +10,7 @@ import { renderWithProviders } from '@/test/utils';
 import LoginPage from './LoginPage';
 import { useAuthStore } from '@/stores/useAuthStore';
 import * as authQueries from '@/hooks/queries/useAuthQueries';
+import { AUTH_ERRORS } from '@/constants/errors';
 import type { LoginRequest } from '@/schemas/auth';
 
 // Mock the auth queries module
@@ -116,7 +117,7 @@ describe('LoginPage', () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText(/유효한 이메일을 입력하세요/i)
+          screen.getByText(AUTH_ERRORS.EMAIL_INVALID)
         ).toBeInTheDocument();
       });
     });
@@ -137,7 +138,7 @@ describe('LoginPage', () => {
       await user.tab(); // Focus and blur without typing
 
       await waitFor(() => {
-        expect(screen.getByText(/비밀번호를 입력하세요/i)).toBeInTheDocument();
+        expect(screen.getByText(AUTH_ERRORS.PASSWORD_REQUIRED)).toBeInTheDocument();
       });
     });
 
@@ -160,7 +161,7 @@ describe('LoginPage', () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText(/유효한 이메일을 입력하세요/i)
+          screen.getByText(AUTH_ERRORS.EMAIL_INVALID)
         ).toBeInTheDocument();
       });
 
@@ -171,7 +172,7 @@ describe('LoginPage', () => {
 
       await waitFor(() => {
         expect(
-          screen.queryByText(/유효한 이메일을 입력하세요/i)
+          screen.queryByText(AUTH_ERRORS.EMAIL_INVALID)
         ).not.toBeInTheDocument();
       });
     });
@@ -249,7 +250,7 @@ describe('LoginPage', () => {
       // Error message should be displayed
       await waitFor(() => {
         expect(
-          screen.getByText(/유효한 이메일을 입력하세요/i)
+          screen.getByText(AUTH_ERRORS.EMAIL_INVALID)
         ).toBeInTheDocument();
       });
     });
@@ -369,7 +370,7 @@ describe('LoginPage', () => {
 
   describe('Error Handling', () => {
     it('should display error message when login fails', async () => {
-      const errorMessage = '이메일 또는 비밀번호가 올바르지 않습니다.';
+      const errorMessage = AUTH_ERRORS.INVALID_CREDENTIALS;
 
       vi.mocked(authQueries.useLogin).mockReturnValue({
         mutate: vi.fn(),
@@ -388,7 +389,7 @@ describe('LoginPage', () => {
     });
 
     it('should clear error message when user starts typing', async () => {
-      const errorMessage = '이메일 또는 비밀번호가 올바르지 않습니다.';
+      const errorMessage = AUTH_ERRORS.INVALID_CREDENTIALS;
 
       vi.mocked(authQueries.useLogin).mockReturnValue({
         mutate: vi.fn(),

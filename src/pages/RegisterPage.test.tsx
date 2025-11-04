@@ -10,6 +10,7 @@ import { renderWithProviders } from '@/test/utils';
 import RegisterPage from './RegisterPage';
 import { useAuthStore } from '@/stores/useAuthStore';
 import * as authQueries from '@/hooks/queries/useAuthQueries';
+import { AUTH_ERRORS } from '@/constants/errors';
 import type { RegisterRequest } from '@/schemas/auth';
 
 // Mock the auth queries module
@@ -120,7 +121,7 @@ describe('RegisterPage', () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText(/유효한 이메일을 입력하세요/i)
+          screen.getByText(AUTH_ERRORS.EMAIL_INVALID)
         ).toBeInTheDocument();
       });
     });
@@ -142,7 +143,7 @@ describe('RegisterPage', () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText(/비밀번호는 최소 8자 이상이어야 합니다/i)
+          screen.getByText(AUTH_ERRORS.PASSWORD_MIN_LENGTH)
         ).toBeInTheDocument();
       });
     });
@@ -164,7 +165,7 @@ describe('RegisterPage', () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText(/비밀번호는 영문 대소문자, 숫자를 포함해야 합니다/i)
+          screen.getByText(AUTH_ERRORS.PASSWORD_COMPLEXITY)
         ).toBeInTheDocument();
       });
     });
@@ -189,7 +190,7 @@ describe('RegisterPage', () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText(/비밀번호가 일치하지 않습니다/i)
+          screen.getByText(AUTH_ERRORS.PASSWORD_MISMATCH)
         ).toBeInTheDocument();
       });
     });
@@ -210,7 +211,7 @@ describe('RegisterPage', () => {
       await user.tab(); // Focus and blur without typing
 
       await waitFor(() => {
-        expect(screen.getByText(/이름을 입력하세요/i)).toBeInTheDocument();
+        expect(screen.getByText(AUTH_ERRORS.NAME_REQUIRED)).toBeInTheDocument();
       });
     });
 
@@ -231,7 +232,7 @@ describe('RegisterPage', () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText(/올바른 휴대폰 번호 형식이 아닙니다/i)
+          screen.getByText(AUTH_ERRORS.PHONE_INVALID)
         ).toBeInTheDocument();
       });
     });
@@ -255,7 +256,7 @@ describe('RegisterPage', () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText(/유효한 이메일을 입력하세요/i)
+          screen.getByText(AUTH_ERRORS.EMAIL_INVALID)
         ).toBeInTheDocument();
       });
 
@@ -266,7 +267,7 @@ describe('RegisterPage', () => {
 
       await waitFor(() => {
         expect(
-          screen.queryByText(/유효한 이메일을 입력하세요/i)
+          screen.queryByText(AUTH_ERRORS.EMAIL_INVALID)
         ).not.toBeInTheDocument();
       });
     });
@@ -359,7 +360,7 @@ describe('RegisterPage', () => {
       // Error message should be displayed
       await waitFor(() => {
         expect(
-          screen.getByText(/유효한 이메일을 입력하세요/i)
+          screen.getByText(AUTH_ERRORS.EMAIL_INVALID)
         ).toBeInTheDocument();
       });
     });
@@ -368,7 +369,7 @@ describe('RegisterPage', () => {
   describe('Error Handling', () => {
     it('should display error message when registration fails', async () => {
       const user = userEvent.setup();
-      const errorMessage = '이미 사용 중인 이메일입니다.';
+      const errorMessage = AUTH_ERRORS.EMAIL_IN_USE;
 
       vi.mocked(authQueries.useRegister).mockReturnValue({
         mutate: vi.fn(),
@@ -388,7 +389,7 @@ describe('RegisterPage', () => {
 
     it('should clear error message when user starts typing', async () => {
       const user = userEvent.setup();
-      const errorMessage = '이미 사용 중인 이메일입니다.';
+      const errorMessage = AUTH_ERRORS.EMAIL_IN_USE;
 
       vi.mocked(authQueries.useRegister).mockReturnValue({
         mutate: vi.fn(),

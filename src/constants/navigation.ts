@@ -19,10 +19,4 @@ export const NAV_ITEMS: NavigationItem[] = [
     path: '/stores',
     displayOrder: 2,
   },
-  {
-    id: 'cart',
-    label: '장바구니',
-    path: '/cart',
-    displayOrder: 3,
-  },
 ];

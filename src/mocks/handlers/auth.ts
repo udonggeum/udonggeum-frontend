@@ -12,6 +12,7 @@ import {
   type AuthResponse,
   type MeResponse,
 } from '@/schemas/auth';
+import { AUTH_ERRORS, AUTH_SUCCESS, ERROR_CODES } from '@/constants/errors';
 
 const BASE_URL = '/api/v1';
 
@@ -27,7 +28,12 @@ export const authHandlers = [
     const parseResult = RegisterRequestSchema.safeParse(body);
     if (!parseResult.success) {
       return HttpResponse.json(
-        { error: '입력값을 확인해주세요.', details: parseResult.error.issues },
+        {
+          error: AUTH_ERRORS.VALIDATION_ERROR,
+          code: ERROR_CODES.VALIDATION_FAILED,
+          // Only include validation details in development for debugging
+          ...(import.meta.env.DEV && { details: parseResult.error.issues }),
+        },
         { status: 400 }
       );
     }
@@ -38,7 +44,10 @@ export const authHandlers = [
     const existingUser = mockDB.getUserByEmail(email);
     if (existingUser) {
       return HttpResponse.json(
-        { error: '이미 사용 중인 이메일입니다.' },
+        {
+          error: AUTH_ERRORS.EMAIL_IN_USE,
+          code: ERROR_CODES.EMAIL_IN_USE,
+        },
         { status: 409 }
       );
     }
@@ -60,7 +69,7 @@ export const authHandlers = [
     const { password: _password, ...userWithoutPassword } = newUser;
 
     const response: AuthResponse = {
-      message: '회원가입이 완료되었습니다.',
+      message: AUTH_SUCCESS.REGISTER_SUCCESS,
       user: userWithoutPassword,
       tokens: {
         access_token,
@@ -82,7 +91,12 @@ export const authHandlers = [
     const parseResult = LoginRequestSchema.safeParse(body);
     if (!parseResult.success) {
       return HttpResponse.json(
-        { error: '입력값을 확인해주세요.', details: parseResult.error.issues },
+        {
+          error: AUTH_ERRORS.VALIDATION_ERROR,
+          code: ERROR_CODES.VALIDATION_FAILED,
+          // Only include validation details in development for debugging
+          ...(import.meta.env.DEV && { details: parseResult.error.issues }),
+        },
         { status: 400 }
       );
     }
@@ -93,7 +107,10 @@ export const authHandlers = [
     const user = mockDB.getUserByEmail(email);
     if (!user) {
       return HttpResponse.json(
-        { error: '이메일 또는 비밀번호가 올바르지 않습니다.' },
+        {
+          error: AUTH_ERRORS.INVALID_CREDENTIALS,
+          code: ERROR_CODES.INVALID_CREDENTIALS,
+        },
         { status: 401 }
       );
     }
@@ -101,7 +118,10 @@ export const authHandlers = [
     // Check password (in real app, this would use bcrypt)
     if (user.password !== password) {
       return HttpResponse.json(
-        { error: '이메일 또는 비밀번호가 올바르지 않습니다.' },
+        {
+          error: AUTH_ERRORS.INVALID_CREDENTIALS,
+          code: ERROR_CODES.INVALID_CREDENTIALS,
+        },
         { status: 401 }
       );
     }
@@ -114,7 +134,7 @@ export const authHandlers = [
     const { password: _password, ...userWithoutPassword } = user;
 
     const response: AuthResponse = {
-      message: '로그인에 성공했습니다.',
+      message: AUTH_SUCCESS.LOGIN_SUCCESS,
       user: userWithoutPassword,
       tokens: {
         access_token,
@@ -144,7 +164,10 @@ export const authHandlers = [
     // Validate refresh token format
     if (!body.refresh_token) {
       return HttpResponse.json(
-        { error: '세션이 만료되었습니다. 다시 로그인해주세요' },
+        {
+          error: AUTH_ERRORS.SESSION_EXPIRED,
+          code: ERROR_CODES.SESSION_EXPIRED,
+        },
         { status: 401 }
       );
     }
@@ -169,7 +192,10 @@ export const authHandlers = [
 
     if (!userId) {
       return HttpResponse.json(
-        { error: '세션이 만료되었습니다. 다시 로그인해주세요' },
+        {
+          error: AUTH_ERRORS.SESSION_EXPIRED,
+          code: ERROR_CODES.SESSION_EXPIRED,
+        },
         { status: 401 }
       );
     }
@@ -198,7 +224,10 @@ export const authHandlers = [
 
     if (!userId) {
       return HttpResponse.json(
-        { error: '인증이 필요합니다.' },
+        {
+          error: AUTH_ERRORS.UNAUTHORIZED,
+          code: ERROR_CODES.UNAUTHORIZED,
+        },
         { status: 401 }
       );
     }
@@ -206,9 +235,14 @@ export const authHandlers = [
     // Find user
     const user = mockDB.getUserById(userId);
     if (!user) {
+      // SECURITY: Don't reveal if user exists - use generic auth failure message
+      // This prevents user enumeration attacks
       return HttpResponse.json(
-        { error: '사용자를 찾을 수 없습니다.' },
-        { status: 404 }
+        {
+          error: AUTH_ERRORS.AUTH_FAILED,
+          code: ERROR_CODES.AUTH_FAILED,
+        },
+        { status: 401 }
       );
     }
 

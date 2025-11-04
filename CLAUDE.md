@@ -142,7 +142,8 @@ src/
 ├── components/             # Reusable UI components (PascalCase files)
 ├── pages/                  # Page components
 ├── constants/              # App-wide constants
-│   └── api.ts              # API endpoints, error messages
+│   ├── api.ts              # API endpoints, generic system error messages
+│   └── errors.ts           # Auth error messages, error codes (AUTH_ERRORS, ERROR_CODES)
 ├── types/                  # Additional TypeScript types
 └── utils/                  # Pure utility functions
     ├── errors.ts           # Custom error classes (ApiError, NetworkError, ValidationError)
@@ -163,17 +164,44 @@ import type { User } from '@/schemas/auth';
 
 ## Error Handling
 
-### 1. Axios Interceptor (Automatic)
+### 1. Centralized Error Messages (`src/constants/errors.ts`)
+
+**All error messages are centralized in one file** to ensure consistency and easy maintenance:
+
+```typescript
+import { AUTH_ERRORS, ERROR_CODES, AUTH_SUCCESS } from '@/constants/errors';
+
+// Form validation
+error: AUTH_ERRORS.EMAIL_INVALID           // '유효한 이메일을 입력하세요'
+error: AUTH_ERRORS.PASSWORD_MIN_LENGTH     // '비밀번호는 최소 8자 이상이어야 합니다'
+
+// API errors
+error: AUTH_ERRORS.INVALID_CREDENTIALS     // '이메일 또는 비밀번호가 올바르지 않습니다'
+error: AUTH_ERRORS.SESSION_EXPIRED         // '세션이 만료되었습니다. 다시 로그인해주세요'
+
+// With error codes for tracking
+{ error: AUTH_ERRORS.EMAIL_IN_USE, code: ERROR_CODES.EMAIL_IN_USE }
+```
+
+**Benefits:**
+- Single source of truth - change once, updates everywhere
+- TypeScript autocomplete for error messages
+- Error codes for debugging and support
+- Easy to add i18n later
+
+### 2. Axios Interceptor (Automatic)
 - **401 Unauthorized**: Auto-logout + redirect to `/login`
 - **Network errors**: Converted to `NetworkError`
 - **API errors**: Converted to `ApiError` with status code
 
-### 2. Zod Validation Errors
+### 3. Zod Validation Errors
 - Convert to `ValidationError` using `ValidationError.fromZod(error)`
-- Display Korean error messages
+- Display Korean error messages from `AUTH_ERRORS` constants
 
-### 3. Component-Level
+### 4. Component-Level
 ```typescript
+import { AUTH_ERRORS } from '@/constants/errors';
+
 function LoginPage() {
   const { mutate: login, error } = useLogin();
 
@@ -185,6 +213,13 @@ function LoginPage() {
   );
 }
 ```
+
+### 5. Security Best Practices
+
+- ✅ **No user enumeration**: Use generic messages instead of revealing if user/email exists
+- ✅ **No internal details**: Hide Zod validation details in production (only in dev mode)
+- ✅ **No English errors**: All user-facing messages are in Korean
+- ✅ **Error codes**: Track issues via codes (AUTH_001, etc.) without exposing internals
 
 ## Code Style Guidelines
 

@@ -11,6 +11,7 @@ import RegisterPage from '@/pages/RegisterPage';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { mockDB } from '@/mocks/utils/db';
 import { STORAGE_KEYS } from '@/constants/api';
+import { AUTH_ERRORS } from '@/constants/errors';
 import type { RegisterRequest } from '@/schemas/auth';
 
 describe('Integration: Registration Flow', () => {
@@ -145,7 +146,7 @@ describe('Integration: Registration Flow', () => {
       () => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
         expect(
-          screen.getByText(/이미 사용 중인 이메일입니다/i)
+          screen.getByText(AUTH_ERRORS.EMAIL_IN_USE)
         ).toBeInTheDocument();
       },
       { timeout: 5000 }
@@ -220,13 +221,13 @@ describe('Integration: Registration Flow', () => {
 
     // Wait for validation errors to appear
     await waitFor(() => {
-      expect(screen.getByText(/이메일을 입력하세요/i)).toBeInTheDocument();
-      expect(screen.getByText(/비밀번호를 입력하세요/i)).toBeInTheDocument();
+      expect(screen.getByText(AUTH_ERRORS.EMAIL_REQUIRED)).toBeInTheDocument();
+      expect(screen.getByText(AUTH_ERRORS.PASSWORD_REQUIRED)).toBeInTheDocument();
       expect(
-        screen.getByText(/비밀번호 확인을 입력하세요/i)
+        screen.getByText(AUTH_ERRORS.PASSWORD_CONFIRM_REQUIRED)
       ).toBeInTheDocument();
-      expect(screen.getByText(/이름을 입력하세요/i)).toBeInTheDocument();
-      expect(screen.getByText(/휴대폰 번호를 입력하세요/i)).toBeInTheDocument();
+      expect(screen.getByText(AUTH_ERRORS.NAME_REQUIRED)).toBeInTheDocument();
+      expect(screen.getByText(AUTH_ERRORS.PHONE_REQUIRED)).toBeInTheDocument();
     });
 
     // Verify no API call was made (auth store should remain empty)

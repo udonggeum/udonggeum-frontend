@@ -2,9 +2,54 @@ import axios from 'axios';
 import type { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 import { API_BASE_URL, ERROR_MESSAGES, ENDPOINTS } from '@/constants/api';
 import { ApiError, NetworkError } from '@/utils/errors';
+import { AUTH_ERRORS } from '@/constants/errors';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { apiLogger } from '@/utils/apiLogger';
 import { TokensSchema } from '@/schemas/auth';
+
+/**
+ * Map backend error responses to Korean messages
+ * This ensures consistent Korean error messages regardless of backend language
+ */
+function getKoreanErrorMessage(status: number, url: string, backendMessage?: string): string {
+  // Authentication endpoints (login, register, etc.)
+  if (url.includes(ENDPOINTS.AUTH.LOGIN)) {
+    if (status === 401) return AUTH_ERRORS.INVALID_CREDENTIALS;
+    if (status === 400) return AUTH_ERRORS.VALIDATION_ERROR;
+  }
+
+  if (url.includes(ENDPOINTS.AUTH.REGISTER)) {
+    if (status === 409) return AUTH_ERRORS.EMAIL_IN_USE;
+    if (status === 400) return AUTH_ERRORS.VALIDATION_ERROR;
+  }
+
+  if (url.includes(ENDPOINTS.AUTH.REFRESH)) {
+    if (status === 401) return AUTH_ERRORS.SESSION_EXPIRED;
+  }
+
+  if (url.includes(ENDPOINTS.AUTH.ME)) {
+    if (status === 401) return AUTH_ERRORS.UNAUTHORIZED;
+  }
+
+  // Generic error mapping by status code
+  switch (status) {
+    case 401:
+      return AUTH_ERRORS.UNAUTHORIZED;
+    case 403:
+      return AUTH_ERRORS.FORBIDDEN;
+    case 404:
+      return AUTH_ERRORS.NOT_FOUND;
+    case 409:
+      return AUTH_ERRORS.EMAIL_IN_USE;
+    case 500:
+    case 502:
+    case 503:
+      return AUTH_ERRORS.SERVER_ERROR;
+    default:
+      // Fall back to backend message or generic error
+      return backendMessage || ERROR_MESSAGES.SERVER_ERROR;
+  }
+}
 
 // Extend Axios config to include metadata for tracking
 declare module 'axios' {
@@ -176,7 +221,7 @@ apiClient.interceptors.response.use(
         useAuthStore.getState().clearAuth();
         window.location.href = '/login';
         return Promise.reject(
-          new ApiError('세션이 만료되었습니다. 다시 로그인해주세요', status)
+          new ApiError(AUTH_ERRORS.SESSION_EXPIRED, status)
         );
       } finally {
         isRefreshing = false;
@@ -184,13 +229,12 @@ apiClient.interceptors.response.use(
     }
 
     // Transform API error to ApiError class
-    const message =
-      (error.response.data as { error?: string })?.error ||
-      error.message ||
-      ERROR_MESSAGES.SERVER_ERROR;
+    // Use Korean error mapping to ensure consistent Korean messages
+    const backendMessage = (error.response.data as { error?: string })?.error;
+    const koreanMessage = getKoreanErrorMessage(status, url, backendMessage);
 
     return Promise.reject(
-      new ApiError(message, status, error.response.data)
+      new ApiError(koreanMessage, status, error.response.data)
     );
   }
 );

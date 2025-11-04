@@ -10,6 +10,7 @@ import { useRegister } from '@/hooks/queries/useAuthQueries';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { RegisterRequestSchema, type RegisterRequest } from '@/schemas/auth';
 import { ValidationError } from '@/utils/errors';
+import { AUTH_ERRORS } from '@/constants/errors';
 import PasswordInput from '@/components/PasswordInput';
 
 /**
@@ -81,43 +82,43 @@ export default function RegisterPage() {
     switch (field) {
       case 'email':
         if (!formData.email) {
-          errors.email = '이메일을 입력하세요';
+          errors.email = AUTH_ERRORS.EMAIL_REQUIRED;
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-          errors.email = '유효한 이메일을 입력하세요';
+          errors.email = AUTH_ERRORS.EMAIL_INVALID;
         }
         break;
 
       case 'password':
         if (!formData.password) {
-          errors.password = '비밀번호를 입력하세요';
+          errors.password = AUTH_ERRORS.PASSWORD_REQUIRED;
         } else if (formData.password.length < 8) {
-          errors.password = '비밀번호는 최소 8자 이상이어야 합니다';
+          errors.password = AUTH_ERRORS.PASSWORD_MIN_LENGTH;
         } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-          errors.password = '비밀번호는 영문 대소문자, 숫자를 포함해야 합니다';
+          errors.password = AUTH_ERRORS.PASSWORD_COMPLEXITY;
         }
         break;
 
       case 'passwordConfirm':
         if (!formData.passwordConfirm) {
-          errors.passwordConfirm = '비밀번호 확인을 입력하세요';
+          errors.passwordConfirm = AUTH_ERRORS.PASSWORD_CONFIRM_REQUIRED;
         } else if (formData.password !== formData.passwordConfirm) {
-          errors.passwordConfirm = '비밀번호가 일치하지 않습니다';
+          errors.passwordConfirm = AUTH_ERRORS.PASSWORD_MISMATCH;
         }
         break;
 
       case 'name':
         if (!formData.name) {
-          errors.name = '이름을 입력하세요';
+          errors.name = AUTH_ERRORS.NAME_REQUIRED;
         } else if (formData.name.trim().length === 0) {
-          errors.name = '이름을 입력하세요';
+          errors.name = AUTH_ERRORS.NAME_REQUIRED;
         }
         break;
 
       case 'phone':
         if (!formData.phone) {
-          errors.phone = '휴대폰 번호를 입력하세요';
+          errors.phone = AUTH_ERRORS.PHONE_REQUIRED;
         } else if (!/^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/.test(formData.phone)) {
-          errors.phone = '올바른 휴대폰 번호 형식이 아닙니다';
+          errors.phone = AUTH_ERRORS.PHONE_INVALID;
         }
         break;
     }
@@ -134,37 +135,37 @@ export default function RegisterPage() {
 
     // Email validation
     if (!formData.email) {
-      errors.email = '이메일을 입력하세요';
+      errors.email = AUTH_ERRORS.EMAIL_REQUIRED;
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errors.email = '유효한 이메일을 입력하세요';
+      errors.email = AUTH_ERRORS.EMAIL_INVALID;
     }
 
     // Password validation
     if (!formData.password) {
-      errors.password = '비밀번호를 입력하세요';
+      errors.password = AUTH_ERRORS.PASSWORD_REQUIRED;
     } else if (formData.password.length < 8) {
-      errors.password = '비밀번호는 최소 8자 이상이어야 합니다';
+      errors.password = AUTH_ERRORS.PASSWORD_MIN_LENGTH;
     } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      errors.password = '비밀번호는 영문 대소문자, 숫자를 포함해야 합니다';
+      errors.password = AUTH_ERRORS.PASSWORD_COMPLEXITY;
     }
 
     // Password confirmation validation
     if (!formData.passwordConfirm) {
-      errors.passwordConfirm = '비밀번호 확인을 입력하세요';
+      errors.passwordConfirm = AUTH_ERRORS.PASSWORD_CONFIRM_REQUIRED;
     } else if (formData.password !== formData.passwordConfirm) {
-      errors.passwordConfirm = '비밀번호가 일치하지 않습니다';
+      errors.passwordConfirm = AUTH_ERRORS.PASSWORD_MISMATCH;
     }
 
     // Name validation
     if (!formData.name || formData.name.trim().length === 0) {
-      errors.name = '이름을 입력하세요';
+      errors.name = AUTH_ERRORS.NAME_REQUIRED;
     }
 
     // Phone validation
     if (!formData.phone) {
-      errors.phone = '휴대폰 번호를 입력하세요';
+      errors.phone = AUTH_ERRORS.PHONE_REQUIRED;
     } else if (!/^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/.test(formData.phone)) {
-      errors.phone = '올바른 휴대폰 번호 형식이 아닙니다';
+      errors.phone = AUTH_ERRORS.PHONE_INVALID;
     }
 
     setFormErrors(errors);

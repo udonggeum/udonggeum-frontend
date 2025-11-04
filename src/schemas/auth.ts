@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { AUTH_ERRORS } from '@/constants/errors';
 
 /**
  * User schema
@@ -6,13 +7,13 @@ import { z } from 'zod';
  */
 export const UserSchema = z.object({
   id: z.number().int().positive(),
-  email: z.string().email('유효한 이메일을 입력하세요'),
-  name: z.string().min(1, '이름을 입력하세요'),
+  email: z.string().email(AUTH_ERRORS.EMAIL_INVALID),
+  name: z.string().min(1, AUTH_ERRORS.NAME_REQUIRED),
   phone: z
     .string()
     .regex(
       /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/,
-      '올바른 전화번호 형식이 아닙니다'
+      AUTH_ERRORS.PHONE_INVALID
     )
     .optional(),
   role: z.enum(['user', 'admin']),
@@ -25,10 +26,12 @@ export type User = z.infer<typeof UserSchema>;
 /**
  * Tokens schema
  * Validates JWT tokens from authentication responses
+ * NOTE: These are validated from API responses, NOT user input.
+ * If validation fails, it indicates a server error, not a user error.
  */
 export const TokensSchema = z.object({
-  access_token: z.string().min(1, 'Access token is required'),
-  refresh_token: z.string().min(1, 'Refresh token is required'),
+  access_token: z.string().min(1), // Internal validation - no user-facing message needed
+  refresh_token: z.string().min(1), // Internal validation - no user-facing message needed
 });
 
 export type Tokens = z.infer<typeof TokensSchema>;
@@ -48,10 +51,11 @@ export type AuthResponse = z.infer<typeof AuthResponseSchema>;
 /**
  * Login request schema
  * Validates user input for login
+ * NOTE: Using 8 character minimum for better security (aligned with RegisterPage)
  */
 export const LoginRequestSchema = z.object({
-  email: z.string().min(1, '이메일을 입력하세요').email('유효한 이메일을 입력하세요'),
-  password: z.string().min(1, '비밀번호를 입력하세요').min(6, '비밀번호는 최소 6자 이상이어야 합니다'),
+  email: z.string().min(1, AUTH_ERRORS.EMAIL_REQUIRED).email(AUTH_ERRORS.EMAIL_INVALID),
+  password: z.string().min(1, AUTH_ERRORS.PASSWORD_REQUIRED).min(8, AUTH_ERRORS.PASSWORD_MIN_LENGTH),
 });
 
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
@@ -59,16 +63,17 @@ export type LoginRequest = z.infer<typeof LoginRequestSchema>;
 /**
  * Register request schema
  * Validates user input for registration
+ * NOTE: Using 8 character minimum for better security (aligned with RegisterPage)
  */
 export const RegisterRequestSchema = z.object({
-  email: z.string().min(1, '이메일을 입력하세요').email('유효한 이메일을 입력하세요'),
-  password: z.string().min(1, '비밀번호를 입력하세요').min(6, '비밀번호는 최소 6자 이상이어야 합니다'),
-  name: z.string().min(1, '이름을 입력하세요'),
+  email: z.string().min(1, AUTH_ERRORS.EMAIL_REQUIRED).email(AUTH_ERRORS.EMAIL_INVALID),
+  password: z.string().min(1, AUTH_ERRORS.PASSWORD_REQUIRED).min(8, AUTH_ERRORS.PASSWORD_MIN_LENGTH),
+  name: z.string().min(1, AUTH_ERRORS.NAME_REQUIRED),
   phone: z
     .string()
     .regex(
       /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/,
-      '올바른 전화번호 형식이 아닙니다'
+      AUTH_ERRORS.PHONE_INVALID
     )
     .optional(),
 });
