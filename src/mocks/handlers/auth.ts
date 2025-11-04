@@ -149,6 +149,21 @@ export const authHandlers = [
       );
     }
 
+    // Handle special test tokens for integration tests
+    if (body.refresh_token === 'valid-refresh-token') {
+      // Return new tokens for test user ID 1
+      const access_token = generateMockToken(1);
+      const refresh_token = generateMockToken(1);
+
+      return HttpResponse.json(
+        {
+          access_token,
+          refresh_token,
+        },
+        { status: 200 }
+      );
+    }
+
     // Extract user ID from token
     const userId = getUserIdFromAuth(`Bearer ${body.refresh_token}`);
 
@@ -205,5 +220,93 @@ export const authHandlers = [
     };
 
     return HttpResponse.json(response, { status: 200 });
+  }),
+
+  /**
+   * Test endpoints for token refresh integration tests
+   * These handlers simulate protected endpoints that require authentication
+   */
+  http.get(`${BASE_URL}/test-protected-endpoint`, ({ request }) => {
+    const authHeader = request.headers.get('Authorization');
+    const userId = getUserIdFromAuth(authHeader);
+
+    // If token is "expired-access-token", return 401 to trigger refresh
+    if (authHeader?.includes('expired-access-token')) {
+      return HttpResponse.json(
+        { error: '인증이 필요합니다.' },
+        { status: 401 }
+      );
+    }
+
+    if (!userId) {
+      return HttpResponse.json(
+        { error: '인증이 필요합니다.' },
+        { status: 401 }
+      );
+    }
+
+    return HttpResponse.json({ message: 'Success', data: { userId } }, { status: 200 });
+  }),
+
+  http.get(`${BASE_URL}/test-endpoint`, ({ request }) => {
+    const authHeader = request.headers.get('Authorization');
+
+    // Handle special test tokens
+    if (authHeader?.includes('test-access-token')) {
+      return HttpResponse.json({ message: 'Success', data: { userId: 1 } }, { status: 200 });
+    }
+
+    const userId = getUserIdFromAuth(authHeader);
+
+    if (!userId) {
+      return HttpResponse.json(
+        { error: '인증이 필요합니다.' },
+        { status: 401 }
+      );
+    }
+
+    return HttpResponse.json({ message: 'Success', data: { userId } }, { status: 200 });
+  }),
+
+  http.get(`${BASE_URL}/endpoint1`, ({ request }) => {
+    const authHeader = request.headers.get('Authorization');
+
+    // If token is "expired-access-token", return 401
+    if (authHeader?.includes('expired-access-token')) {
+      return HttpResponse.json(
+        { error: '인증이 필요합니다.' },
+        { status: 401 }
+      );
+    }
+
+    return HttpResponse.json({ message: 'Endpoint 1 success' }, { status: 200 });
+  }),
+
+  http.get(`${BASE_URL}/endpoint2`, ({ request }) => {
+    const authHeader = request.headers.get('Authorization');
+
+    // If token is "expired-access-token", return 401
+    if (authHeader?.includes('expired-access-token')) {
+      return HttpResponse.json(
+        { error: '인증이 필요합니다.' },
+        { status: 401 }
+      );
+    }
+
+    return HttpResponse.json({ message: 'Endpoint 2 success' }, { status: 200 });
+  }),
+
+  http.get(`${BASE_URL}/endpoint3`, ({ request }) => {
+    const authHeader = request.headers.get('Authorization');
+
+    // If token is "expired-access-token", return 401
+    if (authHeader?.includes('expired-access-token')) {
+      return HttpResponse.json(
+        { error: '인증이 필요합니다.' },
+        { status: 401 }
+      );
+    }
+
+    return HttpResponse.json({ message: 'Endpoint 3 success' }, { status: 200 });
   }),
 ];
