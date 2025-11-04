@@ -16,8 +16,8 @@ export const UserSchema = z.object({
     )
     .optional(),
   role: z.enum(['user', 'admin']),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
+  created_at: z.iso.datetime().optional(),
+  updated_at: z.iso.datetime().optional(),
 });
 
 export type User = z.infer<typeof UserSchema>;
