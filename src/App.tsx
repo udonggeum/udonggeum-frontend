@@ -10,6 +10,8 @@ import MyPage from '@/pages/MyPage';
 import LogoutPage from '@/pages/LogoutPage';
 import ProductsPage from '@/pages/ProductsPage';
 import ProductDetailPage from '@/pages/ProductDetailPage';
+import StoresPage from '@/pages/StoresPage';
+import StoreDetailPage from '@/pages/StoreDetailPage';
 import CartPage from '@/pages/CartPage';
 import MinimalLayout from '@/components/layouts/MinimalLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -52,6 +54,8 @@ export default function App() {
         <Route path="/logout" element={<LogoutPage />} />
         <Route path="/products" element={<ProductsPage />} />
         <Route path="/products/:productId" element={<ProductDetailPage />} />
+        <Route path="/stores" element={<StoresPage />} />
+        <Route path="/stores/:storeId" element={<StoreDetailPage />} />
       </Routes>
     </BrowserRouter>
   );

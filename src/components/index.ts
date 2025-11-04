@@ -19,6 +19,10 @@ export { default as PopularProducts } from './PopularProducts';
 export { default as ProductsFilterBar } from './ProductsFilterBar';
 export { default as PaginationControls } from './PaginationControls';
 
+// Store Components
+export { default as StoreCard } from './StoreCard';
+export { default as StoresLoadingSkeleton } from './StoresLoadingSkeleton';
+
 // Layout Components
 export { default as Navbar } from './Navbar';
 export { default as Footer } from './Footer';

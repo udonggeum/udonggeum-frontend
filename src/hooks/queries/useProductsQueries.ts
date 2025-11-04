@@ -13,6 +13,8 @@ export const productsKeys = {
   details: () => [...productsKeys.all, 'detail'] as const,
   detail: (id: number) => [...productsKeys.details(), id] as const,
   popular: (params?: ProductsRequest) => [...productsKeys.all, 'popular', params] as const,
+  store: (storeId: number, params?: Omit<ProductsRequest, 'store_id'>) =>
+    [...productsKeys.lists(), 'store', storeId, params] as const,
 };
 
 /**
@@ -65,5 +67,29 @@ export function usePopularProducts(params?: ProductsRequest) {
     queryKey: productsKeys.popular(params),
     queryFn: () => productsService.getPopularProducts(params),
     staleTime: 1000 * 60 * 15, // 15 minutes (popular products change infrequently)
+  });
+}
+
+type StoreProductsParams = Omit<ProductsRequest, 'store_id'>;
+
+/**
+ * useStoreProducts query
+ * Fetches products for a specific store using the store_id filter.
+ */
+export function useStoreProducts(
+  storeId: number | undefined,
+  params?: StoreProductsParams,
+  options?: { enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: productsKeys.store(storeId ?? 0, params),
+    queryFn: () => {
+      if (!storeId) {
+        throw new Error('storeId는 필수값입니다.');
+      }
+      return productsService.getProducts({ ...params, store_id: storeId });
+    },
+    staleTime: 1000 * 60 * 5,
+    enabled: (options?.enabled ?? true) && Boolean(storeId),
   });
 }

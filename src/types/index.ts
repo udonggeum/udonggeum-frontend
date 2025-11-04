@@ -239,3 +239,80 @@ export interface CarouselState {
    */
   isAutoPlaying: boolean;
 }
+
+// Store Entities
+
+/**
+ * Represents a jewelry store displayed on the stores listing page
+ */
+export interface StoreSummary {
+  /**
+   * Unique identifier for the store
+   */
+  id: number;
+
+  /**
+   * Store display name
+   */
+  name: string;
+
+  /**
+   * Province or city (e.g., "서울")
+   */
+  region?: string;
+
+  /**
+   * District (e.g., "강남구")
+   */
+  district?: string;
+
+  /**
+   * Street address text shown to users
+   */
+  address?: string;
+
+  /**
+   * Representative phone number (digits or formatted)
+   */
+  phone?: string;
+
+  /**
+   * Business hours description
+   */
+  businessHours?: string;
+
+  /**
+   * Number of products available in the store (if provided)
+   */
+  productCount?: number;
+
+  /**
+   * Optional image or thumbnail URL
+   */
+  imageUrl?: string;
+
+  /**
+   * Category-specific product counts for the store
+   */
+  categoryCounts?: StoreCategoryCount[];
+}
+
+/**
+ * Represents product counts per category for a store
+ */
+export interface StoreCategoryCount {
+  /**
+   * UI category identifier
+   */
+  id: string;
+
+  /**
+   * Display name in Korean
+   */
+  name: string;
+
+  /**
+   * Number of products in this category
+   */
+  count: number;
+}

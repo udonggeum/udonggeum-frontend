@@ -17,6 +17,7 @@ export {
   useProducts,
   useProductDetail,
   usePopularProducts,
+  useStoreProducts,
   productsKeys,
 } from './useProductsQueries';
 

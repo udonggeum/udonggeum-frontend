@@ -1,27 +1,48 @@
 import { apiClient } from '@/api/client';
 import { ENDPOINTS } from '@/constants/api';
 
+export interface StoreCategoryCounter {
+  category?: string;
+  name?: string;
+  key?: string;
+  code?: string;
+  count?: number;
+  total?: number;
+}
+
+export type StoreCategoryCounts =
+  | Record<string, number>
+  | StoreCategoryCounter[];
+
 /**
  * Store detail type (minimal)
- * TODO: Create Zod schema for stores
+ * TODO: Replace with Zod schemas for strict validation when backend stabilizes.
  */
-interface StoreDetail {
+export interface StoreDetail {
   id: number;
   name: string;
   region?: string;
   district?: string;
   address?: string;
   phone?: string;
+  phone_number?: string;
   business_hours?: string;
+  product_count?: number;
+  image_url?: string;
+  logo_url?: string;
+  thumbnail_url?: string;
+  category_counts?: StoreCategoryCounts;
   products?: unknown[];
 }
 
 /**
  * Stores response type
  */
-interface StoresResponse {
+export interface StoresResponse {
   count: number;
   stores: StoreDetail[];
+  category_store_counts?: Record<string, number>;
+  category_counts?: Record<string, number>;
 }
 
 /**
@@ -49,9 +70,10 @@ export interface RegionsData {
 /**
  * Stores request params
  */
-interface StoresRequest {
+export interface StoresRequest {
   region?: string;
   district?: string;
+  category?: string;
   page?: number;
   page_size?: number;
 }
