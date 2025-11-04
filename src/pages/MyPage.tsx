@@ -1,17 +1,21 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../stores/useAuthStore';
-import { User, LogOut } from 'lucide-react';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useLogout } from '@/hooks/queries/useAuthQueries';
+import { User, LogOut, ShoppingBag, Heart } from 'lucide-react';
 
 const MyPage: React.FC = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
-  const clearAuth = useAuthStore((state) => state.clearAuth);
   const navigate = useNavigate();
+  const { mutate: logout, isPending: isLoggingOut } = useLogout();
 
   const handleLogout = () => {
-    clearAuth();
-    navigate('/');
+    logout(undefined, {
+      onSuccess: () => {
+        navigate('/');
+      },
+    });
   };
 
   React.useEffect(() => {
@@ -67,16 +71,66 @@ const MyPage: React.FC = () => {
               <div className="space-y-2">
                 <p><span className="font-semibold">이름:</span> {user?.name || '-'}</p>
                 <p><span className="font-semibold">이메일:</span> {user?.email || '-'}</p>
-                <p><span className="font-semibold">가입일:</span> 2025-01-01</p>
+                <p><span className="font-semibold">전화번호:</span> {user?.phone || '-'}</p>
+                <p>
+                  <span className="font-semibold">가입일:</span>{' '}
+                  {user?.created_at
+                    ? new Date(user.created_at).toLocaleDateString('ko-KR', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })
+                    : '-'}
+                </p>
+              </div>
+            </div>
+
+            <div className="divider"></div>
+
+            {/* Orders Section */}
+            <div className="mt-6">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <ShoppingBag className="w-6 h-6" />
+                주문 내역
+              </h3>
+              <div className="alert">
+                <div>
+                  <p className="text-base-content/70">주문 내역이 없습니다</p>
+                  <p className="text-sm text-base-content/50">첫 주문을 시작해보세요!</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="divider"></div>
+
+            {/* Favorites Section */}
+            <div className="mt-6">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Heart className="w-6 h-6" />
+                찜 목록
+              </h3>
+              <div className="alert">
+                <div>
+                  <p className="text-base-content/70">찜한 상품이 없습니다</p>
+                  <p className="text-sm text-base-content/50">마음에 드는 상품을 찜해보세요!</p>
+                </div>
               </div>
             </div>
 
             <div className="divider"></div>
 
             <div className="card-actions justify-end">
-              <button onClick={handleLogout} className="btn btn-error btn-outline gap-2">
-                <LogOut className="w-4 h-4" />
-                로그아웃
+              <button
+                onClick={handleLogout}
+                className="btn btn-error btn-outline gap-2"
+                disabled={isLoggingOut}
+              >
+                {isLoggingOut ? (
+                  <span className="loading loading-spinner loading-sm"></span>
+                ) : (
+                  <LogOut className="w-4 h-4" />
+                )}
+                {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
               </button>
             </div>
           </div>

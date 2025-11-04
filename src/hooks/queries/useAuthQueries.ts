@@ -107,11 +107,7 @@ export function useLogout() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async () => {
-      // No API call needed for logout in this implementation
-      // If your backend has a logout endpoint, call it here:
-      // await authService.logout();
-    },
+    mutationFn: () => authService.logout(),
     onSuccess: () => {
       // Clear auth store
       clearAuth();

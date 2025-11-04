@@ -1,9 +1,10 @@
 import axios from 'axios';
 import type { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
-import { API_BASE_URL, ERROR_MESSAGES } from '@/constants/api';
+import { API_BASE_URL, ERROR_MESSAGES, ENDPOINTS } from '@/constants/api';
 import { ApiError, NetworkError } from '@/utils/errors';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { apiLogger } from '@/utils/apiLogger';
+import { TokensSchema } from '@/schemas/auth';
 
 // Extend Axios config to include metadata for tracking
 declare module 'axios' {
@@ -11,8 +12,16 @@ declare module 'axios' {
     metadata?: {
       startTime: number;
     };
+    _retry?: boolean; // Track if request has been retried
   }
 }
+
+// Token refresh state
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value?: unknown) => void;
+  reject: (reason?: unknown) => void;
+}> = [];
 
 /**
  * Axios client instance
@@ -102,15 +111,76 @@ apiClient.interceptors.response.use(
       duration
     );
 
-    // 401 Unauthorized - Clear auth and redirect to login
-    if (status === 401) {
-      // Clear auth store
-      useAuthStore.getState().clearAuth();
+    // 401 Unauthorized - Attempt token refresh
+    // Skip token refresh for auth endpoints (login, register, refresh)
+    const isAuthEndpoint =
+      url.includes(ENDPOINTS.AUTH.LOGIN) ||
+      url.includes(ENDPOINTS.AUTH.REGISTER) ||
+      url.includes(ENDPOINTS.AUTH.REFRESH);
 
-      window.location.href = '/login';
-      return Promise.reject(
-        new ApiError(ERROR_MESSAGES.UNAUTHORIZED, status)
-      );
+    if (status === 401 && error.config && !error.config._retry && !isAuthEndpoint) {
+      if (isRefreshing) {
+        // Queue this request while refresh is in progress
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => {
+            // Retry with new token
+            if (error.config && error.config.headers) {
+              const token = useAuthStore.getState().tokens?.access_token;
+              error.config.headers.Authorization = `Bearer ${token}`;
+            }
+            return apiClient(error.config);
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
+      }
+
+      error.config._retry = true;
+      isRefreshing = true;
+
+      const refreshToken = useAuthStore.getState().tokens?.refresh_token;
+
+      if (!refreshToken) {
+        // No refresh token available - logout
+        useAuthStore.getState().clearAuth();
+        window.location.href = '/login';
+        return Promise.reject(new ApiError(ERROR_MESSAGES.UNAUTHORIZED, status));
+      }
+
+      try {
+        // Attempt to refresh token (call endpoint directly to avoid circular dependency)
+        const response = await apiClient.post(ENDPOINTS.AUTH.REFRESH, {
+          refresh_token: refreshToken,
+        });
+
+        // Validate and update tokens
+        const newTokens = TokensSchema.parse(response.data);
+        useAuthStore.getState().updateTokens(newTokens);
+
+        // Process queued requests with new token
+        failedQueue.forEach((prom) => prom.resolve());
+        failedQueue = [];
+
+        // Retry original request with new token
+        if (error.config.headers) {
+          error.config.headers.Authorization = `Bearer ${newTokens.access_token}`;
+        }
+        return apiClient(error.config);
+      } catch (refreshError) {
+        // Refresh failed - logout and reject all queued requests
+        failedQueue.forEach((prom) => prom.reject(refreshError));
+        failedQueue = [];
+
+        useAuthStore.getState().clearAuth();
+        window.location.href = '/login';
+        return Promise.reject(
+          new ApiError('세션이 만료되었습니다. 다시 로그인해주세요', status)
+        );
+      } finally {
+        isRefreshing = false;
+      }
     }
 
     // Transform API error to ApiError class

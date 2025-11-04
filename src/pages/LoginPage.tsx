@@ -1,56 +1,225 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../stores/useAuthStore';
+/**
+ * LoginPage Component
+ * Handles user login with client-side validation and redirect support
+ */
+
+import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useLogin } from '@/hooks/queries/useAuthQueries';
+import { LoginRequestSchema, type LoginRequest } from '@/schemas/auth';
+import PasswordInput from '@/components/PasswordInput';
 
-const LoginPage: React.FC = () => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const setAuth = useAuthStore((state) => state.setAuth);
+interface FormErrors {
+  email?: string;
+  password?: string;
+}
+
+export default function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { mutate: login, isPending, isError, error } = useLogin();
 
-  React.useEffect(() => {
-    // Redirect to home if already authenticated
+  const [formData, setFormData] = useState<LoginRequest>({
+    email: '',
+    password: '',
+  });
+
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  // Redirect authenticated users away from login page
+  useEffect(() => {
     if (isAuthenticated) {
-      navigate('/');
+      const redirectTo = searchParams.get('redirect') || '/';
+      navigate(redirectTo, { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, searchParams]);
 
-  const handleLogin = () => {
-    // Mock login - in production, this would call an API
-    const mockUser = {
-      id: 1,
-      name: '테스트 사용자',
-      email: 'user@example.com',
-      role: 'user' as const,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    const mockTokens = {
-      access_token: 'mock-access-token',
-      refresh_token: 'mock-refresh-token',
-    };
-    setAuth(mockUser, mockTokens);
-    navigate('/');
+  /**
+   * Validate a single field
+   */
+  const validateField = (name: string, value: string): string | undefined => {
+    try {
+      if (name === 'email') {
+        LoginRequestSchema.pick({ email: true }).parse({ email: value });
+      } else if (name === 'password') {
+        LoginRequestSchema.pick({ password: true }).parse({ password: value });
+      }
+      return undefined;
+    } catch (err: any) {
+      // Zod errors have an 'issues' array, not 'errors'
+      if (err.issues && err.issues.length > 0) {
+        return err.issues[0].message;
+      }
+      return '유효하지 않은 값입니다.';
+    }
+  };
+
+  /**
+   * Validate entire form
+   */
+  const validateForm = (): boolean => {
+    const errors: FormErrors = {};
+    let isValid = true;
+
+    // Validate email
+    const emailError = validateField('email', formData.email);
+    if (emailError) {
+      errors.email = emailError;
+      isValid = false;
+    }
+
+    // Validate password
+    const passwordError = validateField('password', formData.password);
+    if (passwordError) {
+      errors.password = passwordError;
+      isValid = false;
+    }
+
+    setFormErrors(errors);
+    setTouched({ email: true, password: true });
+
+    return isValid;
+  };
+
+  /**
+   * Handle input change
+   */
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Clear error for this field if it exists
+    if (formErrors[name as keyof FormErrors]) {
+      setFormErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
+  };
+
+  /**
+   * Handle input blur (mark field as touched)
+   */
+  const handleBlur = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+
+    // Validate field on blur
+    const error = validateField(name, value);
+    if (error) {
+      setFormErrors((prev) => ({ ...prev, [name]: error }));
+    }
+  };
+
+  /**
+   * Handle form submission
+   */
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    // Validate form
+    if (!validateForm()) {
+      return;
+    }
+
+    // Parse and validate data with Zod
+    const validatedData = LoginRequestSchema.parse(formData);
+
+    // Get redirect URL from query params
+    const redirectTo = searchParams.get('redirect') || '/';
+
+    // Call login mutation
+    login(validatedData, {
+      onSuccess: () => {
+        navigate(redirectTo, { replace: true });
+      },
+    });
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-base-200">
-      <div className="card w-96 bg-base-100 shadow-xl">
-        <div className="card-body items-center text-center">
-          <LogIn className="w-16 h-16 text-primary mb-4" />
-          <h2 className="card-title text-2xl mb-2">로그인</h2>
-          <p className="text-base-content/70 mb-6">
-            우동금 서비스에 로그인하세요
-          </p>
-          <div className="card-actions">
-            <button onClick={handleLogin} className="btn btn-primary btn-wide">
-              로그인하기
-            </button>
+    <div className="w-full max-w-md">
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          {/* Header with icon */}
+          <div className="flex flex-col items-center mb-6">
+            <LogIn className="w-12 h-12 text-primary mb-3" aria-hidden="true" />
+            <h1 className="text-2xl font-bold">로그인</h1>
+            <p className="text-sm text-base-content/70 mt-1">
+              우동금 서비스에 로그인하세요
+            </p>
           </div>
+
+          {/* Error Alert */}
+          {isError && error && (
+            <div role="alert" aria-label="error" className="alert alert-error mb-4">
+              <span>{error.message}</span>
+            </div>
+          )}
+
+          {/* Login Form */}
+          <form onSubmit={handleSubmit} noValidate>
+            {/* Email Input */}
+            <div className="form-control w-full mb-4">
+              <label htmlFor="email" className="label">
+                <span className="label-text">이메일</span>
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                placeholder="example@email.com"
+                required
+                className={`input input-bordered w-full ${
+                  touched.email && formErrors.email ? 'input-error' : ''
+                }`}
+              />
+              {touched.email && formErrors.email && (
+                <label className="label">
+                  <span className="label-text-alt text-error">
+                    {formErrors.email}
+                  </span>
+                </label>
+              )}
+            </div>
+
+            {/* Password Input */}
+            <div className="mb-6">
+              <PasswordInput
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                error={touched.password ? formErrors.password : undefined}
+                placeholder="비밀번호를 입력하세요"
+                required
+                label="비밀번호"
+              />
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isPending}
+              className="btn btn-primary w-full mb-4"
+            >
+              {isPending ? '로그인 중...' : '로그인'}
+            </button>
+
+            {/* Register Link */}
+            <div className="text-center text-sm">
+              <span className="text-base-content/70">계정이 없으신가요? </span>
+              <Link to="/register" className="link link-primary">
+                회원가입
+              </Link>
+            </div>
+          </form>
         </div>
       </div>
     </div>
   );
-};
-
-export default LoginPage;
+}
