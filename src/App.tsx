@@ -12,6 +12,7 @@ import ProductsPage from '@/pages/ProductsPage';
 import ProductDetailPage from '@/pages/ProductDetailPage';
 import CartPage from '@/pages/CartPage';
 import MinimalLayout from '@/components/layouts/MinimalLayout';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 // 2. Component
 export default function App() {
@@ -25,16 +26,32 @@ export default function App() {
           <Route path="/register" element={<RegisterPage />} />
         </Route>
 
+        {/* Protected Routes - Require authentication */}
+        <Route
+          path="/cart"
+          element={
+            <ProtectedRoute>
+              <CartPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/mypage"
+          element={
+            <ProtectedRoute>
+              <MyPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Regular Routes - No layout (TODO: Add DefaultLayout) */}
         <Route path="/" element={<MainPage />} />
         <Route path="/old-home" element={<Home />} />
         <Route path="/apidemo" element={<ApiDemo />} />
         <Route path="/components-demo" element={<ComponentsDemo />} />
-        <Route path="/mypage" element={<MyPage />} />
         <Route path="/logout" element={<LogoutPage />} />
         <Route path="/products" element={<ProductsPage />} />
         <Route path="/products/:productId" element={<ProductDetailPage />} />
-        <Route path="/cart" element={<CartPage />} />
       </Routes>
     </BrowserRouter>
   );
