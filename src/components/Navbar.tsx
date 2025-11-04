@@ -16,6 +16,7 @@ interface NavbarProps {
  */
 export default function Navbar({ navigationItems }: NavbarProps) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
   const sortedItems = [...navigationItems].sort(
     (a, b) => a.displayOrder - b.displayOrder
   );
@@ -139,10 +140,11 @@ export default function Navbar({ navigationItems }: NavbarProps) {
         ) : (
           <Link
             to="/mypage"
-            className="btn btn-ghost btn-circle"
+            className="btn btn-ghost gap-2 normal-case"
             aria-label="마이페이지"
           >
             <User className="w-5 h-5" />
+            <span className="hidden sm:inline">{user?.name || '마이'}</span>
           </Link>
         )}
       </div>
