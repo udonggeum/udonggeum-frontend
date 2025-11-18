@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import './index.css';
 import App from './App.tsx';
-import { startMockServiceWorker } from './mocks/browser';
 
 /**
  * QueryClient configuration
@@ -24,27 +23,15 @@ const queryClient = new QueryClient({
   },
 });
 
-/**
- * Initialize app
- * Start mock service worker if enabled, then render app
- */
-async function initializeApp() {
-  // Start MSW if enabled via environment variable
-  await startMockServiceWorker();
-
-  // Render app
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <App />
-        {/* DevTools only in development */}
-        {import.meta.env.DEV && (
-          <ReactQueryDevtools initialIsOpen={false} />
-        )}
-      </QueryClientProvider>
-    </StrictMode>
-  );
-}
-
-// Start the app
-initializeApp().catch(console.error);
+// Render app
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <App />
+      {/* DevTools only in development */}
+      {import.meta.env.DEV && (
+        <ReactQueryDevtools initialIsOpen={false} />
+      )}
+    </QueryClientProvider>
+  </StrictMode>
+);

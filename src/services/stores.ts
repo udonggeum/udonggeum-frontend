@@ -26,8 +26,12 @@ export interface StoreDetail {
   address?: string;
   phone?: string;
   phone_number?: string;
-  business_hours?: string;
+  open_time?: string;
+  close_time?: string;
+  business_hours?: string; // Deprecated: use open_time and close_time
+  description?: string;
   product_count?: number;
+  total_products?: number;
   image_url?: string;
   logo_url?: string;
   thumbnail_url?: string;
@@ -135,11 +139,11 @@ class StoresService {
     id: number,
     includeProducts?: boolean
   ): Promise<StoreDetail> {
-    const response = await apiClient.get<StoreDetail>(
+    const response = await apiClient.get<{ store: StoreDetail }>(
       ENDPOINTS.STORES.DETAIL(id),
       { params: { include_products: includeProducts } }
     );
-    return response.data;
+    return response.data.store;
   }
 }
 

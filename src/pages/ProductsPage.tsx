@@ -224,83 +224,145 @@ export default function ProductsPage() {
     setCurrentSlide(index);
   };
 
+  // Handle previous/next slide
+  const handlePrevSlide = () => {
+    setCurrentSlide((prev) =>
+      prev === 0 ? popularProducts.length - 1 : prev - 1
+    );
+  };
+
+  const handleNextSlide = () => {
+    setCurrentSlide((prev) =>
+      (prev + 1) % popularProducts.length
+    );
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-base-100">
       <Navbar navigationItems={NAV_ITEMS} />
       <main className="flex-grow">
         {/* Popular Products Section - Banner Style */}
         {popularProducts.length > 0 && (
-          <section className="bg-base-200">
+          <section className="bg-gradient-to-b from-base-200 to-base-100 py-8">
             {isLoadingPopular ? (
-              <div className="skeleton h-80 w-full"></div>
+              <div className="container mx-auto px-4">
+                <div className="skeleton h-96 w-full rounded-3xl"></div>
+              </div>
             ) : (
-              <div className="relative h-80 w-full overflow-hidden">
-                <div
-                  className="flex h-full transition-transform duration-500 ease-in-out"
-                  style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-                >
-                  {popularProducts.map((product) => (
-                    <div
-                      key={product.id}
-                      className="h-full w-full flex-shrink-0"
-                    >
-                      <div className="card card-side h-80 w-full bg-base-100 shadow-xl">
-                        <figure className="w-1/2">
-                          <FallbackImage
-                            src={product.imageUrl}
-                            alt={product.name}
-                            className="h-full w-full object-cover"
-                          />
-                        </figure>
-                        <div className="card-body w-1/2 justify-center p-8">
-                          <div className="space-y-3">
-                            <div className="badge badge-primary badge-sm">인기</div>
-                            <h3 className="text-xl font-bold line-clamp-2">{product.name}</h3>
-                            <p className="text-sm text-base-content/70">
-                              {product.storeName && `${product.storeName} · `}
-                              {MOCK_CATEGORIES.find((c) => c.id === product.categoryId)?.name}
-                            </p>
-                            <p className="text-2xl font-bold text-primary">
-                              {product.price.toLocaleString()}원
-                            </p>
-                            <div className="flex gap-2 pt-2">
-                              <button
-                                type="button"
-                                className="btn btn-outline btn-sm flex-1"
-                                onClick={() => handleWishlist(product.id)}
-                              >
-                                찜하기
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn-primary btn-sm flex-1"
-                                onClick={() => handleAddToCart(product.id)}
-                              >
-                                장바구니
-                              </button>
+              <div className="container mx-auto px-4">
+                <div className="group relative h-96 w-full overflow-hidden rounded-3xl bg-base-100 shadow-2xl">
+                  <div
+                    className="flex h-full transition-transform duration-500 ease-in-out"
+                    style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+                  >
+                    {popularProducts.map((product) => (
+                      <div
+                        key={product.id}
+                        className="h-full w-full flex-shrink-0"
+                      >
+                        <div className="card card-side h-96 w-full bg-base-100">
+                          <figure className="w-1/2">
+                            <FallbackImage
+                              src={product.imageUrl}
+                              alt={product.name}
+                              className="h-full w-full object-cover"
+                            />
+                          </figure>
+                          <div className="card-body w-1/2 justify-center p-10">
+                            <div className="space-y-4">
+                              <div className="badge badge-primary">인기</div>
+                              <h3 className="text-3xl font-bold line-clamp-2">{product.name}</h3>
+                              <p className="text-base text-base-content/70">
+                                {product.storeName && `${product.storeName} · `}
+                                {MOCK_CATEGORIES.find((c) => c.id === product.categoryId)?.name}
+                              </p>
+                              <p className="text-4xl font-bold text-primary">
+                                {product.price.toLocaleString()}원
+                              </p>
+                              <div className="flex gap-3 pt-4">
+                                <button
+                                  type="button"
+                                  className="btn btn-outline flex-1"
+                                  onClick={() => handleWishlist(product.id)}
+                                >
+                                  찜하기
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn-primary flex-1"
+                                  onClick={() => handleAddToCart(product.id)}
+                                >
+                                  장바구니
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+
+                  {/* Navigation Arrows - Subtle appearance */}
+                  {popularProducts.length > 1 && (
+                    <>
+                      {/* Previous Button */}
+                      <button
+                        type="button"
+                        onClick={handlePrevSlide}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-base-100/60 p-2 opacity-0 shadow-lg backdrop-blur-sm transition-opacity hover:bg-base-100/80 group-hover:opacity-100"
+                        aria-label="이전 상품"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={2.5}
+                          stroke="currentColor"
+                          className="h-5 w-5"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                        </svg>
+                      </button>
+
+                      {/* Next Button */}
+                      <button
+                        type="button"
+                        onClick={handleNextSlide}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-base-100/60 p-2 opacity-0 shadow-lg backdrop-blur-sm transition-opacity hover:bg-base-100/80 group-hover:opacity-100"
+                        aria-label="다음 상품"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={2.5}
+                          stroke="currentColor"
+                          className="h-5 w-5"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             )}
             {/* Carousel Indicators */}
             {popularProducts.length > 1 && (
-              <div className="flex justify-center gap-2 py-4">
-                {popularProducts.map((product, index) => (
-                  <button
-                    key={product.id}
-                    type="button"
-                    onClick={() => handleSlideClick(index)}
-                    className={`h-2 rounded-full transition-all ${
-                      currentSlide === index ? 'w-8 bg-primary' : 'w-2 bg-base-content/30'
-                    }`}
-                    aria-label={`슬라이드 ${index + 1}로 이동`}
-                  />
-                ))}
+              <div className="container mx-auto px-4">
+                <div className="flex justify-center gap-2 py-6">
+                  {popularProducts.map((product, index) => (
+                    <button
+                      key={product.id}
+                      type="button"
+                      onClick={() => handleSlideClick(index)}
+                      className={`h-2 rounded-full transition-all ${
+                        currentSlide === index ? 'w-8 bg-primary' : 'w-2 bg-base-content/30'
+                      }`}
+                      aria-label={`슬라이드 ${index + 1}로 이동`}
+                    />
+                  ))}
+                </div>
               </div>
             )}
           </section>

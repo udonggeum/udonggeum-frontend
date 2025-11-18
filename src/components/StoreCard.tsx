@@ -34,13 +34,13 @@ export default function StoreCard({ store }: StoreCardProps) {
     (store.categoryCounts?.length ?? 0) - displayedCategoryCounts.length;
 
   return (
-    <div className="card bg-base-100 shadow-xl transition-shadow hover:shadow-2xl">
+    <div className="card card-side bg-base-100 shadow-xl transition-shadow hover:shadow-2xl">
       <Link
         to={`/stores/${store.id}`}
-        className="group"
+        className="group w-64 flex-shrink-0"
         aria-label={`${store.name} 상세 페이지로 이동`}
       >
-        <figure className="aspect-video overflow-hidden bg-base-200">
+        <figure className="h-full overflow-hidden bg-base-200">
           <FallbackImage
             src={store.imageUrl}
             alt={`${store.name} 매장 이미지`}
@@ -50,26 +50,37 @@ export default function StoreCard({ store }: StoreCardProps) {
         </figure>
       </Link>
 
-      <div className="card-body gap-4">
-        <div className="space-y-2">
-          <h3 className="card-title text-xl">
-            <Link to={`/stores/${store.id}`} className="link-hover">
-              {store.name}
-            </Link>
-          </h3>
+      <div className="card-body flex-1 gap-3 p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 space-y-2">
+            <h3 className="card-title text-xl">
+              <Link to={`/stores/${store.id}`} className="link-hover">
+                {store.name}
+              </Link>
+            </h3>
 
-          {locationText && (
-            <p className="flex items-center gap-2 text-sm text-base-content/70">
-              <MapPin className="h-4 w-4 text-primary" aria-hidden="true" />
-              <span>{locationText}</span>
-            </p>
-          )}
+            {locationText && (
+              <p className="flex items-center gap-2 text-sm text-base-content/70">
+                <MapPin className="h-4 w-4 text-primary" aria-hidden="true" />
+                <span>{locationText}</span>
+              </p>
+            )}
 
-          {store.address && (
-            <p className="rounded-lg bg-base-200/60 px-3 py-2 text-sm text-base-content/70">
-              {store.address}
-            </p>
-          )}
+            {store.address && (
+              <p className="text-sm text-base-content/70">
+                {store.address}
+              </p>
+            )}
+          </div>
+
+          <Link
+            to={`/stores/${store.id}`}
+            className="btn btn-sm btn-outline"
+            aria-label={`${store.name} 상세보기`}
+          >
+            상세보기
+            <ArrowUpRight className="ml-1 h-4 w-4" aria-hidden="true" />
+          </Link>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 text-sm text-base-content/70">
@@ -84,10 +95,27 @@ export default function StoreCard({ store }: StoreCardProps) {
               {store.businessHours}
             </span>
           )}
+
+          {store.phone && (
+            <span className="flex items-center gap-2">
+              <Phone className="h-4 w-4" aria-hidden="true" />
+              {store.phone}
+            </span>
+          )}
+
+          {store.phone && sanitizedPhone && (
+            <a
+              href={`tel:${sanitizedPhone}`}
+              className="btn btn-xs btn-primary"
+              aria-label={`${store.name}에 전화하기`}
+            >
+              전화하기
+            </a>
+          )}
         </div>
 
         {displayedCategoryCounts.length > 0 && (
-          <div className="flex flex-wrap gap-2 text-xs text-base-content/70">
+          <div className="flex flex-wrap gap-2 text-xs">
             {displayedCategoryCounts.map((category) => (
               <span
                 key={`${store.id}-${category.id}`}
@@ -106,41 +134,6 @@ export default function StoreCard({ store }: StoreCardProps) {
             )}
           </div>
         )}
-
-        <div className="card-actions mt-2 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {store.phone ? (
-              <>
-                <span className="flex items-center gap-2 text-sm text-base-content/70">
-                  <Phone className="h-4 w-4" aria-hidden="true" />
-                  {store.phone}
-                </span>
-                {sanitizedPhone ? (
-                  <a
-                    href={`tel:${sanitizedPhone}`}
-                    className="btn btn-sm btn-primary"
-                    aria-label={`${store.name}에 전화하기`}
-                  >
-                    전화하기
-                  </a>
-                ) : (
-                  <span className="text-xs text-base-content/50">전화 연결 불가</span>
-                )}
-              </>
-            ) : (
-              <span className="text-sm text-base-content/50">연락처 정보가 준비 중입니다.</span>
-            )}
-          </div>
-
-          <Link
-            to={`/stores/${store.id}`}
-            className="btn btn-sm btn-outline"
-            aria-label={`${store.name} 상세보기`}
-          >
-            상세보기
-            <ArrowUpRight className="ml-1 h-4 w-4" aria-hidden="true" />
-          </Link>
-        </div>
       </div>
     </div>
   );

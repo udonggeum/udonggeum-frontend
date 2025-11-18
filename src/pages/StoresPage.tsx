@@ -6,6 +6,7 @@ import {
   StoresLoadingSkeleton,
   PaginationControls,
   ErrorAlert,
+  CategorySidebar,
 } from '@/components';
 import { useStores, useStoreLocations } from '@/hooks/queries/useStoresQueries';
 import { NAV_ITEMS } from '@/constants/navigation';
@@ -86,7 +87,6 @@ export default function StoresPage() {
   } = useStores({
     region: selectedRegion?.region,
     district: selectedRegion?.district,
-    category: uiCategoryToAPICategory(selectedCategoryId),
     page: currentPage,
     page_size: PAGE_SIZE,
   });
@@ -95,10 +95,23 @@ export default function StoresPage() {
     if (!storesData?.stores) {
       return [];
     }
-    return storesData.stores.map((store) =>
+
+    let filteredStores = storesData.stores;
+
+    // Filter by category on client-side using category_counts
+    if (selectedCategoryId) {
+      const apiCategory = uiCategoryToAPICategory(selectedCategoryId);
+      filteredStores = filteredStores.filter((store) => {
+        // Check if store has products in the selected category
+        const categoryCounts = store.category_counts || {};
+        return (categoryCounts[apiCategory] || 0) > 0;
+      });
+    }
+
+    return filteredStores.map((store) =>
       mapStoreDetailToSummary(store, CATEGORY_LABEL_MAP)
     );
-  }, [storesData?.stores]);
+  }, [storesData?.stores, selectedCategoryId]);
 
   const totalCount = storesData?.count ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
@@ -124,148 +137,92 @@ export default function StoresPage() {
       <Navbar navigationItems={NAV_ITEMS} />
 
       <main className="flex-grow">
-        <section className="bg-base-200 py-6" aria-label="매장 필터">
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-              <div className="flex w-full flex-col gap-4 md:flex-row md:items-end md:gap-4">
-                <label className="form-control w-full md:w-60">
-                  <div className="label">
-                    <span className="label-text text-sm font-semibold">
-                      지역 선택
-                    </span>
-                  </div>
-                  <select
-                    className="select select-bordered"
-                    value={selectedRegionId ?? ''}
-                    onChange={(event) => handleRegionChange(event.target.value)}
-                    disabled={locationsLoading}
-                  >
-                    <option value="">전체 지역</option>
-                    {regionOptions.map((option) => (
-                      <option key={option.id} value={option.id}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+        <div className="container mx-auto px-4 py-10">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[240px_1fr]">
+            {/* Sidebar */}
+            <CategorySidebar
+              regions={regionOptions}
+              categories={categoryOptions}
+              selectedRegionId={selectedRegionId}
+              selectedCategoryId={selectedCategoryId}
+              onRegionChange={handleRegionChange}
+              onCategoryChange={handleCategoryChange}
+            />
 
-                <label className="form-control w-full md:w-60">
-                  <div className="label">
-                    <span className="label-text text-sm font-semibold">
-                      카테고리 선택
-                    </span>
-                  </div>
-                  <select
-                    className="select select-bordered"
-                    value={selectedCategoryId ?? ''}
-                    onChange={(event) => handleCategoryChange(event.target.value)}
-                  >
-                    <option value="">전체 카테고리</option>
-                    {categoryOptions.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-
-              <div className="flex gap-2 md:self-end">
-                <button
-                  type="button"
-                  className="btn btn-outline"
-                  onClick={() => {
-                    setSelectedRegionId(null);
-                    setSelectedCategoryId(null);
-                    setCurrentPage(1);
-                  }}
-                  disabled={
-                    !selectedRegionId && !selectedCategoryId && !isFetching
-                  }
-                >
-                  필터 초기화
-                </button>
-              </div>
-            </div>
-            {locationsLoading && (
-              <p className="mt-3 text-sm text-base-content/60">
-                지역 정보를 불러오는 중입니다...
-              </p>
-            )}
-          </div>
-        </section>
-
-        <section className="container mx-auto px-4 py-10">
-          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            {/* Main Content */}
             <div>
-              <h1 className="text-2xl font-bold">전체 매장</h1>
-              <p className="text-sm text-base-content/70">
-                총 {totalCount.toLocaleString('ko-KR')}개의 매장이 있습니다.
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 text-sm text-base-content/60">
-              <span>{selectedRegionLabel}</span>
-              <span className="text-base-content/40">·</span>
-              <span>{selectedCategoryLabel}</span>
-              {isFetching && (
-                <span className="ml-2 text-primary">데이터 새로고침 중...</span>
+              <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h1 className="text-2xl font-bold">전체 매장</h1>
+                  <p className="text-sm text-base-content/70">
+                    총 {totalCount.toLocaleString('ko-KR')}개의 매장이 있습니다.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-sm text-base-content/60">
+                  <span>{selectedRegionLabel}</span>
+                  <span className="text-base-content/40">·</span>
+                  <span>{selectedCategoryLabel}</span>
+                  {isFetching && (
+                    <span className="ml-2 text-primary">데이터 새로고침 중...</span>
+                  )}
+                </div>
+              </div>
+
+              {isLoading ? (
+                <StoresLoadingSkeleton count={PAGE_SIZE} />
+              ) : error ? (
+                <ErrorAlert
+                  title="매장을 불러오지 못했습니다"
+                  message={
+                    error instanceof Error
+                      ? error.message
+                      : '매장 데이터를 불러오는 중 문제가 발생했습니다.'
+                  }
+                  onRetry={() => {
+                    void refetch();
+                  }}
+                  error={error instanceof Error ? error : undefined}
+                />
+              ) : isEmpty ? (
+                <div className="flex flex-col items-center justify-center gap-4 rounded-xl bg-base-200 py-20 text-center">
+                  <h2 className="text-xl font-semibold">
+                    조건에 맞는 매장이 없습니다
+                  </h2>
+                  <p className="text-base-content/70">
+                    다른 지역이나 카테고리를 선택해보세요.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => {
+                      setSelectedRegionId(null);
+                      setSelectedCategoryId(null);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    전체 매장 보기
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex flex-col gap-4">
+                    {stores.map((store) => (
+                      <StoreCard key={store.id} store={store} />
+                    ))}
+                  </div>
+
+                  <div className="mt-10 flex justify-center">
+                    <PaginationControls
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={(page) => setCurrentPage(page)}
+                    />
+                  </div>
+                </>
               )}
             </div>
           </div>
-
-          {isLoading ? (
-            <StoresLoadingSkeleton count={PAGE_SIZE} />
-          ) : error ? (
-            <ErrorAlert
-              title="매장을 불러오지 못했습니다"
-              message={
-                error instanceof Error
-                  ? error.message
-                  : '매장 데이터를 불러오는 중 문제가 발생했습니다.'
-              }
-              onRetry={() => {
-                void refetch();
-              }}
-              error={error instanceof Error ? error : undefined}
-            />
-          ) : isEmpty ? (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-xl bg-base-200 py-20 text-center">
-              <h2 className="text-xl font-semibold">
-                조건에 맞는 매장이 없습니다
-              </h2>
-              <p className="text-base-content/70">
-                다른 지역이나 카테고리를 선택하거나 필터를 초기화해보세요.
-              </p>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => {
-                  setSelectedRegionId(null);
-                  setSelectedCategoryId(null);
-                  setCurrentPage(1);
-                }}
-              >
-                전체 매장 보기
-              </button>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {stores.map((store) => (
-                  <StoreCard key={store.id} store={store} />
-                ))}
-              </div>
-
-              <div className="mt-10 flex justify-center">
-                <PaginationControls
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={(page) => setCurrentPage(page)}
-                />
-              </div>
-            </>
-          )}
-        </section>
+        </div>
       </main>
 
       <Footer />

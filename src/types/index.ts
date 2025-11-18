@@ -282,6 +282,11 @@ export interface StoreSummary {
   businessHours?: string;
 
   /**
+   * Store description or introduction text
+   */
+  description?: string;
+
+  /**
    * Number of products available in the store (if provided)
    */
   productCount?: number;

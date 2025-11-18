@@ -197,6 +197,11 @@ export default function StoreDetailPage() {
                   <h1 className="text-4xl font-bold leading-tight">
                     {storeSummary.name}
                   </h1>
+                  {storeSummary.description && (
+                    <p className="text-lg text-base-content/80 leading-relaxed">
+                      {storeSummary.description}
+                    </p>
+                  )}
                   <p className="flex items-start gap-2 text-base text-base-content/70">
                     <MapPin className="mt-1 h-5 w-5 text-primary" />
                     <span>

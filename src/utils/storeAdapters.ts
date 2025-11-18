@@ -68,6 +68,11 @@ export function deriveStoreProductCount(
   store: StoreDetail,
   categoryCounts?: StoreCategoryCount[]
 ): number | undefined {
+  // Prefer total_products from API (accurate count from DB)
+  if (typeof store.total_products === 'number') {
+    return store.total_products;
+  }
+
   if (typeof store.product_count === 'number') {
     return store.product_count;
   }
@@ -90,6 +95,12 @@ export function mapStoreDetailToSummary(
   const categoryCounts = extractStoreCategoryCounts(store.category_counts, labelMap);
   const productCount = deriveStoreProductCount(store, categoryCounts);
 
+  // Format business hours from open_time and close_time
+  let businessHours = store.business_hours;
+  if (store.open_time && store.close_time) {
+    businessHours = `${store.open_time} - ${store.close_time}`;
+  }
+
   return {
     id: store.id,
     name: store.name,
@@ -97,9 +108,10 @@ export function mapStoreDetailToSummary(
     district: store.district,
     address: store.address,
     phone: store.phone ?? store.phone_number,
-    businessHours: store.business_hours,
+    businessHours,
     productCount,
     imageUrl: store.image_url ?? store.logo_url ?? store.thumbnail_url,
     categoryCounts,
+    description: store.description,
   };
 }
