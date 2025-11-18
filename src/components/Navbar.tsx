@@ -70,9 +70,12 @@ export default function Navbar({ navigationItems }: NavbarProps) {
               </li>
             ) : (
               <li>
-                <Link to="/mypage" className="text-base">
+                <Link
+                  to={user?.role === 'admin' ? '/seller/dashboard' : '/mypage'}
+                  className="text-base"
+                >
                   <User className="w-4 h-4" />
-                  마이페이지
+                  {user?.role === 'admin' ? '대시보드' : '마이페이지'}
                 </Link>
               </li>
             )}
@@ -81,7 +84,7 @@ export default function Navbar({ navigationItems }: NavbarProps) {
 
         {/* Logo */}
         <Link
-          to="/"
+          to={user?.role === 'admin' ? '/seller/dashboard' : '/'}
           className="btn btn-ghost text-xl font-bold normal-case hover:bg-transparent"
         >
           <span className="text-primary">우동금</span>
@@ -139,12 +142,14 @@ export default function Navbar({ navigationItems }: NavbarProps) {
           </Link>
         ) : (
           <Link
-            to="/mypage"
+            to={user?.role === 'admin' ? '/seller/dashboard' : '/mypage'}
             className="btn btn-ghost gap-2 normal-case"
-            aria-label="마이페이지"
+            aria-label={user?.role === 'admin' ? '대시보드' : '마이페이지'}
           >
             <User className="w-5 h-5" />
-            <span className="hidden sm:inline">{user?.name || '마이'}</span>
+            <span className="hidden sm:inline">
+              {user?.role === 'admin' ? '대시보드' : (user?.name || '마이')}
+            </span>
           </Link>
         )}
       </div>

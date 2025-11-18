@@ -84,6 +84,29 @@ export const AUTH_ERRORS = {
   VALIDATION_ERROR: '입력값을 확인해주세요',
 
   // ============================================
+  // ADDRESS VALIDATION ERRORS
+  // These are shown during address form validation
+  // ============================================
+
+  /** 배송지명 필드가 비어있을 때 */
+  ADDRESS_NAME_REQUIRED: '배송지명을 입력하세요',
+
+  /** 받는 사람 필드가 비어있을 때 */
+  RECIPIENT_REQUIRED: '받는 사람을 입력하세요',
+
+  /** 주소 필드가 비어있을 때 */
+  ADDRESS_REQUIRED: '주소를 입력하세요',
+
+  /** 우편번호 필드가 비어있을 때 */
+  POSTAL_CODE_REQUIRED: '우편번호를 입력하세요',
+
+  /** 우편번호 형식이 올바르지 않을 때 */
+  POSTAL_CODE_INVALID: '5자리 우편번호를 입력하세요',
+
+  /** 기본 주소(도로명 주소) 필드가 비어있을 때 */
+  ADDRESS1_REQUIRED: '도로명 주소를 입력하세요',
+
+  // ============================================
   // API/BUSINESS LOGIC ERRORS
   // These are returned from API calls
   // ============================================

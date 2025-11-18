@@ -89,3 +89,63 @@ export const MeResponseSchema = z.object({
 });
 
 export type MeResponse = z.infer<typeof MeResponseSchema>;
+
+/**
+ * Update profile request schema
+ * Validates user input for profile update
+ * NOTE: Only name and phone can be updated (email and password have separate flows)
+ */
+export const UpdateProfileRequestSchema = z.object({
+  name: z.string().min(1, AUTH_ERRORS.NAME_REQUIRED),
+  phone: z
+    .string()
+    .regex(
+      /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/,
+      AUTH_ERRORS.PHONE_INVALID
+    )
+    .optional(),
+});
+
+export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequestSchema>;
+
+/**
+ * Update profile response schema
+ * Validates response from PUT /auth/me endpoint
+ */
+export const UpdateProfileResponseSchema = z.object({
+  message: z.string(),
+  user: UserSchema,
+});
+
+export type UpdateProfileResponse = z.infer<typeof UpdateProfileResponseSchema>;
+
+/**
+ * Forgot password request schema
+ * Validates user input for password reset request
+ */
+export const ForgotPasswordRequestSchema = z.object({
+  email: z.string().min(1, AUTH_ERRORS.EMAIL_REQUIRED).email(AUTH_ERRORS.EMAIL_INVALID),
+});
+
+export type ForgotPasswordRequest = z.infer<typeof ForgotPasswordRequestSchema>;
+
+/**
+ * Reset password request schema
+ * Validates user input for password reset (token + new password)
+ */
+export const ResetPasswordRequestSchema = z.object({
+  token: z.string().min(1, '재설정 토큰이 필요합니다'),
+  password: z.string().min(1, AUTH_ERRORS.PASSWORD_REQUIRED).min(8, AUTH_ERRORS.PASSWORD_MIN_LENGTH),
+});
+
+export type ResetPasswordRequest = z.infer<typeof ResetPasswordRequestSchema>;
+
+/**
+ * Message response schema
+ * Validates generic success/error messages from API endpoints
+ */
+export const MessageResponseSchema = z.object({
+  message: z.string(),
+});
+
+export type MessageResponse = z.infer<typeof MessageResponseSchema>;

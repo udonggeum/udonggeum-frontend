@@ -9,6 +9,7 @@ import { LogIn } from 'lucide-react';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useLogin } from '@/hooks/queries/useAuthQueries';
 import { LoginRequestSchema, type LoginRequest } from '@/schemas/auth';
+import { ZodError } from 'zod';
 import PasswordInput from '@/components/PasswordInput';
 
 interface FormErrors {
@@ -20,6 +21,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
   const { mutate: login, isPending, isError, error } = useLogin();
 
   const [formData, setFormData] = useState<LoginRequest>({
@@ -32,11 +34,17 @@ export default function LoginPage() {
 
   // Redirect authenticated users away from login page
   useEffect(() => {
-    if (isAuthenticated) {
-      const redirectTo = searchParams.get('redirect') || '/';
-      navigate(redirectTo, { replace: true });
+    if (isAuthenticated && user) {
+      const redirectParam = searchParams.get('redirect');
+      if (redirectParam) {
+        void navigate(redirectParam, { replace: true });
+      } else {
+        // Redirect based on user role
+        const defaultPath = user.role === 'admin' ? '/seller/dashboard' : '/';
+        void navigate(defaultPath, { replace: true });
+      }
     }
-  }, [isAuthenticated, navigate, searchParams]);
+  }, [isAuthenticated, user, navigate, searchParams]);
 
   /**
    * Validate a single field
@@ -49,11 +57,11 @@ export default function LoginPage() {
         LoginRequestSchema.pick({ password: true }).parse({ password: value });
       }
       return undefined;
-    } catch (err: any) {
-      // Zod errors have an 'issues' array, not 'errors'
-      if (err.issues && err.issues.length > 0) {
-        return err.issues[0].message;
+    } catch (err: unknown) {
+      if (err instanceof ZodError && err.issues.length > 0) {
+        return err.issues[0]?.message;
       }
+
       return '유효하지 않은 값입니다.';
     }
   };
@@ -115,7 +123,7 @@ export default function LoginPage() {
   /**
    * Handle form submission
    */
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     // Validate form
@@ -127,12 +135,22 @@ export default function LoginPage() {
     const validatedData = LoginRequestSchema.parse(formData);
 
     // Get redirect URL from query params
-    const redirectTo = searchParams.get('redirect') || '/';
+    const redirectParam = searchParams.get('redirect');
 
     // Call login mutation
     login(validatedData, {
-      onSuccess: () => {
-        navigate(redirectTo, { replace: true });
+      onSuccess: (response) => {
+        // If redirect parameter exists, use it
+        if (redirectParam) {
+          void navigate(redirectParam, { replace: true });
+          return;
+        }
+
+        // Otherwise, redirect based on user role
+        const defaultPath = response.user.role === 'admin'
+          ? '/seller/dashboard'
+          : '/';
+        void navigate(defaultPath, { replace: true });
       },
     });
   };
@@ -187,7 +205,7 @@ export default function LoginPage() {
             </div>
 
             {/* Password Input */}
-            <div className="mb-6">
+            <div className="mb-2">
               <PasswordInput
                 id="password"
                 name="password"
@@ -199,6 +217,13 @@ export default function LoginPage() {
                 required
                 label="비밀번호"
               />
+            </div>
+
+            {/* Forgot Password Link */}
+            <div className="text-right mb-6">
+              <Link to="/forgot-password" className="link link-primary text-sm">
+                비밀번호를 잊으셨나요?
+              </Link>
             </div>
 
             {/* Submit Button */}

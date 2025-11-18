@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Navbar,
@@ -129,7 +129,7 @@ export default function StoreDetailPage() {
     );
   }
 
-  let mainContent: JSX.Element;
+  let mainContent: ReactNode;
 
   if (isLoading) {
     mainContent = (

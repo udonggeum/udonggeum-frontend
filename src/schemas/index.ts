@@ -14,3 +14,9 @@ export * from './cart';
 
 // Orders schemas
 export * from './orders';
+
+// Address schemas
+export * from './address';
+
+// Seller schemas
+export * from './seller';

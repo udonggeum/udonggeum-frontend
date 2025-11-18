@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 /**
  * ProductsLoadingSkeleton Component
  *
@@ -13,14 +15,17 @@ interface ProductsLoadingSkeletonProps {
   count?: number;
 }
 
-export default function ProductsLoadingSkeleton({
-  count = 8,
-}: ProductsLoadingSkeletonProps) {
+export default function ProductsLoadingSkeleton({ count = 8 }: ProductsLoadingSkeletonProps) {
+  const skeletonItems = useMemo(
+    () => Array.from({ length: count }, (_, index) => `product-skeleton-${index + 1}`),
+    [count]
+  );
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {Array.from({ length: count }).map((_, index) => (
+      {skeletonItems.map((skeletonId) => (
         <div
-          key={`skeleton-${index}`}
+          key={skeletonId}
           className="card bg-base-100 shadow-xl"
           aria-label="상품 로딩 중"
         >

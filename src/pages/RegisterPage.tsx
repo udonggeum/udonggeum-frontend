@@ -31,6 +31,7 @@ interface FormErrors {
 export default function RegisterPage() {
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
   const { mutate: register, isPending, isError, error } = useRegister();
 
   // Form state
@@ -47,10 +48,12 @@ export default function RegisterPage() {
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/', { replace: true });
+    if (isAuthenticated && user) {
+      // Redirect based on user role
+      const defaultPath = user.role === 'admin' ? '/seller/dashboard' : '/';
+      navigate(defaultPath, { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
   /**
    * Handle input change
@@ -201,9 +204,12 @@ export default function RegisterPage() {
 
       // Call register mutation
       register(validatedData, {
-        onSuccess: () => {
-          // Navigate to home on success (handled by useRegister hook)
-          navigate('/', { replace: true });
+        onSuccess: (response) => {
+          // Navigate based on user role
+          const defaultPath = response.user.role === 'admin'
+            ? '/seller/dashboard'
+            : '/';
+          navigate(defaultPath, { replace: true });
         },
       });
     } catch (err) {

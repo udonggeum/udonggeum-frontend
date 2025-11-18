@@ -35,6 +35,19 @@ interface MockDB {
     total_amount: number;
     created_at: string;
   }>;
+  addresses: Array<{
+    id: number;
+    user_id: number;
+    name: string;
+    recipient: string;
+    phone: string;
+    zip_code: string;
+    address: string;
+    detail_address: string;
+    is_default: boolean;
+    created_at: string;
+    updated_at: string;
+  }>;
 }
 
 /**
@@ -76,6 +89,7 @@ function loadDB(): MockDB {
     ],
     carts: [],
     orders: [],
+    addresses: [],
   };
 }
 
@@ -179,6 +193,77 @@ class MockDatabase {
     this.db.orders.push(newOrder);
     saveDB(this.db);
     return newOrder;
+  }
+
+  // Addresses
+  getAddressesByUserId(userId: number) {
+    return this.db.addresses.filter((a) => a.user_id === userId);
+  }
+
+  getAddressById(id: number) {
+    return this.db.addresses.find((a) => a.id === id);
+  }
+
+  addAddress(address: Omit<MockDB['addresses'][0], 'id' | 'created_at' | 'updated_at'>) {
+    // If is_default is true, set all other addresses for this user to false
+    if (address.is_default) {
+      this.db.addresses.forEach((a) => {
+        if (a.user_id === address.user_id) {
+          a.is_default = false;
+        }
+      });
+    }
+
+    const newAddress = {
+      ...address,
+      id: Math.max(0, ...this.db.addresses.map((a) => a.id)) + 1,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    this.db.addresses.push(newAddress);
+    saveDB(this.db);
+    return newAddress;
+  }
+
+  updateAddress(
+    id: number,
+    updates: Partial<Omit<MockDB['addresses'][0], 'id' | 'user_id' | 'created_at' | 'updated_at'>>
+  ) {
+    const address = this.db.addresses.find((a) => a.id === id);
+    if (address) {
+      Object.assign(address, updates, { updated_at: new Date().toISOString() });
+      saveDB(this.db);
+    }
+    return address;
+  }
+
+  deleteAddress(id: number) {
+    const index = this.db.addresses.findIndex((a) => a.id === id);
+    if (index !== -1) {
+      this.db.addresses.splice(index, 1);
+      saveDB(this.db);
+      return true;
+    }
+    return false;
+  }
+
+  setDefaultAddress(id: number, userId: number) {
+    // Set all addresses for this user to non-default
+    this.db.addresses.forEach((a) => {
+      if (a.user_id === userId) {
+        a.is_default = false;
+      }
+    });
+
+    // Set the specified address as default
+    const address = this.db.addresses.find((a) => a.id === id);
+    if (address) {
+      address.is_default = true;
+      address.updated_at = new Date().toISOString();
+      saveDB(this.db);
+      return address;
+    }
+    return null;
   }
 
   // Reset database

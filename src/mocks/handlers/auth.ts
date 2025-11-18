@@ -257,6 +257,91 @@ export const authHandlers = [
   }),
 
   /**
+   * POST /api/v1/auth/forgot-password
+   * Request password reset (sends email with token)
+   */
+  http.post(`${BASE_URL}/auth/forgot-password`, async ({ request }) => {
+    const body = (await request.json()) as { email: string };
+
+    if (!body.email) {
+      return HttpResponse.json(
+        {
+          error: AUTH_ERRORS.EMAIL_REQUIRED,
+          code: ERROR_CODES.EMAIL_REQUIRED,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Check if user exists (but don't reveal this for security)
+    const user = mockDB.getUserByEmail(body.email);
+
+    // Always return success message to prevent user enumeration
+    // In real implementation, only send email if user exists
+    const message = user
+      ? '비밀번호 재설정 링크가 이메일로 전송되었습니다.'
+      : '비밀번호 재설정 링크가 이메일로 전송되었습니다.';
+
+    return HttpResponse.json(
+      { message },
+      { status: 200 }
+    );
+  }),
+
+  /**
+   * POST /api/v1/auth/reset-password
+   * Reset password using token
+   */
+  http.post(`${BASE_URL}/auth/reset-password`, async ({ request }) => {
+    const body = (await request.json()) as { token: string; password: string };
+
+    if (!body.token || !body.password) {
+      return HttpResponse.json(
+        {
+          error: '토큰과 비밀번호가 필요합니다.',
+          code: ERROR_CODES.VALIDATION_FAILED,
+        },
+        { status: 400 }
+      );
+    }
+
+    // In real implementation, verify token from database
+    // For MSW, we accept any token format for testing
+    const userId = getUserIdFromAuth(`Bearer ${body.token}`);
+
+    if (!userId) {
+      return HttpResponse.json(
+        {
+          error: '유효하지 않거나 만료된 토큰입니다.',
+          code: ERROR_CODES.SESSION_EXPIRED,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Find user and update password
+    const user = mockDB.getUserById(userId);
+    if (!user) {
+      return HttpResponse.json(
+        {
+          error: '사용자를 찾을 수 없습니다.',
+          code: ERROR_CODES.USER_NOT_FOUND,
+        },
+        { status: 404 }
+      );
+    }
+
+    // Update password (in real app, this would be hashed)
+    user.password = body.password;
+    user.updated_at = new Date().toISOString();
+
+    return HttpResponse.json(
+      { message: '비밀번호가 성공적으로 변경되었습니다.' },
+      { status: 200 }
+    );
+  }),
+
+  /**
    * Test endpoints for token refresh integration tests
    * These handlers simulate protected endpoints that require authentication
    */

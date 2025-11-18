@@ -21,6 +21,8 @@ export const ENDPOINTS = {
     LOGOUT: '/api/v1/auth/logout',
     REFRESH: '/api/v1/auth/refresh',
     ME: '/api/v1/auth/me',
+    FORGOT_PASSWORD: '/api/v1/auth/forgot-password',
+    RESET_PASSWORD: '/api/v1/auth/reset-password',
   },
 
   STORES: {
@@ -55,6 +57,40 @@ export const ENDPOINTS = {
     DETAIL: (id: number) => `/api/v1/orders/${id}`,
     UPDATE_STATUS: (id: number) => `/api/v1/orders/${id}/status`,
     UPDATE_PAYMENT: (id: number) => `/api/v1/orders/${id}/payment`,
+  },
+
+  WISHLIST: {
+    GET: '/api/v1/wishlist',
+    ADD: '/api/v1/wishlist',
+    DELETE: (productId: number) => `/api/v1/wishlist/${productId}`,
+  },
+
+  ADDRESSES: {
+    LIST: '/api/v1/addresses',
+    ADD: '/api/v1/addresses',
+    UPDATE: (id: number) => `/api/v1/addresses/${id}`,
+    DELETE: (id: number) => `/api/v1/addresses/${id}`,
+    SET_DEFAULT: (id: number) => `/api/v1/addresses/${id}/default`,
+  },
+
+  SELLER: {
+    DASHBOARD: '/api/v1/seller/dashboard',
+    STORES: {
+      LIST: '/api/v1/seller/stores',
+      CREATE: '/api/v1/seller/stores',
+      UPDATE: (id: number) => `/api/v1/seller/stores/${id}`,
+      DELETE: (id: number) => `/api/v1/seller/stores/${id}`,
+    },
+    PRODUCTS: {
+      LIST: (storeId: number) => `/api/v1/seller/stores/${storeId}/products`,
+      CREATE: '/api/v1/seller/products',
+      UPDATE: (id: number) => `/api/v1/seller/products/${id}`,
+      DELETE: (id: number) => `/api/v1/seller/products/${id}`,
+    },
+    ORDERS: {
+      LIST: '/api/v1/seller/orders',
+      UPDATE_STATUS: (id: number) => `/api/v1/seller/orders/${id}/status`,
+    },
   },
 } as const;
 

@@ -17,7 +17,12 @@ export { default as ProductsError } from './ProductsError';
 export { default as ProductsLoadingSkeleton } from './ProductsLoadingSkeleton';
 export { default as PopularProducts } from './PopularProducts';
 export { default as ProductsFilterBar } from './ProductsFilterBar';
+export { default as CategoryFilterChips } from './CategoryFilterChips';
 export { default as PaginationControls } from './PaginationControls';
+
+// Order Components
+export { default as OrderCard } from './OrderCard';
+export { OrderStatusBadge, PaymentStatusBadge } from './OrderStatusBadge';
 
 // Store Components
 export { default as StoreCard } from './StoreCard';
@@ -28,3 +33,8 @@ export { default as Navbar } from './Navbar';
 export { default as Footer } from './Footer';
 export { default as HeroCarousel } from './HeroCarousel';
 export { default as SearchSection } from './SearchSection';
+export { default as MainHeroSection } from './MainHeroSection';
+export { default as ProductCarousel } from './ProductCarousel';
+
+// Address Components
+export { default as AddressFormModal } from './AddressFormModal';

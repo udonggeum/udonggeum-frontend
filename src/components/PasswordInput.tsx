@@ -11,6 +11,8 @@ interface PasswordInputProps {
   placeholder?: string;
   required?: boolean;
   label?: string;
+  disabled?: boolean;
+  autoComplete?: string;
 }
 
 /**
@@ -43,6 +45,8 @@ export default function PasswordInput({
   placeholder,
   required,
   label = '비밀번호',
+  disabled,
+  autoComplete,
 }: PasswordInputProps) {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -61,6 +65,8 @@ export default function PasswordInput({
           onBlur={onBlur}
           placeholder={placeholder}
           required={required}
+          disabled={disabled}
+          autoComplete={autoComplete}
           className={`input input-bordered w-full pr-10 ${error ? 'input-error' : ''}`}
         />
         <button

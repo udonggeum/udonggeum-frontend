@@ -8,11 +8,21 @@ import {
   AuthResponseSchema,
   MeResponseSchema,
   TokensSchema,
+  UpdateProfileRequestSchema,
+  UpdateProfileResponseSchema,
+  ForgotPasswordRequestSchema,
+  ResetPasswordRequestSchema,
+  MessageResponseSchema,
   type LoginRequest,
   type RegisterRequest,
   type AuthResponse,
   type MeResponse,
   type Tokens,
+  type UpdateProfileRequest,
+  type UpdateProfileResponse,
+  type ForgotPasswordRequest,
+  type ResetPasswordRequest,
+  type MessageResponse,
 } from '@/schemas/auth';
 
 /**
@@ -119,6 +129,96 @@ class AuthService {
 
     // Validate response
     return TokensSchema.parse(response.data);
+  }
+
+  /**
+   * Update user profile
+   * @param data - Profile data (name, phone)
+   * @returns Updated user information
+   */
+  async updateProfile(data: UpdateProfileRequest): Promise<UpdateProfileResponse> {
+    try {
+      // Validate input
+      const validatedInput = UpdateProfileRequestSchema.parse(data);
+
+      // API call
+      const response = await apiClient.put(
+        ENDPOINTS.AUTH.ME,
+        validatedInput
+      );
+
+      // Validate response
+      const validatedResponse = UpdateProfileResponseSchema.parse(response.data);
+
+      return validatedResponse;
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw ValidationError.fromZod(error);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Request password reset
+   * Sends password reset email with token
+   * @param data - Email address
+   * @returns Success message
+   */
+  async forgotPassword(data: ForgotPasswordRequest): Promise<MessageResponse> {
+    try {
+      // Validate input
+      const validatedInput = ForgotPasswordRequestSchema.parse(data);
+
+      // Normalize email to lowercase for consistency
+      const normalizedData = {
+        email: validatedInput.email.toLowerCase(),
+      };
+
+      // API call
+      const response = await apiClient.post(
+        ENDPOINTS.AUTH.FORGOT_PASSWORD,
+        normalizedData
+      );
+
+      // Validate response
+      const validatedResponse = MessageResponseSchema.parse(response.data);
+
+      return validatedResponse;
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw ValidationError.fromZod(error);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Reset password with token
+   * @param data - Reset token and new password
+   * @returns Success message
+   */
+  async resetPassword(data: ResetPasswordRequest): Promise<MessageResponse> {
+    try {
+      // Validate input
+      const validatedInput = ResetPasswordRequestSchema.parse(data);
+
+      // API call
+      const response = await apiClient.post(
+        ENDPOINTS.AUTH.RESET_PASSWORD,
+        validatedInput
+      );
+
+      // Validate response
+      const validatedResponse = MessageResponseSchema.parse(response.data);
+
+      return validatedResponse;
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw ValidationError.fromZod(error);
+      }
+      throw error;
+    }
   }
 }
 

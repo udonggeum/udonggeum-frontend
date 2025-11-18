@@ -6,15 +6,45 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { UseMutationResult } from '@tanstack/react-query';
 import { renderWithProviders } from '@/test/utils';
 import LoginPage from './LoginPage';
 import { useAuthStore } from '@/stores/useAuthStore';
 import * as authQueries from '@/hooks/queries/useAuthQueries';
 import { AUTH_ERRORS } from '@/constants/errors';
-import type { LoginRequest } from '@/schemas/auth';
+import type { AuthResponse, LoginRequest } from '@/schemas/auth';
 
 // Mock the auth queries module
 vi.mock('@/hooks/queries/useAuthQueries');
+
+type UseLoginMutationResult = UseMutationResult<AuthResponse, Error, LoginRequest, unknown>;
+
+const createUseLoginMock = (
+  overrides: Partial<UseLoginMutationResult> = {}
+): UseLoginMutationResult => ({
+  mutate: vi.fn() as UseLoginMutationResult['mutate'],
+  mutateAsync: vi.fn() as UseLoginMutationResult['mutateAsync'],
+  reset: vi.fn() as UseLoginMutationResult['reset'],
+  status: 'idle',
+  data: undefined,
+  error: null,
+  variables: undefined,
+  context: undefined,
+  isIdle: true,
+  isPending: false,
+  isError: false,
+  isLoading: false,
+  isPaused: false,
+  isSuccess: false,
+  failureCount: 0,
+  failureReason: null,
+  submittedAt: 0,
+  ...overrides,
+});
+
+const mockUseLogin = (overrides?: Partial<UseLoginMutationResult>) => {
+  vi.mocked(authQueries.useLogin).mockReturnValue(createUseLoginMock(overrides));
+};
 
 describe('LoginPage', () => {
   // Valid test data
@@ -37,12 +67,7 @@ describe('LoginPage', () => {
 
   describe('Form Rendering', () => {
     it('should render all form fields', () => {
-      vi.mocked(authQueries.useLogin).mockReturnValue({
-        mutate: vi.fn(),
-        isPending: false,
-        isError: false,
-        error: null,
-      } as any);
+      mockUseLogin();
 
       renderWithProviders(<LoginPage />);
 
@@ -66,12 +91,7 @@ describe('LoginPage', () => {
     });
 
     it('should render password visibility toggle button', () => {
-      vi.mocked(authQueries.useLogin).mockReturnValue({
-        mutate: vi.fn(),
-        isPending: false,
-        isError: false,
-        error: null,
-      } as any);
+      mockUseLogin();
 
       renderWithProviders(<LoginPage />);
 
@@ -83,12 +103,7 @@ describe('LoginPage', () => {
     });
 
     it('should display page title and description', () => {
-      vi.mocked(authQueries.useLogin).mockReturnValue({
-        mutate: vi.fn(),
-        isPending: false,
-        isError: false,
-        error: null,
-      } as any);
+      mockUseLogin();
 
       renderWithProviders(<LoginPage />);
 
@@ -102,12 +117,7 @@ describe('LoginPage', () => {
   describe('Form Validation', () => {
     it('should show validation error for invalid email', async () => {
       const user = userEvent.setup();
-      vi.mocked(authQueries.useLogin).mockReturnValue({
-        mutate: vi.fn(),
-        isPending: false,
-        isError: false,
-        error: null,
-      } as any);
+      mockUseLogin();
 
       renderWithProviders(<LoginPage />);
 
@@ -124,12 +134,7 @@ describe('LoginPage', () => {
 
     it('should show validation error for empty password', async () => {
       const user = userEvent.setup();
-      vi.mocked(authQueries.useLogin).mockReturnValue({
-        mutate: vi.fn(),
-        isPending: false,
-        isError: false,
-        error: null,
-      } as any);
+      mockUseLogin();
 
       renderWithProviders(<LoginPage />);
 
@@ -144,12 +149,7 @@ describe('LoginPage', () => {
 
     it('should clear validation error when user corrects input', async () => {
       const user = userEvent.setup();
-      vi.mocked(authQueries.useLogin).mockReturnValue({
-        mutate: vi.fn(),
-        isPending: false,
-        isError: false,
-        error: null,
-      } as any);
+      mockUseLogin();
 
       renderWithProviders(<LoginPage />);
 
@@ -181,14 +181,9 @@ describe('LoginPage', () => {
   describe('Form Submission', () => {
     it('should call login mutation with correct data on valid form submission', async () => {
       const user = userEvent.setup();
-      const mutateMock = vi.fn();
+      const mutateMock: UseLoginMutationResult['mutate'] = vi.fn();
 
-      vi.mocked(authQueries.useLogin).mockReturnValue({
-        mutate: mutateMock,
-        isPending: false,
-        isError: false,
-        error: null,
-      } as any);
+      mockUseLogin({ mutate: mutateMock });
 
       renderWithProviders(<LoginPage />);
 
@@ -210,13 +205,11 @@ describe('LoginPage', () => {
       );
     });
 
-    it('should disable submit button while login is pending', async () => {
-      vi.mocked(authQueries.useLogin).mockReturnValue({
-        mutate: vi.fn(),
+    it('should disable submit button while login is pending', () => {
+      mockUseLogin({
         isPending: true,
-        isError: false,
-        error: null,
-      } as any);
+        status: 'pending',
+      });
 
       renderWithProviders(<LoginPage />);
 
@@ -226,14 +219,9 @@ describe('LoginPage', () => {
 
     it('should prevent submission with invalid form data', async () => {
       const user = userEvent.setup();
-      const mutateMock = vi.fn();
+      const mutateMock: UseLoginMutationResult['mutate'] = vi.fn();
 
-      vi.mocked(authQueries.useLogin).mockReturnValue({
-        mutate: mutateMock,
-        isPending: false,
-        isError: false,
-        error: null,
-      } as any);
+      mockUseLogin({ mutate: mutateMock });
 
       renderWithProviders(<LoginPage />);
 
@@ -259,33 +247,9 @@ describe('LoginPage', () => {
   describe('Redirect Handling', () => {
     it('should redirect to home page after successful login when no redirect param', async () => {
       const user = userEvent.setup();
-      const mutateMock = vi.fn((data, options) => {
-        // Simulate successful login
-        if (options?.onSuccess) {
-          options.onSuccess({
-            message: '로그인에 성공했습니다.',
-            user: {
-              id: 1,
-              email: validData.email,
-              name: '테스트 사용자',
-              role: 'user' as const,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            },
-            tokens: {
-              access_token: 'token',
-              refresh_token: 'refresh',
-            },
-          });
-        }
-      });
+      const mutateMock: UseLoginMutationResult['mutate'] = vi.fn();
 
-      vi.mocked(authQueries.useLogin).mockReturnValue({
-        mutate: mutateMock,
-        isPending: false,
-        isError: false,
-        error: null,
-      } as any);
+      mockUseLogin({ mutate: mutateMock });
 
       renderWithProviders(<LoginPage />, {
         initialRoute: '/login',
@@ -301,14 +265,9 @@ describe('LoginPage', () => {
 
     it('should extract and use redirect parameter from URL', async () => {
       const user = userEvent.setup();
-      const mutateMock = vi.fn();
+      const mutateMock: UseLoginMutationResult['mutate'] = vi.fn();
 
-      vi.mocked(authQueries.useLogin).mockReturnValue({
-        mutate: mutateMock,
-        isPending: false,
-        isError: false,
-        error: null,
-      } as any);
+      mockUseLogin({ mutate: mutateMock });
 
       renderWithProviders(<LoginPage />, {
         initialRoute: '/login?redirect=%2Fcart',
@@ -347,12 +306,7 @@ describe('LoginPage', () => {
         isAuthenticated: true,
       });
 
-      vi.mocked(authQueries.useLogin).mockReturnValue({
-        mutate: vi.fn(),
-        isPending: false,
-        isError: false,
-        error: null,
-      } as any);
+      mockUseLogin();
 
       renderWithProviders(<LoginPage />, {
         initialRoute: '/login',
@@ -369,15 +323,14 @@ describe('LoginPage', () => {
   });
 
   describe('Error Handling', () => {
-    it('should display error message when login fails', async () => {
+    it('should display error message when login fails', () => {
       const errorMessage = AUTH_ERRORS.INVALID_CREDENTIALS;
 
-      vi.mocked(authQueries.useLogin).mockReturnValue({
-        mutate: vi.fn(),
-        isPending: false,
+      mockUseLogin({
         isError: true,
         error: new Error(errorMessage),
-      } as any);
+        status: 'error',
+      });
 
       renderWithProviders(<LoginPage />);
 
@@ -388,15 +341,14 @@ describe('LoginPage', () => {
       expect(screen.getByText(errorMessage)).toBeInTheDocument();
     });
 
-    it('should clear error message when user starts typing', async () => {
+    it('should clear error message when user starts typing', () => {
       const errorMessage = AUTH_ERRORS.INVALID_CREDENTIALS;
 
-      vi.mocked(authQueries.useLogin).mockReturnValue({
-        mutate: vi.fn(),
-        isPending: false,
+      mockUseLogin({
         isError: true,
         error: new Error(errorMessage),
-      } as any);
+        status: 'error',
+      });
 
       const { rerender } = renderWithProviders(<LoginPage />);
 
@@ -404,12 +356,11 @@ describe('LoginPage', () => {
       expect(screen.getByText(errorMessage)).toBeInTheDocument();
 
       // Mock: clear error state when user types
-      vi.mocked(authQueries.useLogin).mockReturnValue({
-        mutate: vi.fn(),
-        isPending: false,
+      mockUseLogin({
         isError: false,
         error: null,
-      } as any);
+        status: 'idle',
+      });
 
       // Re-render with cleared error
       rerender(<LoginPage />);
@@ -421,12 +372,7 @@ describe('LoginPage', () => {
 
   describe('Accessibility', () => {
     it('should have proper form labels and associations', () => {
-      vi.mocked(authQueries.useLogin).mockReturnValue({
-        mutate: vi.fn(),
-        isPending: false,
-        isError: false,
-        error: null,
-      } as any);
+      mockUseLogin();
 
       renderWithProviders(<LoginPage />);
 
@@ -439,12 +385,7 @@ describe('LoginPage', () => {
     });
 
     it('should have proper aria-label for password toggle button', () => {
-      vi.mocked(authQueries.useLogin).mockReturnValue({
-        mutate: vi.fn(),
-        isPending: false,
-        isError: false,
-        error: null,
-      } as any);
+      mockUseLogin();
 
       renderWithProviders(<LoginPage />);
 
@@ -456,12 +397,7 @@ describe('LoginPage', () => {
     });
 
     it('should mark required fields with required attribute', () => {
-      vi.mocked(authQueries.useLogin).mockReturnValue({
-        mutate: vi.fn(),
-        isPending: false,
-        isError: false,
-        error: null,
-      } as any);
+      mockUseLogin();
 
       renderWithProviders(<LoginPage />);
 

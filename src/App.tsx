@@ -6,14 +6,26 @@ import ApiDemo from '@/pages/ApiDemo';
 import ComponentsDemo from '@/pages/ComponentsDemo';
 import LoginPage from '@/pages/LoginPage';
 import RegisterPage from '@/pages/RegisterPage';
+import ForgotPasswordPage from '@/pages/ForgotPasswordPage';
+import ResetPasswordPage from '@/pages/ResetPasswordPage';
 import MyPage from '@/pages/MyPage';
+import ProfileEditPage from '@/pages/ProfileEditPage';
 import ProductsPage from '@/pages/ProductsPage';
 import ProductDetailPage from '@/pages/ProductDetailPage';
 import StoresPage from '@/pages/StoresPage';
 import StoreDetailPage from '@/pages/StoreDetailPage';
 import CartPage from '@/pages/CartPage';
+import OrderPage from '@/pages/OrderPage';
+import WishlistPage from '@/pages/WishlistPage';
+import OrderHistoryPage from '@/pages/OrderHistoryPage';
+import AddressManagementPage from '@/pages/AddressManagementPage';
+import SellerDashboardPage from '@/pages/SellerDashboardPage';
+import SellerStoresPage from '@/pages/SellerStoresPage';
+import SellerProductsPage from '@/pages/SellerProductsPage';
+import SellerOrdersPage from '@/pages/SellerOrdersPage';
 import MinimalLayout from '@/components/layouts/MinimalLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import AdminRoute from '@/components/AdminRoute';
 
 // 2. Component
 export default function App() {
@@ -25,6 +37,8 @@ export default function App() {
         <Route element={<MinimalLayout />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
         </Route>
 
         {/* Protected Routes - Require authentication */}
@@ -37,11 +51,85 @@ export default function App() {
           }
         />
         <Route
+          path="/order"
+          element={
+            <ProtectedRoute>
+              <OrderPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/mypage"
           element={
             <ProtectedRoute>
               <MyPage />
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/mypage/edit"
+          element={
+            <ProtectedRoute>
+              <ProfileEditPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/mypage/addresses"
+          element={
+            <ProtectedRoute>
+              <AddressManagementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/wishlist"
+          element={
+            <ProtectedRoute>
+              <WishlistPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders"
+          element={
+            <ProtectedRoute>
+              <OrderHistoryPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Seller Routes - Require admin role */}
+        <Route
+          path="/seller/dashboard"
+          element={
+            <AdminRoute>
+              <SellerDashboardPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/seller/stores"
+          element={
+            <AdminRoute>
+              <SellerStoresPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/seller/products"
+          element={
+            <AdminRoute>
+              <SellerProductsPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/seller/orders"
+          element={
+            <AdminRoute>
+              <SellerOrdersPage />
+            </AdminRoute>
           }
         />
 

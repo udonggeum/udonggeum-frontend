@@ -30,14 +30,19 @@ class ProductsService {
    * @param params - Filter parameters
    * @returns Popular products response
    */
-  async getPopularProducts(params?: {
-    category?: string;
-    region?: string;
-    district?: string;
-    limit?: number;
-  }): Promise<ProductsResponse> {
+  async getPopularProducts(params?: ProductsRequest): Promise<ProductsResponse> {
+    // Map page_size to limit for popular endpoint
+    const requestParams = params
+      ? {
+          category: params.category,
+          region: params.region,
+          district: params.district,
+          limit: params.page_size,
+        }
+      : undefined;
+
     const response = await apiClient.get(ENDPOINTS.PRODUCTS.POPULAR, {
-      params,
+      params: requestParams,
     });
 
     // Validate response

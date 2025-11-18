@@ -1,4 +1,5 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Navbar,
   Footer,
@@ -10,50 +11,75 @@ import {
 } from '@/components';
 import { useProducts } from '@/hooks/queries/useProductsQueries';
 import { useStoreLocations } from '@/hooks/queries/useStoresQueries';
-import { transformProductsFromAPI, uiCategoryToAPICategory } from '@/utils/apiAdapters';
+import {
+  apiCategoryToUICategory,
+  transformProductsFromAPI,
+  uiCategoryToAPICategory,
+} from '@/utils/apiAdapters';
 import { MOCK_CATEGORIES } from '@/constants/mockData';
 import { NAV_ITEMS } from '@/constants/navigation';
 import type { Product } from '@/types';
+import { findRegionIdByNames, getRegionOptions, type RegionOption } from '@/utils/regionOptions';
 
 const PAGE_SIZE = 12;
-
-interface RegionOption {
-  id: string;
-  label: string;
-  region?: string;
-  district?: string;
-}
 
 const SORT_OPTIONS = [
   { id: 'latest', label: '신상품순', value: 'latest' as const },
   { id: 'popularity', label: '인기순', value: 'popularity' as const },
+  { id: 'wishlist', label: '찜많은순', value: 'wishlist' as const },
+  { id: 'views', label: '조회순', value: 'views' as const },
   { id: 'price_asc', label: '낮은 가격순', value: 'price_asc' as const },
   { id: 'price_desc', label: '높은 가격순', value: 'price_desc' as const },
 ];
 
 export default function ProductsPage() {
-  const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const categoryParam = searchParams.get('category');
+  const regionParam = searchParams.get('region');
+  const districtParam = searchParams.get('district');
+  const regionIdParam = searchParams.get('regionId') ?? searchParams.get('region_id');
+
   const [selectedSort, setSelectedSort] = useState<(typeof SORT_OPTIONS)[number]['value']>('latest');
   const [currentPage, setCurrentPage] = useState(1);
-  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
   const { data: locationsData } = useStoreLocations();
 
-  const regionOptions: RegionOption[] = useMemo(() => {
-    if (!locationsData) {
-      return [];
-    }
+  const regionOptions: RegionOption[] = useMemo(
+    () => getRegionOptions(locationsData),
+    [locationsData]
+  );
 
-    return locationsData.regions.flatMap((regionGroup) =>
-      regionGroup.districts.map((district) => ({
-        id: `${regionGroup.region}-${district}`.toLowerCase().replace(/\s+/g, '-'),
-        label: `${regionGroup.region} ${district}`,
-        region: regionGroup.region,
-        district,
-      }))
-    );
-  }, [locationsData]);
+  const resolvedRegionIdFromParams = useMemo(
+    () => findRegionIdByNames(regionOptions, regionParam, districtParam, regionIdParam ?? null),
+    [regionOptions, regionParam, districtParam, regionIdParam]
+  );
+
+  const resolvedCategoryIdFromParams = useMemo(
+    () => mapCategoryParamToId(categoryParam),
+    [categoryParam]
+  );
+
+  const [selectedRegionId, setSelectedRegionId] = useState<string | null>(resolvedRegionIdFromParams);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    resolvedCategoryIdFromParams
+  );
+
+  const lastRegionParamRef = useRef(resolvedRegionIdFromParams);
+  const lastCategoryParamRef = useRef(resolvedCategoryIdFromParams);
+
+  useEffect(() => {
+    if (lastRegionParamRef.current !== resolvedRegionIdFromParams) {
+      lastRegionParamRef.current = resolvedRegionIdFromParams;
+      setSelectedRegionId(resolvedRegionIdFromParams);
+    }
+  }, [resolvedRegionIdFromParams]);
+
+  useEffect(() => {
+    if (lastCategoryParamRef.current !== resolvedCategoryIdFromParams) {
+      lastCategoryParamRef.current = resolvedCategoryIdFromParams;
+      setSelectedCategoryId(resolvedCategoryIdFromParams);
+    }
+  }, [resolvedCategoryIdFromParams]);
 
   const selectedRegion = regionOptions.find((region) => region.id === selectedRegionId);
 
@@ -107,15 +133,10 @@ export default function ProductsPage() {
         <ProductsFilterBar
           regions={regionOptions}
           categories={MOCK_CATEGORIES}
-          sortOptions={SORT_OPTIONS}
           selectedRegionId={selectedRegionId}
           selectedCategoryId={selectedCategoryId}
-          selectedSortValue={selectedSort}
           onRegionChange={(regionId) => setSelectedRegionId(regionId)}
           onCategoryChange={(categoryId) => setSelectedCategoryId(categoryId)}
-          onSortChange={(value) => setSelectedSort(value)}
-          onToggleAdvancedFilters={() => setIsAdvancedOpen((prev) => !prev)}
-          isAdvancedOpen={isAdvancedOpen}
         />
 
         <section className="container mx-auto px-4 py-10">
@@ -123,14 +144,47 @@ export default function ProductsPage() {
             <div>
               <h1 className="text-2xl font-bold">전체 상품</h1>
               <p className="text-sm text-base-content/70">
-                총 {productsData?.count ?? 0}개의 상품이 있습니다.
+                총 {products.length}개의 상품이 있습니다.
               </p>
             </div>
-            <div className="text-sm text-base-content/60">
-              {selectedRegion ? selectedRegion.label : '전체 지역'} ·{' '}
-              {selectedCategoryId
-                ? MOCK_CATEGORIES.find((category) => category.id === selectedCategoryId)?.name ?? '전체 상품'
-                : '전체 상품'}
+            <div className="flex items-center gap-2">
+              <div className="text-sm text-base-content/60">
+                {selectedRegion ? selectedRegion.label : '전체 지역'} ·{' '}
+                {selectedCategoryId
+                  ? MOCK_CATEGORIES.find((category) => category.id === selectedCategoryId)?.name ?? '전체 상품'
+                  : '전체 상품'}
+              </div>
+              <div className="dropdown dropdown-end">
+                <label tabIndex={0} className="btn btn-sm btn-outline gap-1">
+                  {SORT_OPTIONS.find((opt) => opt.value === selectedSort)?.label ?? '정렬'}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="h-4 w-4"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </label>
+                <ul
+                  tabIndex={0}
+                  className="menu dropdown-content z-[1] mt-2 w-40 rounded-box bg-base-100 p-2 shadow-lg"
+                >
+                  {SORT_OPTIONS.map((option) => (
+                    <li key={option.id}>
+                      <button
+                        type="button"
+                        className={selectedSort === option.value ? 'active' : ''}
+                        onClick={() => setSelectedSort(option.value)}
+                      >
+                        {option.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
 
@@ -187,4 +241,24 @@ export default function ProductsPage() {
       <Footer />
     </div>
   );
+}
+
+const CATEGORY_ID_SET = new Set(MOCK_CATEGORIES.map((category) => category.id));
+
+function mapCategoryParamToId(paramValue: string | null): string | null {
+  if (!paramValue) {
+    return null;
+  }
+
+  const trimmed = paramValue.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  if (CATEGORY_ID_SET.has(trimmed)) {
+    return trimmed;
+  }
+
+  const converted = apiCategoryToUICategory(trimmed);
+  return converted ?? null;
 }

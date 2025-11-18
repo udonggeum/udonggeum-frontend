@@ -189,8 +189,10 @@ export default function CartPage() {
       alert('결제할 상품을 선택해주세요.');
       return;
     }
-    // TODO: 실제 결제(주문) 흐름이 준비되면 해당 페이지로 이동하도록 수정
-    alert('결제 페이지는 준비 중입니다. 빠르게 제공될 예정이에요!');
+    const selectedIds = selectedCartItems.map((item) => item.id);
+    void navigate('/order', {
+      state: { selectedItemIds: selectedIds },
+    });
   };
 
   if (!isAuthenticated) {

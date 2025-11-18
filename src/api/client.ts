@@ -178,7 +178,8 @@ apiClient.interceptors.response.use(
             return apiClient(error.config);
           })
           .catch((err) => {
-            return Promise.reject(err);
+            const normalizedError = err instanceof Error ? err : new Error(String(err));
+            return Promise.reject(normalizedError);
           });
       }
 
@@ -188,9 +189,12 @@ apiClient.interceptors.response.use(
       const refreshToken = useAuthStore.getState().tokens?.refresh_token;
 
       if (!refreshToken) {
-        // No refresh token available - logout
+        // No refresh token available - if user was authenticated, force re-login
+        const wasAuthenticated = useAuthStore.getState().isAuthenticated;
         useAuthStore.getState().clearAuth();
-        window.location.href = '/login';
+        if (wasAuthenticated) {
+          window.location.href = '/login';
+        }
         return Promise.reject(new ApiError(ERROR_MESSAGES.UNAUTHORIZED, status));
       }
 

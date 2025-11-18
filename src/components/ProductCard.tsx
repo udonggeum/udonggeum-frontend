@@ -1,5 +1,7 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import FallbackImage from './FallbackImage';
+import { useToggleWishlist, useIsInWishlist } from '@/hooks/queries';
+import { useAuthStore } from '@/stores/useAuthStore';
 import type { Product } from '../types';
 
 interface ProductCardProps {
@@ -19,7 +21,37 @@ export default function ProductCard({
   onWishlist,
   onAddToCart,
 }: ProductCardProps) {
+  const navigate = useNavigate();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  // Convert string ID to number for API
+  const productIdNum = parseInt(product.id, 10);
+
+  // Check if product is in wishlist
+  const isInWishlist = useIsInWishlist(productIdNum);
+
+  // Wishlist toggle mutation
+  const { mutate: toggleWishlist, isPending: isTogglingWishlist } = useToggleWishlist();
+
   const formattedPrice = product.price.toLocaleString('ko-KR');
+
+  const handleWishlistClick = () => {
+    // Check authentication
+    if (!isAuthenticated) {
+      void navigate('/login');
+      return;
+    }
+
+    // Call legacy onWishlist if provided (for backward compatibility)
+    onWishlist?.(product.id);
+
+    // Toggle wishlist via API
+    toggleWishlist({
+      productId: productIdNum,
+      isInWishlist,
+    });
+  };
+
   return (
     <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
       <figure className="aspect-square overflow-hidden">
@@ -60,26 +92,31 @@ export default function ProductCard({
         <div className="card-actions justify-end mt-4">
           <button
             type="button"
-            onClick={() => onWishlist?.(product.id)}
+            onClick={handleWishlistClick}
+            disabled={isTogglingWishlist}
             className={`btn btn-sm ${
-              product.isWishlisted ? 'btn-secondary' : 'btn-outline btn-secondary'
+              isInWishlist ? 'btn-secondary' : 'btn-outline btn-secondary'
             }`}
-            aria-label={product.isWishlisted ? '찜 해제' : '찜하기'}
+            aria-label={isInWishlist ? '찜 해제' : '찜하기'}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill={product.isWishlisted ? 'currentColor' : 'none'}
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-              />
-            </svg>
+            {isTogglingWishlist ? (
+              <span className="loading loading-spinner loading-xs"></span>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill={isInWishlist ? 'currentColor' : 'none'}
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                />
+              </svg>
+            )}
             찜하기
           </button>
           <button

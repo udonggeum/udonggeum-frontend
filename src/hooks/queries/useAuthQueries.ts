@@ -2,7 +2,13 @@ import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { authService } from '@/services/auth';
 import { useAuthStore } from '@/stores/useAuthStore';
-import type { LoginRequest, RegisterRequest } from '@/schemas/auth';
+import type {
+  LoginRequest,
+  RegisterRequest,
+  UpdateProfileRequest,
+  ForgotPasswordRequest,
+  ResetPasswordRequest,
+} from '@/schemas/auth';
 
 /**
  * Auth Query Keys Factory
@@ -115,5 +121,57 @@ export function useLogout() {
       // Clear all queries from cache
       queryClient.clear();
     },
+  });
+}
+
+/**
+ * useUpdateProfile mutation
+ * Updates user profile and syncs with auth store
+ *
+ * @example
+ * const { mutate: updateProfile, isPending } = useUpdateProfile();
+ * updateProfile({ name: '홍길동', phone: '010-1234-5678' });
+ */
+export function useUpdateProfile() {
+  const updateUser = useAuthStore((state) => state.updateUser);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: UpdateProfileRequest) => authService.updateProfile(data),
+    onSuccess: (response) => {
+      // Update auth store with new user data
+      updateUser(response.user);
+
+      // Invalidate and refetch user data
+      void queryClient.invalidateQueries({ queryKey: authKeys.me() });
+    },
+  });
+}
+
+/**
+ * useForgotPassword mutation
+ * Requests password reset email with token
+ *
+ * @example
+ * const { mutate: forgotPassword, isPending } = useForgotPassword();
+ * forgotPassword({ email: 'user@example.com' });
+ */
+export function useForgotPassword() {
+  return useMutation({
+    mutationFn: (data: ForgotPasswordRequest) => authService.forgotPassword(data),
+  });
+}
+
+/**
+ * useResetPassword mutation
+ * Resets password with token
+ *
+ * @example
+ * const { mutate: resetPassword, isPending } = useResetPassword();
+ * resetPassword({ token: 'abc123', password: 'newpassword123' });
+ */
+export function useResetPassword() {
+  return useMutation({
+    mutationFn: (data: ResetPasswordRequest) => authService.resetPassword(data),
   });
 }
