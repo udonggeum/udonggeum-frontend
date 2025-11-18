@@ -5,9 +5,11 @@ import { ZodError } from 'zod';
 import {
   CartResponseSchema,
   AddToCartRequestSchema,
+  AddToCartResponseSchema,
   UpdateCartItemRequestSchema,
   type CartResponse,
   type AddToCartRequest,
+  type AddToCartResponse,
   type UpdateCartItemRequest,
 } from '@/schemas/cart';
 
@@ -30,14 +32,18 @@ class CartService {
   /**
    * Add item to cart
    * @param data - Product and quantity to add
+   * @returns Added cart item information
    */
-  async addToCart(data: AddToCartRequest): Promise<void> {
+  async addToCart(data: AddToCartRequest): Promise<AddToCartResponse> {
     try {
       // Validate input
       const validatedInput = AddToCartRequestSchema.parse(data);
 
       // API call
-      await apiClient.post(ENDPOINTS.CART.ADD, validatedInput);
+      const response = await apiClient.post(ENDPOINTS.CART.ADD, validatedInput);
+
+      // Validate and return response
+      return AddToCartResponseSchema.parse(response.data);
     } catch (error) {
       if (error instanceof ZodError) {
         throw ValidationError.fromZod(error);

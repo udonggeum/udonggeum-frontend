@@ -21,7 +21,7 @@ interface MockDB {
     id: number;
     user_id: number;
     product_id: number;
-    product_option_id: number;
+    product_option_id?: number | null;
     quantity: number;
     created_at: string;
   }>;
@@ -142,8 +142,11 @@ class MockDatabase {
 
   addToCart(item: Omit<MockDB['carts'][0], 'id' | 'created_at'>) {
     const newItem = {
-      ...item,
       id: Math.max(0, ...this.db.carts.map((c) => c.id)) + 1,
+      user_id: item.user_id,
+      product_id: item.product_id,
+      product_option_id: item.product_option_id ?? null,
+      quantity: item.quantity,
       created_at: new Date().toISOString(),
     };
     this.db.carts.push(newItem);
@@ -151,10 +154,15 @@ class MockDatabase {
     return newItem;
   }
 
-  updateCartItem(id: number, quantity: number) {
+  updateCartItem(id: number, updates: { quantity?: number; product_option_id?: number | null }) {
     const item = this.db.carts.find((c) => c.id === id);
     if (item) {
-      item.quantity = quantity;
+      if (updates.quantity !== undefined) {
+        item.quantity = updates.quantity;
+      }
+      if ('product_option_id' in updates) {
+        item.product_option_id = updates.product_option_id ?? null;
+      }
       saveDB(this.db);
     }
     return item;

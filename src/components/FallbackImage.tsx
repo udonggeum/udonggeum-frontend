@@ -3,10 +3,12 @@ import type { ImgHTMLAttributes } from 'react';
 
 interface FallbackImageProps extends ImgHTMLAttributes<HTMLImageElement> {
   /**
-   * 대체 이미지 경로 (기본: /images/base-image.png)
+   * 대체 이미지 경로 (기본: placeholder 이미지)
    */
   fallbackSrc?: string;
 }
+
+const DEFAULT_FALLBACK = '/images/base-image.png';
 
 /**
  * 공통 이미지 컴포넌트
@@ -15,7 +17,7 @@ interface FallbackImageProps extends ImgHTMLAttributes<HTMLImageElement> {
  */
 export default function FallbackImage({
   src,
-  fallbackSrc = '/images/base-image.png',
+  fallbackSrc = DEFAULT_FALLBACK,
   onError,
   ...rest
 }: FallbackImageProps) {

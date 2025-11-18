@@ -78,8 +78,8 @@ export default function ProductDetailPage() {
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isCartResultModalOpen, setIsCartResultModalOpen] = useState(false);
-  const [isStoreInfoOpen, setIsStoreInfoOpen] = useState(true);
-  const [isDescriptionOpen, setIsDescriptionOpen] = useState(true);
+  const [isStoreInfoOpen, setIsStoreInfoOpen] = useState(false);
+  const [isDescriptionOpen, setIsDescriptionOpen] = useState(false);
 
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
@@ -190,8 +190,19 @@ export default function ProductDetailPage() {
       return;
     }
 
-    void navigate('/cart', {
-      replace: false,
+    // 바로구매: 장바구니를 거치지 않고 주문 페이지로 직접 이동
+    const selectedOption = productDetail.options?.find(
+      (opt) => opt.id === selectedOptionId
+    );
+
+    void navigate('/order', {
+      state: {
+        directPurchase: {
+          product: productDetail,
+          product_option: selectedOption,
+          quantity,
+        },
+      },
     });
   };
 

@@ -18,7 +18,9 @@ export { default as ProductsLoadingSkeleton } from './ProductsLoadingSkeleton';
 export { default as PopularProducts } from './PopularProducts';
 export { default as ProductsFilterBar } from './ProductsFilterBar';
 export { default as CategoryFilterChips } from './CategoryFilterChips';
+export { default as CategorySidebar } from './CategorySidebar';
 export { default as PaginationControls } from './PaginationControls';
+export { default as AddToCartModal } from './AddToCartModal';
 
 // Order Components
 export { default as OrderCard } from './OrderCard';

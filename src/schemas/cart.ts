@@ -39,12 +39,22 @@ export const AddToCartRequestSchema = z.object({
 export type AddToCartRequest = z.infer<typeof AddToCartRequestSchema>;
 
 /**
+ * Add to cart response schema
+ * Response from POST /cart endpoint
+ */
+export const AddToCartResponseSchema = z.object({
+  message: z.string(),
+});
+
+export type AddToCartResponse = z.infer<typeof AddToCartResponseSchema>;
+
+/**
  * Update cart item request schema
- * Validates input for updating cart item quantity
+ * Validates input for updating cart item quantity and option
  */
 export const UpdateCartItemRequestSchema = z.object({
   quantity: z.number().int().positive('수량은 최소 1개 이상이어야 합니다'),
-  product_option_id: z.number().int().positive().optional(),
+  product_option_id: z.number().int().positive().nullable().optional(),
 });
 
 export type UpdateCartItemRequest = z.infer<

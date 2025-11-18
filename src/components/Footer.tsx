@@ -10,69 +10,72 @@ export default function Footer() {
   return (
     <footer className="bg-base-200 text-base-content">
       {/* Main Footer Content */}
-      <div className="footer p-10 container mx-auto">
-        {/* Company Info Column */}
-        <nav>
-          <h3 className="footer-title">회사정보</h3>
-          <Link to="/about" className="link link-hover">
-            회사소개
-          </Link>
-          <Link to="/stores" className="link link-hover">
-            매장안내
-          </Link>
-        </nav>
-
-        {/* Customer Support Column */}
-        <nav>
-          <h3 className="footer-title">고객지원</h3>
-          <Link to="/faq" className="link link-hover">
-            FAQ
-          </Link>
-          <Link to="/shipping" className="link link-hover">
-            배송 안내
-          </Link>
-          <Link to="/returns" className="link link-hover">
-            반품/교환
-          </Link>
-          <Link to="/order-tracking" className="link link-hover">
-            주문 조회
-          </Link>
-        </nav>
-
-        {/* Legal Notices Column */}
-        <nav>
-          <h3 className="footer-title">법적고지</h3>
-          <Link to="/terms" className="link link-hover">
-            이용약관
-          </Link>
-          <Link to="/privacy" className="link link-hover">
-            개인정보처리방침
-          </Link>
-          <Link to="/cookies" className="link link-hover">
-            쿠키 정책
-          </Link>
-        </nav>
-
-        {/* Contact & Social Media (Optional 4th column) */}
-        <nav>
-          <h3 className="footer-title">문의하기</h3>
-          <div className="flex flex-col gap-2">
-            <p className="text-sm">
-              <span className="font-semibold">고객센터:</span> 1588-0000
-            </p>
-            <p className="text-sm">
-              <span className="font-semibold">이메일:</span> support@udonggeum.kr
-            </p>
-            <p className="text-sm">
-              <span className="font-semibold">운영시간:</span> 평일 09:00 - 18:00
-            </p>
+      <div className="container mx-auto p-10">
+        <div className="flex flex-wrap items-center justify-center gap-8">
+          {/* Company Info */}
+          <div className="flex items-center gap-4">
+            <h3 className="font-semibold">회사정보</h3>
+            <Link to="/about" className="link link-hover">
+              회사소개
+            </Link>
+            <Link to="/stores" className="link link-hover">
+              매장안내
+            </Link>
           </div>
-          <div className="flex gap-3 mt-2">
+
+          <div className="divider divider-horizontal mx-0"></div>
+
+          {/* Customer Support */}
+          <div className="flex items-center gap-4">
+            <h3 className="font-semibold">고객지원</h3>
+            <Link to="/faq" className="link link-hover">
+              FAQ
+            </Link>
+            <Link to="/shipping" className="link link-hover">
+              배송 안내
+            </Link>
+            <Link to="/returns" className="link link-hover">
+              반품/교환
+            </Link>
+            <Link to="/order-tracking" className="link link-hover">
+              주문 조회
+            </Link>
+          </div>
+
+          <div className="divider divider-horizontal mx-0"></div>
+
+          {/* Legal Notices */}
+          <div className="flex items-center gap-4">
+            <h3 className="font-semibold">법적고지</h3>
+            <Link to="/terms" className="link link-hover">
+              이용약관
+            </Link>
+            <Link to="/privacy" className="link link-hover">
+              개인정보처리방침
+            </Link>
+            <Link to="/cookies" className="link link-hover">
+              쿠키 정책
+            </Link>
+          </div>
+
+          <div className="divider divider-horizontal mx-0"></div>
+
+          {/* Contact Info */}
+          <div className="flex items-center gap-4">
+            <h3 className="font-semibold">문의하기</h3>
+            <span className="text-sm">고객센터: 1588-0000</span>
+            <span className="text-sm">support@udonggeum.kr</span>
+          </div>
+
+          <div className="divider divider-horizontal mx-0"></div>
+
+          {/* Social Media */}
+          <div className="flex items-center gap-3">
             <a
               href="https://instagram.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="btn btn-ghost btn-square btn-sm"
+              className="btn btn-ghost btn-circle btn-sm"
               aria-label="Instagram"
             >
               <svg
@@ -88,7 +91,7 @@ export default function Footer() {
               href="https://facebook.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="btn btn-ghost btn-square btn-sm"
+              className="btn btn-ghost btn-circle btn-sm"
               aria-label="Facebook"
             >
               <svg
@@ -101,7 +104,7 @@ export default function Footer() {
               </svg>
             </a>
           </div>
-        </nav>
+        </div>
       </div>
 
       {/* Copyright Section */}

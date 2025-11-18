@@ -32,6 +32,11 @@ import {
 
 interface OrderLocationState {
   selectedItemIds?: number[];
+  directPurchase?: {
+    product: CartItem['product'];
+    product_option?: CartItem['product_option'];
+    quantity: number;
+  };
 }
 
 interface ShippingFormState {
@@ -95,14 +100,16 @@ export default function OrderPage() {
   const { user } = useAuthStore();
   const locationState = location.state as OrderLocationState | undefined;
   const selectedItemIds = locationState?.selectedItemIds;
+  const directPurchase = locationState?.directPurchase;
 
+  // 바로구매가 아닐 때만 장바구니 불러오기
   const {
     data: cartData,
     isLoading: isCartLoading,
     isFetching: isCartFetching,
     error: cartError,
     refetch: refetchCart,
-  } = useCart();
+  } = useCart({ enabled: !directPurchase });
 
   const { mutate: updateCartItem, isPending: isUpdatingCart } = useUpdateCartItem();
   const { mutate: removeCartItem, isPending: isRemovingCart } = useRemoveCartItem();
@@ -171,12 +178,25 @@ export default function OrderPage() {
   }, [savedAddresses, selectedAddressId]);
 
   const filteredCartSelection = useMemo(() => {
+    // 바로구매일 경우 임시 CartItem 생성
+    if (directPurchase) {
+      return [
+        {
+          id: 0, // 임시 ID (장바구니 아이템이 아니므로)
+          quantity: directPurchase.quantity,
+          product: directPurchase.product,
+          product_option: directPurchase.product_option,
+        } as CartItem,
+      ];
+    }
+
+    // 장바구니에서 선택한 아이템 필터링
     if (!cartData?.cart_items) return [];
     if (!selectedItemIds || selectedItemIds.length === 0) {
       return cartData.cart_items;
     }
     return cartData.cart_items.filter((item) => selectedItemIds.includes(item.id));
-  }, [cartData?.cart_items, selectedItemIds]);
+  }, [directPurchase, cartData?.cart_items, selectedItemIds]);
 
   const [orderItems, setOrderItems] = useState<CartItem[]>(filteredCartSelection);
 
@@ -331,6 +351,16 @@ export default function OrderPage() {
 
   const handleQuantityChange = (itemId: number, quantity: number) => {
     if (quantity < 1) return;
+
+    // 바로구매일 경우 로컬 상태만 업데이트 (장바구니 API 호출 안 함)
+    if (directPurchase) {
+      setOrderItems((prev) =>
+        prev.map((item) => (item.id === itemId ? { ...item, quantity } : item))
+      );
+      return;
+    }
+
+    // 장바구니 아이템일 경우 API 호출
     setOrderItems((prev) =>
       prev.map((item) => (item.id === itemId ? { ...item, quantity } : item))
     );
@@ -349,6 +379,11 @@ export default function OrderPage() {
   };
 
   const handleRemoveItem = (itemId: number) => {
+    // 바로구매일 경우 삭제 불가 (주문 페이지를 떠나야 함)
+    if (directPurchase) {
+      return;
+    }
+
     const previousItems = orderItems;
     setOrderItems((prev) => prev.filter((item) => item.id !== itemId));
     removeCartItem(itemId, {
@@ -523,10 +558,17 @@ export default function OrderPage() {
             </div>
           )}
 
-          {!selectedItemIds?.length && (
+          {!directPurchase && !selectedItemIds?.length && (
             <div className="alert alert-info mb-6">
               <Info className="h-5 w-5" />
               <span>장바구니에서 선택한 상품 정보가 없어 전체 상품을 불러왔습니다.</span>
+            </div>
+          )}
+
+          {directPurchase && (
+            <div className="alert alert-success mb-6">
+              <Info className="h-5 w-5" />
+              <span>바로구매 상품입니다. 배송 정보를 입력하고 결제를 진행하세요.</span>
             </div>
           )}
 
@@ -595,44 +637,46 @@ export default function OrderPage() {
                       총 {orderItems.length}개
                     </h2>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 text-sm">
-                    <label className="flex cursor-pointer items-center gap-2">
-                      <input
-                        type="checkbox"
-                        className="checkbox checkbox-sm checkbox-primary"
-                        checked={
-                          orderItems.length > 0 &&
-                          orderItems.every((item) => markedItems[item.id])
-                        }
-                        onChange={(event) => {
-                          const checked = event.target.checked;
-                          const next: Record<number, boolean> = {};
-                          orderItems.forEach((item) => {
-                            next[item.id] = checked;
-                          });
-                          setMarkedItems(next);
-                        }}
-                      />
-                      <span>전체 선택</span>
-                    </label>
-                    <span className="text-base-content/40">|</span>
-                    <button
-                      type="button"
-                      className="btn btn-link btn-xs text-base-content/70"
-                      onClick={handleClearAll}
-                      disabled={orderItems.length === 0 || isRemovingCart}
-                    >
-                      전체 삭제
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-link btn-xs text-base-content/70"
-                      onClick={handleRemoveSelected}
-                      disabled={markedCount === 0 || isRemovingCart}
-                    >
-                      선택 삭제 ({markedCount})
-                    </button>
-                  </div>
+                  {!directPurchase && (
+                    <div className="flex flex-wrap items-center gap-2 text-sm">
+                      <label className="flex cursor-pointer items-center gap-2">
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-sm checkbox-primary"
+                          checked={
+                            orderItems.length > 0 &&
+                            orderItems.every((item) => markedItems[item.id])
+                          }
+                          onChange={(event) => {
+                            const checked = event.target.checked;
+                            const next: Record<number, boolean> = {};
+                            orderItems.forEach((item) => {
+                              next[item.id] = checked;
+                            });
+                            setMarkedItems(next);
+                          }}
+                        />
+                        <span>전체 선택</span>
+                      </label>
+                      <span className="text-base-content/40">|</span>
+                      <button
+                        type="button"
+                        className="btn btn-link btn-xs text-base-content/70"
+                        onClick={handleClearAll}
+                        disabled={orderItems.length === 0 || isRemovingCart}
+                      >
+                        전체 삭제
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-link btn-xs text-base-content/70"
+                        onClick={handleRemoveSelected}
+                        disabled={markedCount === 0 || isRemovingCart}
+                      >
+                        선택 삭제 ({markedCount})
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {orderItems.length === 0 ? (
@@ -669,18 +713,20 @@ export default function OrderPage() {
                         >
                           <div className="flex flex-col gap-4 md:flex-row md:items-start">
                             <div className="flex items-start gap-3">
-                              <input
-                                type="checkbox"
-                                className="checkbox checkbox-primary mt-2"
-                                checked={Boolean(markedItems[item.id])}
-                                onChange={() =>
-                                  setMarkedItems((prev) => ({
-                                    ...prev,
-                                    [item.id]: !prev[item.id],
-                                  }))
-                                }
-                                aria-label="삭제 대상 선택"
-                              />
+                              {!directPurchase && (
+                                <input
+                                  type="checkbox"
+                                  className="checkbox checkbox-primary mt-2"
+                                  checked={Boolean(markedItems[item.id])}
+                                  onChange={() =>
+                                    setMarkedItems((prev) => ({
+                                      ...prev,
+                                      [item.id]: !prev[item.id],
+                                    }))
+                                  }
+                                  aria-label="삭제 대상 선택"
+                                />
+                              )}
                               <div className="h-24 w-24 overflow-hidden rounded-2xl border border-base-200">
                                 <FallbackImage
                                   src={item.product.image_url}
@@ -743,15 +789,17 @@ export default function OrderPage() {
                                     +
                                   </button>
                                 </div>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRemoveItem(item.id)}
-                                  disabled={isRemovingCart}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                  삭제
-                                </Button>
+                                {!directPurchase && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleRemoveItem(item.id)}
+                                    disabled={isRemovingCart}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                    삭제
+                                  </Button>
+                                )}
                               </div>
 
                               <div className="flex flex-wrap gap-3 text-xs text-base-content/60">

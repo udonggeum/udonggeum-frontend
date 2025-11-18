@@ -25,33 +25,35 @@ export const cartHandlers = [
 
     const cartItems = mockDB.getCartByUserId(userId);
 
-    // Enrich cart items with product details
+    // Enrich cart items with full product and option objects (matching CartItemSchema)
     const enrichedItems = cartItems.map((item) => {
       const product = mockProducts.find((p) => p.id === item.product_id);
-      const option = mockProductOptions.find((o) => o.id === item.product_option_id);
+      const option = item.product_option_id
+        ? mockProductOptions.find((o) => o.id === item.product_option_id)
+        : undefined;
 
-      const productPrice = product?.price ?? 0;
-      const optionPrice = option?.additional_price ?? 0;
-      const optionLabel = option ? `${option.name}: ${option.value}` : '';
+      if (!product) {
+        // Skip items with missing products (shouldn't happen in normal flow)
+        return null;
+      }
 
       return {
         id: item.id,
-        product_id: item.product_id,
-        product_name: product?.name || 'Unknown',
-        product_price: productPrice,
-        product_option_id: item.product_option_id,
-        option_value: optionLabel,
-        option_additional_price: optionPrice,
         quantity: item.quantity,
-        subtotal: (productPrice + optionPrice) * item.quantity,
-        created_at: item.created_at,
+        product: product, // Full product object
+        product_option: option, // Full option object (or undefined)
       };
-    });
+    }).filter((item) => item !== null);
 
-    const total = enrichedItems.reduce((sum, item) => sum + item.subtotal, 0);
+    // Calculate total
+    const total = enrichedItems.reduce((sum, item) => {
+      const productPrice = item.product.price ?? 0;
+      const optionPrice = item.product_option?.additional_price ?? 0;
+      return sum + (productPrice + optionPrice) * item.quantity;
+    }, 0);
 
     return HttpResponse.json({
-      items: enrichedItems,
+      cart_items: enrichedItems,
       total,
       count: enrichedItems.length,
     });
@@ -73,7 +75,7 @@ export const cartHandlers = [
     const body = await request.json();
     const { product_id, product_option_id, quantity } = body as {
       product_id: number;
-      product_option_id: number;
+      product_option_id?: number;
       quantity: number;
     };
 
@@ -87,22 +89,22 @@ export const cartHandlers = [
     }
 
     // Add to cart
-    const newItem = mockDB.addToCart({
+    mockDB.addToCart({
       user_id: userId,
       product_id,
       product_option_id,
       quantity,
     });
 
+    // Backend only returns message, no item object
     return HttpResponse.json({
       message: '장바구니에 추가되었습니다.',
-      item: newItem,
     }, { status: 201 });
   }),
 
   /**
    * PUT /api/v1/cart/:id
-   * Update cart item quantity (requires authentication)
+   * Update cart item quantity and/or option (requires authentication)
    */
   http.put(`${BASE_URL}/cart/:id`, async ({ params, request }) => {
     const userId = getUserIdFromAuth(request.headers.get('Authorization'));
@@ -115,9 +117,16 @@ export const cartHandlers = [
 
     const id = parseInt(params.id as string, 10);
     const body = await request.json();
-    const { quantity } = body as { quantity: number };
+    const { quantity, product_option_id } = body as {
+      quantity: number;
+      product_option_id?: number | null;
+    };
 
-    const updatedItem = mockDB.updateCartItem(id, quantity);
+    const updatedItem = mockDB.updateCartItem(id, {
+      quantity,
+      ...(product_option_id !== undefined && { product_option_id })
+    });
+
     if (!updatedItem) {
       return HttpResponse.json(
         { error: '장바구니 항목을 찾을 수 없습니다.' },

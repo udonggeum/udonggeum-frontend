@@ -72,6 +72,26 @@ export const productsHandlers = [
             new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
         break;
+      case 'wishlist':
+      case 'wishlist_desc':
+      case 'wishlist_count':
+      case 'wishlist_count_desc':
+        filteredProducts.sort((a, b) => (b.wishlist_count || 0) - (a.wishlist_count || 0));
+        break;
+      case 'wishlist_asc':
+      case 'wishlist_count_asc':
+        filteredProducts.sort((a, b) => (a.wishlist_count || 0) - (b.wishlist_count || 0));
+        break;
+      case 'views':
+      case 'views_desc':
+      case 'view_count':
+      case 'view_count_desc':
+        filteredProducts.sort((a, b) => (b.view_count || 0) - (a.view_count || 0));
+        break;
+      case 'views_asc':
+      case 'view_count_asc':
+        filteredProducts.sort((a, b) => (a.view_count || 0) - (b.view_count || 0));
+        break;
       case 'popularity':
       default:
         filteredProducts.sort((a, b) => b.popularity_score - a.popularity_score);

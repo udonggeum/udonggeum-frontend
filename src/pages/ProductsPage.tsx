@@ -1,16 +1,20 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Navbar,
   Footer,
   ProductCard,
   ProductsLoadingSkeleton,
   ProductsError,
-  ProductsFilterBar,
+  CategorySidebar,
   PaginationControls,
+  FallbackImage,
+  AddToCartModal,
 } from '@/components';
-import { useProducts } from '@/hooks/queries/useProductsQueries';
+import { useProducts, usePopularProducts } from '@/hooks/queries/useProductsQueries';
 import { useStoreLocations } from '@/hooks/queries/useStoresQueries';
+import { useAddToCart } from '@/hooks/queries/useCartQueries';
+import { useAuthStore } from '@/stores/useAuthStore';
 import {
   apiCategoryToUICategory,
   transformProductsFromAPI,
@@ -19,6 +23,7 @@ import {
 import { MOCK_CATEGORIES } from '@/constants/mockData';
 import { NAV_ITEMS } from '@/constants/navigation';
 import type { Product } from '@/types';
+import type { Product as APIProduct } from '@/schemas/products';
 import { findRegionIdByNames, getRegionOptions, type RegionOption } from '@/utils/regionOptions';
 
 const PAGE_SIZE = 12;
@@ -33,6 +38,7 @@ const SORT_OPTIONS = [
 ];
 
 export default function ProductsPage() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const categoryParam = searchParams.get('category');
   const regionParam = searchParams.get('region');
@@ -41,8 +47,13 @@ export default function ProductsPage() {
 
   const [selectedSort, setSelectedSort] = useState<(typeof SORT_OPTIONS)[number]['value']>('latest');
   const [currentPage, setCurrentPage] = useState(1);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isCartModalOpen, setIsCartModalOpen] = useState(false);
+  const [selectedProductForCart, setSelectedProductForCart] = useState<APIProduct | null>(null);
 
   const { data: locationsData } = useStoreLocations();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { mutate: addToCart, isPending: isAddingToCart } = useAddToCart();
 
   const regionOptions: RegionOption[] = useMemo(
     () => getRegionOptions(locationsData),
@@ -96,14 +107,38 @@ export default function ProductsPage() {
     sort: selectedSort,
     region: selectedRegion?.region,
     district: selectedRegion?.district,
+    include_options: true,
   });
 
+  // Fetch popular products for the selected category
+  const { data: popularProductsData, isLoading: isLoadingPopular } = usePopularProducts({
+    category: uiCategoryToAPICategory(selectedCategoryId),
+    region: selectedRegion?.region,
+    district: selectedRegion?.district,
+    page_size: 4,
+  });
+
+  // Store API products for cart modal (keeps original structure with options)
+  const apiProducts = useMemo(() => productsData?.products ?? [], [productsData]);
+  const apiPopularProducts = useMemo(
+    () => popularProductsData?.products ?? [],
+    [popularProductsData]
+  );
+
+  // Transform to UI products for display
   const products: Product[] = useMemo(() => {
     if (!productsData) {
       return [];
     }
     return transformProductsFromAPI(productsData.products);
   }, [productsData]);
+
+  const popularProducts: Product[] = useMemo(() => {
+    if (!popularProductsData) {
+      return [];
+    }
+    return transformProductsFromAPI(popularProductsData.products);
+  }, [popularProductsData]);
 
   const pageSizeFromResponse = productsData?.page_size ?? PAGE_SIZE;
 
@@ -121,72 +156,219 @@ export default function ProductsPage() {
   };
 
   const handleAddToCart = (productId: string) => {
-    console.log('Add to cart requested for product', productId);
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      alert('로그인이 필요한 서비스입니다.');
+      void navigate('/login');
+      return;
+    }
+
+    // Find the API product (has full options data) from both regular and popular products
+    const allApiProducts = [...apiProducts, ...apiPopularProducts];
+    const apiProduct = allApiProducts.find((p) => p.id.toString() === productId);
+
+    if (!apiProduct) {
+      console.error('Product not found:', productId);
+      return;
+    }
+
+    // Open modal with API product (has full product options structure)
+    setSelectedProductForCart(apiProduct);
+    setIsCartModalOpen(true);
+  };
+
+  const handleCartConfirm = (
+    productId: number,
+    quantity: number,
+    optionId?: number
+  ) => {
+    addToCart(
+      {
+        product_id: productId,
+        quantity,
+        product_option_id: optionId,
+      },
+      {
+        onSuccess: () => {
+          setIsCartModalOpen(false);
+          setSelectedProductForCart(null);
+          alert('장바구니에 추가되었습니다.');
+        },
+        onError: (error) => {
+          console.error('Failed to add to cart:', error);
+          alert(
+            error instanceof Error
+              ? error.message
+              : '장바구니 추가에 실패했습니다.'
+          );
+        },
+      }
+    );
   };
 
   const isEmpty = !isLoading && !isFetching && products.length === 0;
+
+  // Auto-slide carousel for popular products
+  useEffect(() => {
+    if (popularProducts.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % popularProducts.length);
+    }, 5000); // 5초마다 자동 슬라이드
+
+    return () => clearInterval(interval);
+  }, [popularProducts.length]);
+
+  // Handle manual slide change (indicator click)
+  const handleSlideClick = (index: number) => {
+    setCurrentSlide(index);
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-base-100">
       <Navbar navigationItems={NAV_ITEMS} />
       <main className="flex-grow">
-        <ProductsFilterBar
-          regions={regionOptions}
-          categories={MOCK_CATEGORIES}
-          selectedRegionId={selectedRegionId}
-          selectedCategoryId={selectedCategoryId}
-          onRegionChange={(regionId) => setSelectedRegionId(regionId)}
-          onCategoryChange={(categoryId) => setSelectedCategoryId(categoryId)}
-        />
-
-        <section className="container mx-auto px-4 py-10">
-          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">전체 상품</h1>
-              <p className="text-sm text-base-content/70">
-                총 {products.length}개의 상품이 있습니다.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="text-sm text-base-content/60">
-                {selectedRegion ? selectedRegion.label : '전체 지역'} ·{' '}
-                {selectedCategoryId
-                  ? MOCK_CATEGORIES.find((category) => category.id === selectedCategoryId)?.name ?? '전체 상품'
-                  : '전체 상품'}
-              </div>
-              <div className="dropdown dropdown-end">
-                <label tabIndex={0} className="btn btn-sm btn-outline gap-1">
-                  {SORT_OPTIONS.find((opt) => opt.value === selectedSort)?.label ?? '정렬'}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="h-4 w-4"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                  </svg>
-                </label>
-                <ul
-                  tabIndex={0}
-                  className="menu dropdown-content z-[1] mt-2 w-40 rounded-box bg-base-100 p-2 shadow-lg"
+        {/* Popular Products Section - Banner Style */}
+        {popularProducts.length > 0 && (
+          <section className="bg-base-200">
+            {isLoadingPopular ? (
+              <div className="skeleton h-80 w-full"></div>
+            ) : (
+              <div className="relative h-80 w-full overflow-hidden">
+                <div
+                  className="flex h-full transition-transform duration-500 ease-in-out"
+                  style={{ transform: `translateX(-${currentSlide * 100}%)` }}
                 >
-                  {SORT_OPTIONS.map((option) => (
-                    <li key={option.id}>
-                      <button
-                        type="button"
-                        className={selectedSort === option.value ? 'active' : ''}
-                        onClick={() => setSelectedSort(option.value)}
-                      >
-                        {option.label}
-                      </button>
-                    </li>
+                  {popularProducts.map((product) => (
+                    <div
+                      key={product.id}
+                      className="h-full w-full flex-shrink-0"
+                    >
+                      <div className="card card-side h-80 w-full bg-base-100 shadow-xl">
+                        <figure className="w-1/2">
+                          <FallbackImage
+                            src={product.imageUrl}
+                            alt={product.name}
+                            className="h-full w-full object-cover"
+                          />
+                        </figure>
+                        <div className="card-body w-1/2 justify-center p-8">
+                          <div className="space-y-3">
+                            <div className="badge badge-primary badge-sm">인기</div>
+                            <h3 className="text-xl font-bold line-clamp-2">{product.name}</h3>
+                            <p className="text-sm text-base-content/70">
+                              {product.storeName && `${product.storeName} · `}
+                              {MOCK_CATEGORIES.find((c) => c.id === product.categoryId)?.name}
+                            </p>
+                            <p className="text-2xl font-bold text-primary">
+                              {product.price.toLocaleString()}원
+                            </p>
+                            <div className="flex gap-2 pt-2">
+                              <button
+                                type="button"
+                                className="btn btn-outline btn-sm flex-1"
+                                onClick={() => handleWishlist(product.id)}
+                              >
+                                찜하기
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-primary btn-sm flex-1"
+                                onClick={() => handleAddToCart(product.id)}
+                              >
+                                장바구니
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
+            )}
+            {/* Carousel Indicators */}
+            {popularProducts.length > 1 && (
+              <div className="flex justify-center gap-2 py-4">
+                {popularProducts.map((product, index) => (
+                  <button
+                    key={product.id}
+                    type="button"
+                    onClick={() => handleSlideClick(index)}
+                    className={`h-2 rounded-full transition-all ${
+                      currentSlide === index ? 'w-8 bg-primary' : 'w-2 bg-base-content/30'
+                    }`}
+                    aria-label={`슬라이드 ${index + 1}로 이동`}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        <section className="container mx-auto px-4 py-8">
+
+          {/* 2-column layout: Sidebar + Product List */}
+          <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
+            {/* Left Sidebar - Region & Category Navigation */}
+            <div className="w-full lg:w-56">
+              <CategorySidebar
+                regions={regionOptions}
+                categories={MOCK_CATEGORIES}
+                selectedRegionId={selectedRegionId}
+                selectedCategoryId={selectedCategoryId}
+                onRegionChange={(regionId) => setSelectedRegionId(regionId)}
+                onCategoryChange={(categoryId) => setSelectedCategoryId(categoryId)}
+              />
             </div>
-          </div>
+
+            {/* Main Content - Product List */}
+            <div className="flex-1">
+
+              {/* Header with sorting */}
+              <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-xl font-bold">
+                    {selectedCategoryId
+                      ? MOCK_CATEGORIES.find((category) => category.id === selectedCategoryId)?.name ?? '전체 상품'
+                      : '전체 상품'}
+                  </h2>
+                  <p className="text-sm text-base-content/70">
+                    총 {products.length}개의 상품
+                  </p>
+                </div>
+                <div className="dropdown dropdown-end">
+                  <label tabIndex={0} className="btn btn-sm btn-outline gap-1">
+                    {SORT_OPTIONS.find((opt) => opt.value === selectedSort)?.label ?? '정렬'}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="h-4 w-4"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+                  </label>
+                  <ul
+                    tabIndex={0}
+                    className="menu dropdown-content z-[1] mt-2 w-40 rounded-box bg-base-100 p-2 shadow-lg"
+                  >
+                    {SORT_OPTIONS.map((option) => (
+                      <li key={option.id}>
+                        <button
+                          type="button"
+                          className={selectedSort === option.value ? 'active' : ''}
+                          onClick={() => setSelectedSort(option.value)}
+                        >
+                          {option.label}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
 
           {isLoading ? (
             <ProductsLoadingSkeleton count={PAGE_SIZE} />
@@ -236,9 +418,23 @@ export default function ProductsPage() {
               </div>
             </>
           )}
+            </div>
+          </div>
         </section>
       </main>
       <Footer />
+
+      {/* Add to Cart Modal */}
+      <AddToCartModal
+        isOpen={isCartModalOpen}
+        onClose={() => {
+          setIsCartModalOpen(false);
+          setSelectedProductForCart(null);
+        }}
+        product={selectedProductForCart}
+        onConfirm={handleCartConfirm}
+        isPending={isAddingToCart}
+      />
     </div>
   );
 }
