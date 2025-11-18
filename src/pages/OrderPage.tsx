@@ -15,7 +15,7 @@ import {
   useUpdateCartItem,
 } from '@/hooks/queries/useCartQueries';
 import { useCreateOrder } from '@/hooks/queries/useOrdersQueries';
-import { useAddresses } from '@/hooks/queries/useAddressQueries';
+import { useAddresses, useAddAddress } from '@/hooks/queries/useAddressQueries';
 import { useAuthStore } from '@/stores/useAuthStore';
 import type { CartItem } from '@/schemas/cart';
 import type { Address } from '@/schemas/address';
@@ -122,6 +122,9 @@ export default function OrderPage() {
     error: addressesError,
   } = useAddresses();
 
+  // Add new address mutation
+  const { mutate: addAddress, isPending: isAddingAddress } = useAddAddress();
+
   // Transform API addresses to SavedAddress format
   const savedAddresses = useMemo<SavedAddress[]>(() => {
     if (addressesData?.addresses && addressesData.addresses.length > 0) {
@@ -149,31 +152,63 @@ export default function OrderPage() {
   }, [addressesData?.addresses, user?.name, user?.phone]);
 
   const defaultAddress = savedAddresses[0];
-  const [selectedAddressId, setSelectedAddressId] = useState<string>(
-    defaultAddress?.id ?? 'manual'
-  );
+  const [selectedAddressId, setSelectedAddressId] = useState<string>('manual');
+  const [hasAutoSelected, setHasAutoSelected] = useState(false);
 
   const [shippingForm, setShippingForm] = useState<ShippingFormState>({
-    recipient: defaultAddress?.recipient ?? user?.name ?? '',
-    phone: defaultAddress?.phone ?? user?.phone ?? '',
-    postalCode: defaultAddress?.postalCode ?? '',
-    address1: defaultAddress?.address1 ?? '',
-    address2: defaultAddress?.address2 ?? '',
+    recipient: user?.name ?? '',
+    phone: user?.phone ?? '',
+    postalCode: '',
+    address1: '',
+    address2: '',
     saveAsDefault: false,
   });
 
+  // Auto-select first address when addresses are loaded (only once)
   useEffect(() => {
-    if (!selectedAddressId || selectedAddressId === 'manual') return;
+    if (savedAddresses.length > 0 && selectedAddressId === 'manual' && !hasAutoSelected) {
+      const firstAddress = savedAddresses[0];
+      setSelectedAddressId(firstAddress.id);
+      setShippingForm({
+        recipient: firstAddress.recipient,
+        phone: firstAddress.phone,
+        postalCode: firstAddress.postalCode,
+        address1: firstAddress.address1,
+        address2: firstAddress.address2,
+        saveAsDefault: false,
+      });
+      setHasAutoSelected(true);
+    }
+  }, [savedAddresses, selectedAddressId, hasAutoSelected]);
+
+  // Update form when selected address changes
+  useEffect(() => {
+    if (!selectedAddressId) return;
+
+    if (selectedAddressId === 'manual') {
+      // 새 배송지 입력 모드: 빈 폼으로 초기화
+      setShippingForm({
+        recipient: '',
+        phone: '',
+        postalCode: '',
+        address1: '',
+        address2: '',
+        saveAsDefault: false,
+      });
+      return;
+    }
+
+    // 저장된 배송지 선택: 해당 주소 정보로 채우기
     const matched = savedAddresses.find((address) => address.id === selectedAddressId);
     if (matched) {
-      setShippingForm((prev) => ({
-        ...prev,
+      setShippingForm({
         recipient: matched.recipient,
         phone: matched.phone,
         postalCode: matched.postalCode,
         address1: matched.address1,
         address2: matched.address2,
-      }));
+        saveAsDefault: false,
+      });
     }
   }, [savedAddresses, selectedAddressId]);
 
@@ -422,6 +457,37 @@ export default function OrderPage() {
       });
     });
     setMarkedItems({});
+  };
+
+  const handleAddNewAddress = () => {
+    setSubmitError(null);
+    const isValid = validateForm();
+    if (!isValid) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    // Add new address via API
+    addAddress(
+      {
+        name: shippingForm.recipient, // 수령인 이름을 배송지 이름으로 사용
+        recipient: shippingForm.recipient,
+        phone: shippingForm.phone,
+        zip_code: shippingForm.postalCode,
+        address: shippingForm.address1,
+        detail_address: shippingForm.address2,
+        is_default: shippingForm.saveAsDefault,
+      },
+      {
+        onSuccess: () => {
+          alert('새 배송지가 추가되었습니다.');
+          // 자동으로 새로 추가된 배송지가 선택되도록 처리 (리페치 후 첫 번째 항목)
+        },
+        onError: (error) => {
+          setSubmitError(`배송지 추가 실패: ${error.message}`);
+        },
+      }
+    );
   };
 
   const handleProceedToPayment = () => {
@@ -915,28 +981,13 @@ export default function OrderPage() {
                   </div>
                 </div>
 
-                {/* 저장된 배송지가 없을 때 */}
-                {(!addressesData?.addresses || addressesData.addresses.length === 0) && (
-                  <div className="mb-4 rounded-2xl border border-dashed border-primary/30 bg-primary/5 p-4">
-                    <div className="flex items-start gap-3">
-                      <Info className="h-5 w-5 text-primary mt-0.5" />
-                      <div>
-                        <p className="font-semibold text-base-content">저장된 배송지가 없습니다</p>
-                        <p className="text-sm text-base-content/70 mt-1">
-                          아래 양식을 작성하여 새로운 배송지를 입력해주세요.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 저장된 배송지가 있을 때만 선택 UI 표시 */}
-                {addressesData?.addresses && addressesData.addresses.length > 0 && (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <label className="form-control">
+                {/* 저장된 배송지 선택 드롭다운 (있을 경우) */}
+                {savedAddresses.length > 0 && (
+                  <div className="mb-4">
+                    <label className="form-control w-full">
                       <span className="label-text text-sm text-base-content">저장된 배송지</span>
                       <select
-                        className="select select-bordered"
+                        className="select select-bordered w-full"
                         value={selectedAddressId}
                         onChange={(event) => setSelectedAddressId(event.target.value)}
                       >
@@ -945,134 +996,120 @@ export default function OrderPage() {
                             {address.label}
                           </option>
                         ))}
-                        <option value="manual">직접 입력하기</option>
+                        <option value="manual">새 배송지로 입력하기</option>
                       </select>
                     </label>
-                    <div className="flex items-end">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="w-full"
-                        onClick={() => {
-                          setSelectedAddressId('manual');
-                          setShippingForm({
-                            recipient: '',
-                            phone: '',
-                            postalCode: '',
-                            address1: '',
-                            address2: '',
-                            saveAsDefault: false,
-                          });
-                        }}
-                      >
-                        새 배송지 추가
-                      </Button>
-                    </div>
                   </div>
                 )}
 
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  <label className="form-control">
-                    <span className="label-text text-sm text-base-content">수령인</span>
-                    <input
-                      type="text"
-                      name="recipient"
-                      className={`input input-bordered ${formErrors.recipient ? 'input-error' : ''}`}
-                      placeholder="홍길동"
-                      value={shippingForm.recipient}
-                      onChange={handleShippingInputChange}
-                      onBlur={handleFieldBlur}
-                      aria-describedby="recipient-error"
-                    />
-                    {formErrors.recipient && (
-                      <span id="recipient-error" className="label-text-alt text-error">
-                        {formErrors.recipient}
-                      </span>
-                    )}
-                  </label>
-                  <label className="form-control">
-                    <span className="label-text text-sm text-base-content">연락처</span>
-                    <input
-                      type="tel"
-                      name="phone"
-                      className={`input input-bordered ${formErrors.phone ? 'input-error' : ''}`}
-                      placeholder="010-1234-5678"
-                      value={shippingForm.phone}
-                      onChange={handleShippingInputChange}
-                      onBlur={handleFieldBlur}
-                      aria-describedby="phone-error"
-                    />
-                    {formErrors.phone && (
-                      <span id="phone-error" className="label-text-alt text-error">
-                        {formErrors.phone}
-                      </span>
-                    )}
-                  </label>
-                </div>
-
-                <div className="mt-4 grid gap-4 md:grid-cols-[180px_auto]">
-                  <label className="form-control">
-                    <span className="label-text text-sm text-base-content">우편번호</span>
-                    <input
-                      type="text"
-                      name="postalCode"
-                      className={`input input-bordered ${formErrors.postalCode ? 'input-error' : ''}`}
-                      placeholder="00000"
-                      value={shippingForm.postalCode}
-                      onChange={handleShippingInputChange}
-                      onBlur={handleFieldBlur}
-                      aria-describedby="postal-error"
-                    />
-                    {formErrors.postalCode && (
-                      <span id="postal-error" className="label-text-alt text-error">
-                        {formErrors.postalCode}
-                      </span>
-                    )}
-                  </label>
-                  <div className="flex items-end">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => {
-                        alert('우편번호 검색 서비스는 추후 연동 예정입니다.');
-                      }}
-                    >
-                      우편번호 검색
-                    </Button>
+                {/* 입력 폼은 항상 표시 */}
+                <>
+                  {/* 수령인 / 연락처 - 1:1 비율 */}
+                  <div className="mt-4 grid grid-cols-2 gap-4">
+                    <label className="form-control">
+                      <span className="label-text text-sm text-base-content">수령인</span>
+                      <input
+                        type="text"
+                        name="recipient"
+                        className={`input input-bordered ${formErrors.recipient ? 'input-error' : ''}`}
+                        placeholder="홍길동"
+                        value={shippingForm.recipient}
+                        onChange={handleShippingInputChange}
+                        onBlur={handleFieldBlur}
+                        aria-describedby="recipient-error"
+                      />
+                      {formErrors.recipient && (
+                        <span id="recipient-error" className="label-text-alt text-error">
+                          {formErrors.recipient}
+                        </span>
+                      )}
+                    </label>
+                    <label className="form-control">
+                      <span className="label-text text-sm text-base-content">연락처</span>
+                      <input
+                        type="tel"
+                        name="phone"
+                        className={`input input-bordered ${formErrors.phone ? 'input-error' : ''}`}
+                        placeholder="010-1234-5678"
+                        value={shippingForm.phone}
+                        onChange={handleShippingInputChange}
+                        onBlur={handleFieldBlur}
+                        aria-describedby="phone-error"
+                      />
+                      {formErrors.phone && (
+                        <span id="phone-error" className="label-text-alt text-error">
+                          {formErrors.phone}
+                        </span>
+                      )}
+                    </label>
                   </div>
-                </div>
 
-                <label className="form-control mt-4">
-                  <span className="label-text text-sm text-base-content">도로명 주소</span>
-                  <input
-                    type="text"
-                    name="address1"
-                    className={`input input-bordered ${formErrors.address1 ? 'input-error' : ''}`}
-                    placeholder="도로명 주소"
-                    value={shippingForm.address1}
-                    onChange={handleShippingInputChange}
-                    onBlur={handleFieldBlur}
-                    aria-describedby="address1-error"
-                  />
-                  {formErrors.address1 && (
-                    <span id="address1-error" className="label-text-alt text-error">
-                      {formErrors.address1}
-                    </span>
-                  )}
-                </label>
+                  {/* 우편번호 + 검색버튼 */}
+                  <div className="mt-4">
+                    <label className="form-control w-full">
+                      <span className="label-text text-sm text-base-content">우편번호</span>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          name="postalCode"
+                          className={`input input-bordered flex-1 ${formErrors.postalCode ? 'input-error' : ''}`}
+                          placeholder="00000"
+                          value={shippingForm.postalCode}
+                          onChange={handleShippingInputChange}
+                          onBlur={handleFieldBlur}
+                          aria-describedby="postal-error"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="shrink-0"
+                          onClick={() => {
+                            alert('우편번호 검색 서비스는 추후 연동 예정입니다.');
+                          }}
+                        >
+                          우편번호 검색
+                        </Button>
+                      </div>
+                      {formErrors.postalCode && (
+                        <span id="postal-error" className="label-text-alt text-error">
+                          {formErrors.postalCode}
+                        </span>
+                      )}
+                    </label>
+                  </div>
 
-                <label className="form-control mt-4">
-                  <span className="label-text text-sm text-base-content">상세 주소</span>
-                  <input
-                    type="text"
-                    name="address2"
-                    className="input input-bordered"
-                    placeholder="동/호수, 배송 참고사항"
-                    value={shippingForm.address2}
-                    onChange={handleShippingInputChange}
-                  />
-                </label>
+                  {/* 도로명 주소 / 상세 주소 - 1:1 비율 */}
+                  <div className="mt-4 grid grid-cols-2 gap-4">
+                    <label className="form-control">
+                      <span className="label-text text-sm text-base-content">도로명 주소</span>
+                      <input
+                        type="text"
+                        name="address1"
+                        className={`input input-bordered ${formErrors.address1 ? 'input-error' : ''}`}
+                        placeholder="도로명 주소"
+                        value={shippingForm.address1}
+                        onChange={handleShippingInputChange}
+                        onBlur={handleFieldBlur}
+                        aria-describedby="address1-error"
+                      />
+                      {formErrors.address1 && (
+                        <span id="address1-error" className="label-text-alt text-error">
+                          {formErrors.address1}
+                        </span>
+                      )}
+                    </label>
+                    <label className="form-control">
+                      <span className="label-text text-sm text-base-content">상세 주소</span>
+                      <input
+                        type="text"
+                        name="address2"
+                        className="input input-bordered"
+                        placeholder="동/호수, 배송 참고사항"
+                        value={shippingForm.address2}
+                        onChange={handleShippingInputChange}
+                      />
+                    </label>
+                  </div>
 
                 <label className="mt-4 flex items-center gap-2 text-sm text-base-content/80">
                   <input
@@ -1084,6 +1121,21 @@ export default function OrderPage() {
                   />
                   기본 배송지로 저장
                 </label>
+
+                {/* 새 배송지 추가 버튼 (새 배송지 입력 모드일 때만) */}
+                {selectedAddressId === 'manual' && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="mt-4 w-full"
+                    onClick={handleAddNewAddress}
+                    disabled={isAddingAddress}
+                    loading={isAddingAddress}
+                  >
+                    새 배송지 추가
+                  </Button>
+                )}
+                </>
                 </section>
               )}
 

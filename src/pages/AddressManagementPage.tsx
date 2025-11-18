@@ -173,23 +173,25 @@ export default function AddressManagementPage() {
             /* Address List */
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {addresses.map((address) => (
-                <div
-                  key={address.id}
-                  className={`card bg-base-200 shadow-sm ${
-                    address.is_default ? 'ring-2 ring-primary' : ''
-                  }`}
-                >
-                  <div className="card-body">
-                    {/* Badge for default address */}
-                    {address.is_default && (
-                      <div className="badge badge-primary gap-1 mb-2">
+                <div key={address.id} className="relative">
+                  {/* Badge for default address - outside card */}
+                  {address.is_default && (
+                    <div className="absolute -top-2 left-4 z-10">
+                      <div className="badge badge-primary gap-1 shadow-md">
                         <Star size={12} fill="currentColor" />
                         기본 배송지
                       </div>
-                    )}
+                    </div>
+                  )}
 
-                    {/* Address Name */}
-                    <h3 className="card-title text-lg">{address.name}</h3>
+                  <div
+                    className={`card bg-base-200 shadow-sm ${
+                      address.is_default ? 'ring-2 ring-primary' : ''
+                    }`}
+                  >
+                    <div className="card-body">
+                      {/* Address Name */}
+                      <h3 className="card-title text-lg">{address.name}</h3>
 
                     {/* Address Details */}
                     <div className="space-y-1 text-sm text-base-content/70">
@@ -232,6 +234,7 @@ export default function AddressManagementPage() {
                       </button>
                     </div>
                   </div>
+                </div>
                 </div>
               ))}
             </div>
