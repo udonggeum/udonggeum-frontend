@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   ChevronDown,
   ChevronUp,
@@ -490,8 +490,17 @@ export default function ProductDetailPage() {
                     </div>
                     <div className="flex flex-wrap items-center gap-3 text-sm text-base-content/70">
                       <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4 text-primary" />
-                        <span>{uiProduct?.storeLocation ?? '지역 정보 없음'}</span>
+                        <StoreIcon className="h-4 w-4 text-primary" />
+                        {productDetail.store?.id ? (
+                          <Link
+                            to={`/stores/${productDetail.store.id}`}
+                            className="link link-primary hover:link-hover"
+                          >
+                            {productDetail.store.name}
+                          </Link>
+                        ) : (
+                          <span>매장 정보 없음</span>
+                        )}
                       </div>
                       <span className="h-1 w-1 rounded-full bg-base-content/40" />
                       <span>재고 {productDetail.stock_quantity ?? 0}개</span>
@@ -603,46 +612,55 @@ export default function ProductDetailPage() {
                   {isStoreInfoOpen && (
                     <div
                       id="product-store-info"
-                      className="mt-4 grid gap-3 sm:grid-cols-2"
+                      className="mt-4 space-y-4"
                     >
-                      <div className="flex items-start gap-3 rounded-2xl bg-base-200/60 px-4 py-3">
-                        <div className="rounded-full bg-primary/10 p-2 text-primary">
-                          <StoreIcon className="h-4 w-4" />
-                        </div>
-                        <div className="text-sm">
-                          <p className="font-semibold text-base-content">매장명</p>
-                          <p className="text-base-content/70">
-                            {productDetail.store?.name ?? '정보 없음'}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3 rounded-2xl bg-base-200/60 px-4 py-3">
-                        <div className="rounded-full bg-primary/10 p-2 text-primary">
-                          <MapPin className="h-4 w-4" />
-                        </div>
-                        <div className="text-sm">
-                          <p className="font-semibold text-base-content">위치</p>
-                          <p className="text-base-content/70">
-                            {uiProduct?.storeLocation ?? '지역 정보 없음'}
-                          </p>
-                        </div>
-                      </div>
-                      {productDetail.store?.phone_number && (
-                        <div className="flex items-start gap-3 rounded-2xl bg-base-200/60 px-4 py-3 sm:col-span-2">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="flex items-start gap-3 rounded-2xl bg-base-200/60 px-4 py-3">
                           <div className="rounded-full bg-primary/10 p-2 text-primary">
-                            <Phone className="h-4 w-4" />
+                            <StoreIcon className="h-4 w-4" />
                           </div>
                           <div className="text-sm">
-                            <p className="font-semibold text-base-content">연락처</p>
-                            <a
-                              href={`tel:${productDetail.store.phone_number}`}
-                              className="link link-primary text-base-content"
-                            >
-                              {productDetail.store.phone_number}
-                            </a>
+                            <p className="font-semibold text-base-content">매장명</p>
+                            {productDetail.store?.id ? (
+                              <Link
+                                to={`/stores/${productDetail.store.id}`}
+                                className="link link-primary text-base font-medium hover:link-hover"
+                              >
+                                {productDetail.store.name}
+                              </Link>
+                            ) : (
+                              <p className="text-base-content/70">정보 없음</p>
+                            )}
                           </div>
                         </div>
-                      )}
+                        <div className="flex items-start gap-3 rounded-2xl bg-base-200/60 px-4 py-3">
+                          <div className="rounded-full bg-primary/10 p-2 text-primary">
+                            <MapPin className="h-4 w-4" />
+                          </div>
+                          <div className="text-sm">
+                            <p className="font-semibold text-base-content">위치</p>
+                            <p className="text-base-content/70">
+                              {uiProduct?.storeLocation ?? '지역 정보 없음'}
+                            </p>
+                          </div>
+                        </div>
+                        {productDetail.store?.phone_number && (
+                          <div className="flex items-start gap-3 rounded-2xl bg-base-200/60 px-4 py-3 sm:col-span-2">
+                            <div className="rounded-full bg-primary/10 p-2 text-primary">
+                              <Phone className="h-4 w-4" />
+                            </div>
+                            <div className="text-sm">
+                              <p className="font-semibold text-base-content">연락처</p>
+                              <a
+                                href={`tel:${productDetail.store.phone_number}`}
+                                className="link link-primary text-base-content"
+                              >
+                                {productDetail.store.phone_number}
+                              </a>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </section>
