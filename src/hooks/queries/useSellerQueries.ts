@@ -219,21 +219,21 @@ export function useDeleteProduct() {
 }
 
 /**
- * useSellerOrders query
- * Fetches seller's orders
- * Only enabled when user is authenticated as admin
+ * useStoreOrders query
+ * Fetches specific store's orders
+ * Only enabled when user is authenticated as admin and storeId is provided
  *
  * @example
- * const { data: orders, isLoading } = useSellerOrders();
+ * const { data: orders, isLoading } = useStoreOrders(storeId);
  */
-export function useSellerOrders() {
+export function useStoreOrders(storeId?: number) {
   const user = useAuthStore((state) => state.user);
   const isAdmin = user?.role === 'admin';
 
   return useQuery({
-    queryKey: sellerKeys.orders(),
-    queryFn: () => sellerService.getOrders(),
-    enabled: isAdmin,
+    queryKey: [...sellerKeys.orders(), storeId] as const,
+    queryFn: () => sellerService.getStoreOrders(storeId!),
+    enabled: isAdmin && !!storeId,
     staleTime: 1000 * 60, // 1 minute (orders change frequently)
   });
 }

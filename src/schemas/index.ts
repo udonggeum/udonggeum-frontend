@@ -20,3 +20,6 @@ export * from './address';
 
 // Seller schemas
 export * from './seller';
+
+// Image schemas
+export * from './image';

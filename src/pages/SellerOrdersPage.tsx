@@ -5,13 +5,15 @@
 
 import { useState } from 'react';
 import { ShoppingBag, Package } from 'lucide-react';
-import { useSellerOrders, useUpdateOrderStatus } from '@/hooks/queries';
+import { useSellerStores, useStoreOrders, useUpdateOrderStatus } from '@/hooks/queries';
 import { LoadingSpinner, ErrorAlert, OrderStatusBadge, PaymentStatusBadge } from '@/components';
 import type { Order } from '@/schemas';
 import type { UpdateOrderStatusRequest } from '@/schemas/seller';
 
 export default function SellerOrdersPage() {
-  const { data: orders, isLoading, isError, error } = useSellerOrders();
+  const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>();
+  const { data: stores, isLoading: isLoadingStores } = useSellerStores();
+  const { data: orders, isLoading, isError, error } = useStoreOrders(selectedStoreId);
   const { mutate: updateOrderStatus, isPending: isUpdating } = useUpdateOrderStatus();
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -19,7 +21,7 @@ export default function SellerOrdersPage() {
 
   const openStatusModal = (order: Order) => {
     setSelectedOrder(order);
-    setNewStatus(order.status);
+    setNewStatus(order.status || 'pending');
   };
 
   const closeStatusModal = () => {
@@ -44,18 +46,10 @@ export default function SellerOrdersPage() {
     );
   };
 
-  if (isLoading) {
+  if (isLoadingStores) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
         <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <ErrorAlert error={error} />
       </div>
     );
   }
@@ -73,8 +67,45 @@ export default function SellerOrdersPage() {
         </p>
       </div>
 
+      {/* Store Selection */}
+      {!stores || stores.length === 0 ? (
+        <div className="alert alert-warning mb-8">
+          <span>먼저 가게를 추가해주세요. 가게가 있어야 주문을 확인할 수 있습니다.</span>
+        </div>
+      ) : (
+        <div className="mb-8">
+          <label htmlFor="store-select-orders" className="label">
+            <span className="label-text font-semibold">가게 선택</span>
+          </label>
+          <select
+            id="store-select-orders"
+            value={selectedStoreId || ''}
+            onChange={(e) => setSelectedStoreId(Number(e.target.value) || undefined)}
+            className="select select-bordered w-full max-w-xs"
+          >
+            <option value="">가게를 선택하세요</option>
+            {stores.map((store) => (
+              <option key={store.id} value={store.id}>
+                {store.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Loading/Error States */}
+      {isLoading && selectedStoreId && (
+        <div className="flex justify-center items-center min-h-[200px]">
+          <LoadingSpinner />
+        </div>
+      )}
+
+      {isError && selectedStoreId && (
+        <ErrorAlert error={error} message="주문 목록을 불러오는 중 오류가 발생했습니다" />
+      )}
+
       {/* Orders List */}
-      {!orders || orders.length === 0 ? (
+      {selectedStoreId && !isLoading && !isError && (!orders || orders.length === 0) ? (
         <div className="card bg-base-100 shadow-md">
           <div className="card-body text-center">
             <ShoppingBag className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
@@ -84,7 +115,7 @@ export default function SellerOrdersPage() {
             </p>
           </div>
         </div>
-      ) : (
+      ) : selectedStoreId && orders && orders.length > 0 ? (
         <div className="space-y-4">
           {orders.map((order) => (
             <div key={order.id} className="card bg-base-100 shadow-md">
@@ -163,7 +194,7 @@ export default function SellerOrdersPage() {
             </div>
           ))}
         </div>
-      )}
+      ) : null}
 
       {/* Status Update Modal */}
       {selectedOrder && (

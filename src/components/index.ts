@@ -40,3 +40,6 @@ export { default as ProductCarousel } from './ProductCarousel';
 
 // Address Components
 export { default as AddressFormModal } from './AddressFormModal';
+
+// Image Components
+export { default as ImageUploadWithOptimization } from './ImageUploadWithOptimization';
