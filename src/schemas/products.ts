@@ -14,6 +14,10 @@ export const StoreSchema = z.object({
   district: z.string().optional(),
   address: z.string().optional().nullable(),
   phone_number: z.string().optional().nullable(),
+  image_url: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  open_time: z.string().optional().nullable(),
+  close_time: z.string().optional().nullable(),
 });
 
 export type Store = z.infer<typeof StoreSchema>;

@@ -10,7 +10,6 @@ import {
   ShoppingBag,
   DollarSign,
   Store,
-  Star,
 } from 'lucide-react';
 import { useDashboardStats } from '@/hooks/queries';
 import { LoadingSpinner, ErrorAlert } from '@/components';
@@ -75,28 +74,46 @@ export default function SellerDashboardPage() {
     },
   ];
 
-  // Optional stats
-  const optionalStats = [];
-  if (stats.total_stores !== undefined) {
-    optionalStats.push({
-      title: '가게 수',
-      value: stats.total_stores,
-      icon: Store,
+  // Additional stats from backend
+  const additionalStats = [
+    {
+      title: '확정된 주문',
+      value: stats.confirmed_orders,
+      icon: ShoppingBag,
       color: 'text-indigo-600',
       bgColor: 'bg-indigo-100',
-    });
-  }
-  if (stats.average_rating !== undefined) {
-    optionalStats.push({
-      title: '평균 평점',
-      value: stats.average_rating.toFixed(1),
-      icon: Star,
+    },
+    {
+      title: '배송 중',
+      value: stats.shipping_orders,
+      icon: Package,
       color: 'text-orange-600',
       bgColor: 'bg-orange-100',
-    });
-  }
+    },
+    {
+      title: '배송 완료',
+      value: stats.delivered_orders,
+      icon: ShoppingBag,
+      color: 'text-teal-600',
+      bgColor: 'bg-teal-100',
+    },
+    {
+      title: '취소된 주문',
+      value: stats.cancelled_orders,
+      icon: ShoppingBag,
+      color: 'text-red-600',
+      bgColor: 'bg-red-100',
+    },
+    {
+      title: '재고 부족 상품',
+      value: stats.low_stock_products,
+      icon: Package,
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-100',
+    },
+  ];
 
-  const allStats = [...statCards, ...optionalStats];
+  const allStats = [...statCards, ...additionalStats];
 
   return (
     <div className="container mx-auto px-4 py-8">
