@@ -124,7 +124,7 @@ export default function OrderCard({ order, onViewDetail }: OrderCardProps) {
           <button
             type="button"
             onClick={() => onViewDetail?.(order.id)}
-            className="btn btn-sm btn-primary btn-outline"
+            className="btn btn-sm bg-[var(--color-gold)] hover:bg-[var(--color-gold)]/80 text-[var(--color-primary)] border-[var(--color-gold)] font-semibold"
           >
             상세 보기
           </button>

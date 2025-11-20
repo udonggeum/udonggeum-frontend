@@ -67,7 +67,7 @@ export default function PasswordInput({
           required={required}
           disabled={disabled}
           autoComplete={autoComplete}
-          className={`input input-bordered w-full pr-10 bg-[var(--color-primary)] text-[var(--color-text)] ${
+          className={`input input-bordered w-full pr-10 bg-[var(--color-primary)] text-[var(--color-text)] placeholder:text-[var(--color-text)]/40 focus:border-[var(--color-gold)] focus:outline-none [&:-webkit-autofill]:bg-[var(--color-primary)] [&:-webkit-autofill]:text-[var(--color-text)] [&:-webkit-autofill]:shadow-[0_0_0px_1000px_var(--color-primary)_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:var(--color-text)] ${
             error ? 'border-red-400' : 'border-[var(--color-text)]/20'
           }`}
         />

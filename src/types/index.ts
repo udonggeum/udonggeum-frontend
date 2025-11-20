@@ -130,6 +130,12 @@ export interface Product {
    * Human-readable store location (e.g., "서울 강남구")
    */
   storeLocation?: string;
+
+  /**
+   * Available stock quantity
+   * @example 10
+   */
+  stockQuantity?: number;
 }
 
 /**

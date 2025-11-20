@@ -7,6 +7,7 @@ import {
   LoadingSpinner,
   ErrorAlert,
   FallbackImage,
+  QuantitySelector,
 } from '@/components';
 import { NAV_ITEMS } from '@/constants/navigation';
 import {
@@ -255,6 +256,11 @@ export default function OrderPage() {
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Auto-dismissible alerts
+  const [showDirectPurchaseAlert, setShowDirectPurchaseAlert] = useState(true);
+  const [showNoSelectionAlert, setShowNoSelectionAlert] = useState(true);
+  const [showLowStockAlert, setShowLowStockAlert] = useState(true);
+
   const itemsSubtotal = useMemo(() => {
     return orderItems.reduce((sum, item) => {
       const optionExtra = item.product_option?.additional_price ?? 0;
@@ -294,6 +300,34 @@ export default function OrderPage() {
     () => Object.values(markedItems).filter(Boolean).length,
     [markedItems]
   );
+
+  // Auto-dismiss alerts after delay
+  useEffect(() => {
+    if (directPurchase && showDirectPurchaseAlert) {
+      const timer = setTimeout(() => {
+        setShowDirectPurchaseAlert(false);
+      }, 5000); // 5초 후 사라짐
+      return () => clearTimeout(timer);
+    }
+  }, [directPurchase, showDirectPurchaseAlert]);
+
+  useEffect(() => {
+    if (!directPurchase && !selectedItemIds?.length && showNoSelectionAlert) {
+      const timer = setTimeout(() => {
+        setShowNoSelectionAlert(false);
+      }, 5000); // 5초 후 사라짐
+      return () => clearTimeout(timer);
+    }
+  }, [directPurchase, selectedItemIds, showNoSelectionAlert]);
+
+  useEffect(() => {
+    if (lowStockItems.length > 0 && showLowStockAlert) {
+      const timer = setTimeout(() => {
+        setShowLowStockAlert(false);
+      }, 7000); // 7초 후 사라짐
+      return () => clearTimeout(timer);
+    }
+  }, [lowStockItems.length, showLowStockAlert]);
 
   const missingSelectionCount = selectedItemIds
     ? selectedItemIds.length - filteredCartSelection.length
@@ -504,34 +538,40 @@ export default function OrderPage() {
 
     const inferredPickupStoreId = pickupStoreInfos[0]?.id;
 
+    // 주문할 상품 목록 생성
+    const items = orderItems.map((item) => ({
+      product_id: item.product.id,
+      quantity: item.quantity,
+      product_option_id: item.product_option?.id,
+    }));
+
     const payload =
       fulfillmentType === 'delivery'
         ? {
+            items,
             fulfillment_type: 'delivery' as const,
             shipping_address: `${shippingForm.recipient} | ${shippingForm.phone} | ${buildShippingAddress(shippingForm)}`,
           }
         : {
+            items,
             fulfillment_type: 'pickup' as const,
             pickup_store_id: inferredPickupStoreId,
           };
 
-    createOrder(
-      payload,
-      {
-        onSuccess: (response) => {
-          navigate('/cart', {
-            replace: true,
-            state: {
-              orderId: response.order.id,
-              totalDue,
-            },
-          });
-        },
-        onError: (error) => {
-          setSubmitError(error.message);
-        },
-      }
-    );
+    createOrder(payload, {
+      onSuccess: (response) => {
+        navigate('/cart', {
+          replace: true,
+          state: {
+            orderId: response.order.id,
+            totalDue,
+          },
+        });
+      },
+      onError: (error) => {
+        setSubmitError(error.message);
+      },
+    });
   };
 
   const hasDeliveryAddress = Boolean(
@@ -592,21 +632,23 @@ export default function OrderPage() {
             })}
           </div>
 
-          <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-sm uppercase tracking-wide text-primary">Order</p>
-              <h1 className="mt-1 text-3xl font-bold text-[var(--color-text)]">주문</h1>
-              <p className="text-sm text-[var(--color-text)]/70">
-                선택한 상품 정보를 확인하고 배송 또는 픽업 정보를 입력하세요.
-              </p>
-            </div>
-            <div className="flex items-center gap-3 rounded-2xl bg-[var(--color-primary)] px-4 py-3 text-sm shadow-sm">
-              <Truck className="h-5 w-5 text-primary" />
+          <div className="mb-8 pb-6 border-b border-[var(--color-text)]/10">
+            <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="font-semibold text-[var(--color-text)]">결제 단계 전 확인</p>
-                <p className="text-xs text-[var(--color-text)]/60">
-                  모든 정보가 정확한지 확인 후 결제하기로 이동합니다.
+                <span className="badge badge-outline border-[var(--color-gold)] text-[var(--color-gold)]">Order</span>
+                <h1 className="mt-2 text-3xl font-bold text-[var(--color-text)]">주문</h1>
+                <p className="text-sm text-[var(--color-text)]/70">
+                  선택한 상품 정보를 확인하고 배송 또는 픽업 정보를 입력하세요.
                 </p>
+              </div>
+              <div className="flex items-center gap-3 rounded-xl border border-[var(--color-text)]/10 px-4 py-3 text-sm">
+                <Truck className="h-5 w-5 text-[var(--color-gold)]" />
+                <div>
+                  <p className="font-semibold text-[var(--color-text)]">결제 단계 전 확인</p>
+                  <p className="text-xs text-[var(--color-text)]/60">
+                    모든 정보가 정확한지 확인 후 결제하기로 이동합니다.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -623,17 +665,33 @@ export default function OrderPage() {
             </div>
           )}
 
-          {!directPurchase && !selectedItemIds?.length && (
+          {!directPurchase && !selectedItemIds?.length && showNoSelectionAlert && (
             <div className="alert alert-info mb-6">
               <Info className="h-5 w-5" />
               <span>장바구니에서 선택한 상품 정보가 없어 전체 상품을 불러왔습니다.</span>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm btn-circle ml-auto"
+                onClick={() => setShowNoSelectionAlert(false)}
+                aria-label="알림 닫기"
+              >
+                ✕
+              </button>
             </div>
           )}
 
-          {directPurchase && (
+          {directPurchase && showDirectPurchaseAlert && (
             <div className="alert alert-success mb-6">
               <Info className="h-5 w-5" />
               <span>바로구매 상품입니다. 배송 정보를 입력하고 결제를 진행하세요.</span>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm btn-circle ml-auto"
+                onClick={() => setShowDirectPurchaseAlert(false)}
+                aria-label="알림 닫기"
+              >
+                ✕
+              </button>
             </div>
           )}
 
@@ -647,13 +705,21 @@ export default function OrderPage() {
             </div>
           )}
 
-          {lowStockItems.length > 0 && (
+          {lowStockItems.length > 0 && showLowStockAlert && (
             <div className="alert alert-info mb-6">
               <Package className="h-5 w-5" />
               <span>
                 {lowStockItems.map((item) => item.product.name).join(', ')} 상품의 재고가 얼마 남지
                 않았습니다.
               </span>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm btn-circle ml-auto"
+                onClick={() => setShowLowStockAlert(false)}
+                aria-label="알림 닫기"
+              >
+                ✕
+              </button>
             </div>
           )}
 
@@ -692,9 +758,9 @@ export default function OrderPage() {
             </div>
           )}
 
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
-            <div className="space-y-6">
-              <section className="rounded-3xl border border-base-200 bg-[var(--color-primary)] p-6 shadow-sm">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+            <div className="space-y-8">
+              <section className="pb-8 border-b border-[var(--color-text)]/10">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-sm text-[var(--color-text)]/60">주문 상품</p>
@@ -745,8 +811,8 @@ export default function OrderPage() {
                 </div>
 
                 {orderItems.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-base-300 bg-[var(--color-secondary)]/50 p-10 text-center">
-                    <ShoppingBag className="mx-auto h-12 w-12 text-[var(--color-text)]/40" />
+                  <div className="rounded-xl border border-dashed border-[var(--color-text)]/20 p-10 text-center">
+                    <ShoppingBag className="mx-auto h-12 w-12 text-[var(--color-text)]/30" />
                     <p className="mt-4 text-base font-semibold text-[var(--color-text)]">
                       주문할 상품이 없습니다
                     </p>
@@ -774,7 +840,7 @@ export default function OrderPage() {
                       return (
                         <article
                           key={item.id}
-                          className="rounded-3xl border border-base-200 bg-base-50 p-4 shadow-sm"
+                          className="rounded-xl border border-[var(--color-text)]/10 p-4"
                         >
                           <div className="flex flex-col gap-4 md:flex-row md:items-start">
                             <div className="flex items-start gap-3">
@@ -829,33 +895,13 @@ export default function OrderPage() {
                               </div>
 
                               <div className="flex flex-wrap items-center gap-3">
-                                <div className="join rounded-full border border-base-200 bg-[var(--color-primary)]">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="join-item"
-                                    onClick={() =>
-                                      handleQuantityChange(item.id, item.quantity - 1)
-                                    }
-                                    disabled={item.quantity <= 1 || isUpdatingCart}
-                                  >
-                                    -
-                                  </Button>
-                                  <span className="join-item px-4 text-sm font-semibold">
-                                    {item.quantity}
-                                  </span>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="join-item"
-                                    onClick={() =>
-                                      handleQuantityChange(item.id, item.quantity + 1)
-                                    }
-                                    disabled={isUpdatingCart}
-                                  >
-                                    +
-                                  </Button>
-                                </div>
+                                <QuantitySelector
+                                  quantity={item.quantity}
+                                  onDecrease={() => handleQuantityChange(item.id, item.quantity - 1)}
+                                  onIncrease={() => handleQuantityChange(item.id, item.quantity + 1)}
+                                  disabled={isUpdatingCart}
+                                  showInput={false}
+                                />
                                 {!directPurchase && (
                                   <Button
                                     variant="ghost"
@@ -898,9 +944,9 @@ export default function OrderPage() {
 
               </section>
 
-              <section className="rounded-3xl border border-base-200 bg-[var(--color-primary)] p-6 shadow-sm">
+              <section className="pb-8 border-b border-[var(--color-text)]/10">
                 <div className="mb-4 flex items-center gap-2">
-                  <Truck className="h-5 w-5 text-primary" />
+                  <Truck className="h-5 w-5 text-[var(--color-gold)]" />
                   <div>
                     <p className="text-sm text-[var(--color-text)]/60">수령 방법</p>
                     <h2 className="text-lg font-semibold text-[var(--color-text)]">배송 또는 픽업 선택</h2>
@@ -910,22 +956,22 @@ export default function OrderPage() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <button
                     type="button"
-                    className={`flex items-start gap-3 rounded-2xl border p-4 text-left transition ${
+                    className={`flex items-start gap-3 rounded-xl border p-4 text-left transition ${
                       fulfillmentType === 'delivery'
-                        ? 'border-primary bg-primary/5 shadow-sm'
-                        : 'border-base-200 hover:border-base-300'
+                        ? 'border-[var(--color-gold)] bg-[var(--color-gold)]/5'
+                        : 'border-[var(--color-text)]/10 hover:border-[var(--color-text)]/20'
                     }`}
                     onClick={() => setFulfillmentType('delivery')}
                     aria-pressed={fulfillmentType === 'delivery'}
                   >
-                    <span className="rounded-full bg-primary/10 p-3 text-primary">
+                    <span className="rounded-full bg-[var(--color-gold)]/10 p-3 text-[var(--color-gold)]">
                       <Truck className="h-5 w-5" />
                     </span>
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-semibold text-[var(--color-text)]">배송 받기</p>
                         {fulfillmentType === 'delivery' && (
-                          <span className="badge badge-primary badge-outline badge-sm">선택됨</span>
+                          <span className="badge badge-outline border-[var(--color-gold)] text-[var(--color-gold)] badge-sm">선택됨</span>
                         )}
                       </div>
                       <p className="text-sm text-[var(--color-text)]/70">
@@ -939,22 +985,22 @@ export default function OrderPage() {
 
                   <button
                     type="button"
-                    className={`flex items-start gap-3 rounded-2xl border p-4 text-left transition ${
+                    className={`flex items-start gap-3 rounded-xl border p-4 text-left transition ${
                       fulfillmentType === 'pickup'
-                        ? 'border-primary bg-primary/5 shadow-sm'
-                        : 'border-base-200 hover:border-base-300'
+                        ? 'border-[var(--color-gold)] bg-[var(--color-gold)]/5'
+                        : 'border-[var(--color-text)]/10 hover:border-[var(--color-text)]/20'
                     }`}
                     onClick={() => setFulfillmentType('pickup')}
                     aria-pressed={fulfillmentType === 'pickup'}
                   >
-                    <span className="rounded-full bg-primary/10 p-3 text-primary">
+                    <span className="rounded-full bg-[var(--color-gold)]/10 p-3 text-[var(--color-gold)]">
                       <Package className="h-5 w-5" />
                     </span>
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-semibold text-[var(--color-text)]">매장 픽업</p>
                         {fulfillmentType === 'pickup' && (
-                          <span className="badge badge-primary badge-outline badge-sm">선택됨</span>
+                          <span className="badge badge-outline border-[var(--color-gold)] text-[var(--color-gold)] badge-sm">선택됨</span>
                         )}
                       </div>
                       <p className="text-sm text-[var(--color-text)]/70">
@@ -973,9 +1019,9 @@ export default function OrderPage() {
               </section>
 
               {fulfillmentType === 'delivery' && (
-                <section className="rounded-3xl border border-base-200 bg-[var(--color-primary)] p-6 shadow-sm">
+                <section className="pb-8 border-b border-[var(--color-text)]/10">
                 <div className="mb-4 flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-primary" />
+                  <MapPin className="h-5 w-5 text-[var(--color-gold)]" />
                   <div>
                     <p className="text-sm text-[var(--color-text)]/60">배송지</p>
                     <h2 className="text-lg font-semibold text-[var(--color-text)]">배송지 정보</h2>
@@ -988,7 +1034,7 @@ export default function OrderPage() {
                     <label className="form-control w-full">
                       <span className="label-text text-sm text-[var(--color-text)]">저장된 배송지</span>
                       <select
-                        className="select select-bordered w-full"
+                        className="select w-full bg-[var(--color-text)]/5 border-[var(--color-gold)]/30 focus:border-[var(--color-gold)] text-[var(--color-text)]"
                         value={selectedAddressId}
                         onChange={(event) => setSelectedAddressId(event.target.value)}
                       >
@@ -1012,7 +1058,7 @@ export default function OrderPage() {
                       <input
                         type="text"
                         name="recipient"
-                        className={`input input-bordered ${formErrors.recipient ? 'input-error' : ''}`}
+                        className={`input ${formErrors.recipient ? 'input-error' : 'bg-[var(--color-text)]/5 border-[var(--color-gold)]/30 focus:border-[var(--color-gold)]'} text-[var(--color-text)] placeholder:text-[var(--color-text)]/40`}
                         placeholder="홍길동"
                         value={shippingForm.recipient}
                         onChange={handleShippingInputChange}
@@ -1030,7 +1076,7 @@ export default function OrderPage() {
                       <input
                         type="tel"
                         name="phone"
-                        className={`input input-bordered ${formErrors.phone ? 'input-error' : ''}`}
+                        className={`input ${formErrors.phone ? 'input-error' : 'bg-[var(--color-text)]/5 border-[var(--color-gold)]/30 focus:border-[var(--color-gold)]'} text-[var(--color-text)] placeholder:text-[var(--color-text)]/40`}
                         placeholder="010-1234-5678"
                         value={shippingForm.phone}
                         onChange={handleShippingInputChange}
@@ -1053,7 +1099,7 @@ export default function OrderPage() {
                         <input
                           type="text"
                           name="postalCode"
-                          className={`input input-bordered flex-1 ${formErrors.postalCode ? 'input-error' : ''}`}
+                          className={`input flex-1 ${formErrors.postalCode ? 'input-error' : 'bg-[var(--color-text)]/5 border-[var(--color-gold)]/30 focus:border-[var(--color-gold)]'} text-[var(--color-text)] placeholder:text-[var(--color-text)]/40`}
                           placeholder="00000"
                           value={shippingForm.postalCode}
                           onChange={handleShippingInputChange}
@@ -1086,7 +1132,7 @@ export default function OrderPage() {
                       <input
                         type="text"
                         name="address1"
-                        className={`input input-bordered ${formErrors.address1 ? 'input-error' : ''}`}
+                        className={`input ${formErrors.address1 ? 'input-error' : 'bg-[var(--color-text)]/5 border-[var(--color-gold)]/30 focus:border-[var(--color-gold)]'} text-[var(--color-text)] placeholder:text-[var(--color-text)]/40`}
                         placeholder="도로명 주소"
                         value={shippingForm.address1}
                         onChange={handleShippingInputChange}
@@ -1104,7 +1150,7 @@ export default function OrderPage() {
                       <input
                         type="text"
                         name="address2"
-                        className="input input-bordered"
+                        className="input bg-[var(--color-text)]/5 border-[var(--color-gold)]/30 focus:border-[var(--color-gold)] text-[var(--color-text)] placeholder:text-[var(--color-text)]/40"
                         placeholder="동/호수, 배송 참고사항"
                         value={shippingForm.address2}
                         onChange={handleShippingInputChange}
@@ -1112,11 +1158,11 @@ export default function OrderPage() {
                     </label>
                   </div>
 
-                <label className="mt-4 flex items-center gap-2 text-sm text-[var(--color-text)]/80">
+                <label className="mt-4 flex items-center gap-2 text-sm text-[var(--color-text)]">
                   <input
                     type="checkbox"
                     name="saveAsDefault"
-                    className="checkbox checkbox-primary"
+                    className="checkbox border-[var(--color-gold)]/50 [--chkbg:var(--color-gold)] [--chkfg:var(--color-primary)]"
                     checked={shippingForm.saveAsDefault}
                     onChange={handleShippingInputChange}
                   />
@@ -1141,9 +1187,9 @@ export default function OrderPage() {
               )}
 
               {fulfillmentType === 'pickup' && (
-                <section className="rounded-3xl border border-base-200 bg-[var(--color-primary)] p-6 shadow-sm">
+                <section className="pb-8 border-b border-[var(--color-text)]/10">
                   <div className="mb-4 flex items-center gap-2">
-                    <Package className="h-5 w-5 text-primary" />
+                    <Package className="h-5 w-5 text-[var(--color-gold)]" />
                     <div>
                       <p className="text-sm text-[var(--color-text)]/60">픽업 안내</p>
                       <h2 className="text-lg font-semibold text-[var(--color-text)]">상품별 매장 방문</h2>
@@ -1151,7 +1197,7 @@ export default function OrderPage() {
                   </div>
 
                   {pickupStoreInfos.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-base-300 bg-[var(--color-secondary)]/40 p-4 text-sm text-[var(--color-text)]/70">
+                    <div className="rounded-xl border border-dashed border-[var(--color-text)]/20 p-4 text-sm text-[var(--color-text)]/70">
                       선택한 상품의 픽업 매장을 찾을 수 없습니다. 잠시 후 다시 시도하거나 고객 센터에 문의해주세요.
                     </div>
                   ) : (
@@ -1159,7 +1205,7 @@ export default function OrderPage() {
                       {pickupStoreInfos.map((store) => (
                         <div
                           key={store.id ?? store.name}
-                          className="rounded-2xl border border-base-200 p-4"
+                          className="rounded-xl border border-[var(--color-text)]/10 p-4"
                         >
                           <p className="text-base font-semibold text-[var(--color-text)]">{store.name}</p>
                           <p className="text-sm text-[var(--color-text)]/70">
@@ -1180,9 +1226,9 @@ export default function OrderPage() {
                 </section>
               )}
 
-              <section className="rounded-3xl border border-base-200 bg-[var(--color-primary)] p-6 shadow-sm">
+              <section className="pb-8">
                 <div className="mb-4 flex items-center gap-2">
-                  <Info className="h-5 w-5 text-primary" />
+                  <Info className="h-5 w-5 text-[var(--color-gold)]" />
                   <div>
                     <p className="text-sm text-[var(--color-text)]/60">주문 메모</p>
                     <h2 className="text-lg font-semibold text-[var(--color-text)]">배송 요청사항</h2>
@@ -1190,7 +1236,7 @@ export default function OrderPage() {
                 </div>
                 <textarea
                   name="orderMemo"
-                  className="textarea textarea-bordered min-h-[120px]"
+                  className="textarea min-h-[120px] bg-[var(--color-text)]/5 border-[var(--color-gold)]/30 focus:border-[var(--color-gold)] text-[var(--color-text)] placeholder:text-[var(--color-text)]/40"
                   placeholder="예) 부재 시 경비실에 맡겨주세요."
                   value={orderMemo}
                   onChange={(event) => {
@@ -1205,7 +1251,7 @@ export default function OrderPage() {
             </div>
 
             <div className="self-start lg:sticky lg:top-6">
-              <section className="rounded-3xl border border-base-200 bg-[var(--color-primary)] p-6 shadow-lg">
+              <section className="rounded-xl border border-[var(--color-text)]/10 p-6">
                 <h2 className="text-lg font-semibold text-[var(--color-text)]">주문 요약</h2>
                 <div className="mt-4 space-y-3 text-sm text-[var(--color-text)]/70">
                   <div className="flex items-center justify-between">
@@ -1229,21 +1275,30 @@ export default function OrderPage() {
                       </p>
                     </div>
                     {isCartFetching && (
-                      <span className="text-xs text-primary">금액 새로고침 중...</span>
+                      <span className="text-xs text-[var(--color-gold)]">금액 새로고침 중...</span>
                     )}
                   </div>
                 </div>
 
-                <Button
-                  block
-                  size="lg"
-                  className="mt-6"
+                <button
+                  type="button"
+                  className={`btn w-full mt-6 ${
+                    isCTAEnabled
+                      ? 'bg-[var(--color-gold)] hover:bg-[var(--color-gold)]/80 text-[var(--color-primary)] border-[var(--color-gold)]'
+                      : 'btn-disabled'
+                  }`}
                   onClick={handleProceedToPayment}
-                  disabled={!isCTAEnabled}
-                  loading={isSubmittingOrder}
+                  disabled={!isCTAEnabled || isSubmittingOrder}
                 >
-                  결제하기로 이동
-                </Button>
+                  {isSubmittingOrder ? (
+                    <>
+                      <span className="loading loading-spinner"></span>
+                      처리 중...
+                    </>
+                  ) : (
+                    '결제하기로 이동'
+                  )}
+                </button>
                 {!isCTAEnabled && (
                   <p className="mt-3 text-xs text-error">
                     필수 입력값을 모두 채우고 배송/픽업 정보를 확인해주세요.
@@ -1251,7 +1306,7 @@ export default function OrderPage() {
                 )}
                 <p className="mt-4 text-xs text-[var(--color-text)]/60">
                   주문 제출 시{' '}
-                  <a href="/" className="link link-primary">
+                  <a href="/" className="link text-[var(--color-gold)] hover:text-[var(--color-gold)]/80">
                     이용약관
                   </a>
                   에 동의한 것으로 간주됩니다.
@@ -1264,21 +1319,31 @@ export default function OrderPage() {
       <Footer />
 
       {orderItems.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 border-t border-base-300 bg-[var(--color-primary)] px-4 py-4 shadow-2xl md:hidden">
+        <div className="fixed bottom-0 left-0 right-0 border-t border-[var(--color-text)]/10 bg-[var(--color-bg)] px-4 py-4 md:hidden backdrop-blur-sm">
           <div className="mx-auto flex max-w-4xl items-center justify-between">
             <div>
               <p className="text-xs text-[var(--color-text)]/60">총 결제금액</p>
               <p className="text-xl font-bold text-[var(--color-text)]">{formatCurrency(totalDue)}</p>
             </div>
-            <Button
-              size="sm"
-              className="min-w-[140px]"
+            <button
+              type="button"
+              className={`btn btn-sm min-w-[140px] ${
+                isCTAEnabled
+                  ? 'bg-[var(--color-gold)] hover:bg-[var(--color-gold)]/80 text-[var(--color-primary)] border-[var(--color-gold)]'
+                  : 'btn-disabled'
+              }`}
               onClick={handleProceedToPayment}
-              disabled={!isCTAEnabled}
-              loading={isSubmittingOrder}
+              disabled={!isCTAEnabled || isSubmittingOrder}
             >
-              결제하기로 이동
-            </Button>
+              {isSubmittingOrder ? (
+                <>
+                  <span className="loading loading-spinner loading-xs"></span>
+                  처리 중
+                </>
+              ) : (
+                '결제하기로 이동'
+              )}
+            </button>
           </div>
         </div>
       )}

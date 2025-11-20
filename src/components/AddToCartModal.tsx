@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Product, ProductOption } from '@/schemas/products';
-import { FallbackImage, Button } from '@/components';
+import { FallbackImage, Button, QuantitySelector } from '@/components';
 
 interface AddToCartModalProps {
   isOpen: boolean;
@@ -148,61 +148,12 @@ export default function AddToCartModal({
               <label className="label">
                 <span className="label-text font-semibold">수량</span>
               </label>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleQuantityChange(-1)}
-                  disabled={quantity <= 1}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="h-4 w-4"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M19.5 12h-15"
-                    />
-                  </svg>
-                </Button>
-                <input
-                  type="number"
-                  className="input input-bordered w-20 text-center bg-[var(--color-primary)] border-[var(--color-text)]/20"
-                  value={quantity}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value, 10);
-                    if (!isNaN(value) && value >= 1) {
-                      setQuantity(value);
-                    }
-                  }}
-                  min={1}
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleQuantityChange(1)}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="h-4 w-4"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 4.5v15m7.5-7.5h-15"
-                    />
-                  </svg>
-                </Button>
-              </div>
+              <QuantitySelector
+                quantity={quantity}
+                onDecrease={() => handleQuantityChange(-1)}
+                onIncrease={() => handleQuantityChange(1)}
+                onChange={setQuantity}
+              />
             </div>
 
             {/* Total Price */}

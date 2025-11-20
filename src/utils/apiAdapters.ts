@@ -106,6 +106,7 @@ export function transformProductFromAPI(apiProduct: APIProduct): UIProduct {
     isInCart: false, // Client-side state (default false)
     storeName: apiProduct.store?.name,
     storeLocation: storeLocation || undefined,
+    stockQuantity: apiProduct.stock_quantity, // Add stock quantity
     options: apiProduct.options
       ?.map((option) => {
         const baseLabel =

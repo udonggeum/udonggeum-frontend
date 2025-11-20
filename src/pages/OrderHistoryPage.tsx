@@ -1,14 +1,19 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { X, Package, MapPin, Calendar, CreditCard } from 'lucide-react';
 import {
   Navbar,
   Footer,
   OrderCard,
   LoadingSpinner,
   ErrorAlert,
+  OrderStatusBadge,
+  PaymentStatusBadge,
 } from '@/components';
 import { useOrders } from '@/hooks/queries';
 import { NAV_ITEMS } from '@/constants/navigation';
+import type { Order } from '@/schemas/orders';
+import FallbackImage from '@/components/FallbackImage';
 
 type StatusFilter = 'all' | 'pending' | 'confirmed' | 'shipping' | 'delivered' | 'cancelled';
 
@@ -19,11 +24,12 @@ type StatusFilter = 'all' | 'pending' | 'confirmed' | 'shipping' | 'delivered' |
  * Features:
  * - Filter by order status
  * - Empty state with call-to-action
- * - Order detail view
+ * - Order detail modal
  * - Date sorting (newest first)
  */
 export default function OrderHistoryPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const {
     data: ordersData,
@@ -39,8 +45,14 @@ export default function OrderHistoryPage() {
   }) || [];
 
   const handleViewDetail = (orderId: number) => {
-    // TODO: Navigate to order detail page or open modal
-    console.log('View order detail:', orderId);
+    const order = ordersData?.orders.find((o) => o.id === orderId);
+    if (order) {
+      setSelectedOrder(order);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setSelectedOrder(null);
   };
 
   return (
@@ -231,6 +243,175 @@ export default function OrderHistoryPage() {
       </main>
 
       <Footer />
+
+      {/* Order Detail Modal */}
+      {selectedOrder && (
+        <dialog className="modal modal-open">
+          <div className="modal-box max-w-3xl bg-[var(--color-secondary)] border border-[var(--color-text)]/10">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h3 className="text-2xl font-bold text-[var(--color-text)]">
+                  주문 상세 정보
+                </h3>
+                <p className="text-sm text-[var(--color-text)]/60 mt-1">
+                  주문번호 #{selectedOrder.id}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="btn btn-sm btn-circle btn-ghost"
+                aria-label="모달 닫기"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Order Status */}
+            <div className="flex flex-wrap gap-2 mb-6 p-4 bg-[var(--color-primary)] rounded-lg">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-[var(--color-text)]/70">주문 상태:</span>
+                <OrderStatusBadge status={selectedOrder.status || 'pending'} />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-[var(--color-text)]/70">결제 상태:</span>
+                <PaymentStatusBadge status={selectedOrder.payment_status || 'pending'} />
+              </div>
+            </div>
+
+            {/* Order Info */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+              <div className="flex items-start gap-3 p-4 bg-[var(--color-primary)] rounded-lg">
+                <Calendar className="h-5 w-5 text-[var(--color-gold)] mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-xs text-[var(--color-text)]/60 mb-1">주문 일시</p>
+                  <p className="text-sm font-semibold text-[var(--color-text)]">
+                    {new Date(selectedOrder.created_at).toLocaleString('ko-KR', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-4 bg-[var(--color-primary)] rounded-lg">
+                <Package className="h-5 w-5 text-[var(--color-gold)] mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-xs text-[var(--color-text)]/60 mb-1">배송 방법</p>
+                  <p className="text-sm font-semibold text-[var(--color-text)]">
+                    {selectedOrder.fulfillment_type === 'delivery' ? '배송' : '픽업'}
+                  </p>
+                </div>
+              </div>
+
+              {selectedOrder.shipping_address && (
+                <div className="flex items-start gap-3 p-4 bg-[var(--color-primary)] rounded-lg sm:col-span-2">
+                  <MapPin className="h-5 w-5 text-[var(--color-gold)] mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-xs text-[var(--color-text)]/60 mb-1">배송지 주소</p>
+                    <p className="text-sm font-semibold text-[var(--color-text)]">
+                      {selectedOrder.shipping_address}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Order Items */}
+            <div className="mb-6">
+              <h4 className="text-lg font-semibold text-[var(--color-text)] mb-3">
+                주문 상품
+              </h4>
+              <div className="space-y-3">
+                {selectedOrder.order_items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex gap-4 p-4 bg-[var(--color-primary)] rounded-lg"
+                  >
+                    <div className="w-20 h-20 flex-shrink-0">
+                      <FallbackImage
+                        src={item.product?.image_url || ''}
+                        alt={item.product?.name || '상품'}
+                        className="w-full h-full object-cover rounded"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-[var(--color-text)] mb-1">
+                        {item.product?.name || '상품명 없음'}
+                      </p>
+                      {item.option_snapshot && (
+                        <p className="text-xs text-[var(--color-text)]/60 mb-2">
+                          옵션: {item.option_snapshot}
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-[var(--color-text)]/70">
+                          수량: {item.quantity}개
+                        </p>
+                        <p className="text-sm font-bold text-[var(--color-gold)]">
+                          ₩{item.price.toLocaleString('ko-KR')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Total Amount */}
+            <div className="border-t border-[var(--color-text)]/10 pt-4">
+              <div className="flex items-center justify-between p-4 bg-[var(--color-gold)]/10 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 text-[var(--color-gold)]" />
+                  <span className="text-lg font-semibold text-[var(--color-text)]">
+                    총 결제 금액
+                  </span>
+                </div>
+                <span className="text-2xl font-bold text-[var(--color-gold)]">
+                  ₩{selectedOrder.total_amount.toLocaleString('ko-KR')}
+                </span>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="modal-action">
+              {selectedOrder.payment_status === 'pending' && selectedOrder.status !== 'cancelled' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    // TODO: Implement payment flow
+                    console.log('결제하기 clicked for order:', selectedOrder.id);
+                  }}
+                  className="btn bg-[var(--color-gold)] hover:bg-[var(--color-gold)]/80 text-[var(--color-primary)] border-[var(--color-gold)] gap-2"
+                >
+                  <CreditCard className="h-5 w-5" />
+                  결제하기
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="btn btn-outline border-[var(--color-text)]/30 text-[var(--color-text)] hover:bg-[var(--color-secondary)]"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button
+              type="button"
+              aria-label="모달 닫기"
+              onClick={handleCloseModal}
+            >
+              닫기
+            </button>
+          </form>
+        </dialog>
+      )}
     </div>
   );
 }

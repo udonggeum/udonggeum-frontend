@@ -220,7 +220,7 @@ class SellerService {
       // Validate input
       const validatedData = UpdateOrderStatusRequestSchema.parse(data);
 
-      const response = await apiClient.patch<{ order: Order; message: string }>(
+      const response = await apiClient.put<{ order: Order; message: string }>(
         ENDPOINTS.SELLER.ORDERS.UPDATE_STATUS(orderId),
         validatedData
       );

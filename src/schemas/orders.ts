@@ -12,6 +12,15 @@ export const OrderItemSchema = z.object({
   quantity: z.number().int().positive(),
   price: z.number().nonnegative(),
   option_snapshot: z.string(),
+  product: z.object({
+    id: z.number().int().positive(),
+    name: z.string(),
+    image_url: z.string().optional(),
+  }).optional(),
+  store: z.object({
+    id: z.number().int().positive(),
+    name: z.string(),
+  }).optional(),
 });
 
 export type OrderItem = z.infer<typeof OrderItemSchema>;
@@ -60,13 +69,27 @@ export const OrdersResponseSchema = z.object({
 export type OrdersResponse = z.infer<typeof OrdersResponseSchema>;
 
 /**
+ * Order item input schema for creating orders
+ * Specifies which products to order
+ */
+export const OrderItemInputSchema = z.object({
+  product_id: z.number().int().positive(),
+  quantity: z.number().int().positive(),
+  product_option_id: z.number().int().positive().optional(),
+});
+
+export type OrderItemInput = z.infer<typeof OrderItemInputSchema>;
+
+/**
  * Create order request schema
  * Complex validation using refine:
+ * - Items array is required and must not be empty
  * - If fulfillment_type is 'delivery', shipping_address is required
  * - If fulfillment_type is 'pickup', pickup_store_id is required
  */
 export const CreateOrderRequestSchema = z
   .object({
+    items: z.array(OrderItemInputSchema).min(1, '주문할 상품이 최소 1개 이상 필요합니다'),
     fulfillment_type: z.enum(['delivery', 'pickup']),
     shipping_address: z.string().min(1).optional(),
     pickup_store_id: z.number().int().positive().optional(),

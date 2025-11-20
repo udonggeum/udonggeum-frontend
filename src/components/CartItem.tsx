@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Trash2 } from 'lucide-react';
 import Button from './Button';
 import FallbackImage from './FallbackImage';
+import QuantitySelector from './QuantitySelector';
 import type { CartItem as CartItemType } from '@/schemas/cart';
 
 interface CartItemProps {
@@ -88,35 +89,12 @@ const CartItem = React.memo(({
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <div className="join">
-              <Button
-                variant="outline"
-                size="sm"
-                className="join-item"
-                onClick={() => onQuantityChange(item.id, item.quantity - 1)}
-                disabled={item.quantity <= 1 || isUpdating}
-                aria-label="수량 감소"
-              >
-                -
-              </Button>
-              <input
-                type="number"
-                min={1}
-                value={item.quantity}
-                readOnly
-                className="join-item input input-sm input-bordered w-16 text-center font-semibold bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-gold)]"
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                className="join-item"
-                onClick={() => onQuantityChange(item.id, item.quantity + 1)}
-                disabled={isUpdating}
-                aria-label="수량 증가"
-              >
-                +
-              </Button>
-            </div>
+            <QuantitySelector
+              quantity={item.quantity}
+              onDecrease={() => onQuantityChange(item.id, item.quantity - 1)}
+              onIncrease={() => onQuantityChange(item.id, item.quantity + 1)}
+              disabled={isUpdating}
+            />
             <div className="flex flex-wrap gap-2">
               <Button
                 variant="ghost"

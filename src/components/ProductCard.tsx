@@ -55,6 +55,8 @@ export default function ProductCard({
     });
   };
 
+  const isSoldOut = product.stockQuantity === 0;
+
   return (
     <div className="card bg-[var(--color-secondary)] shadow-xl hover:shadow-2xl transition-shadow border border-[var(--color-text)]/10">
       <figure className="aspect-square overflow-hidden bg-[var(--color-primary)] relative group">
@@ -62,13 +64,22 @@ export default function ProductCard({
           <FallbackImage
             src={product.imageUrl}
             alt={product.imageAlt}
-            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+            className={`w-full h-full object-cover transition-transform duration-300 hover:scale-105 ${isSoldOut ? 'opacity-50' : ''}`}
             loading="lazy"
           />
         </Link>
 
+        {/* Sold Out Badge */}
+        {isSoldOut && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10">
+            <div className="bg-error text-white px-6 py-3 rounded-lg font-bold text-xl shadow-lg">
+              품절
+            </div>
+          </div>
+        )}
+
         {/* Action buttons overlaid on image */}
-        {!hideActions && (
+        {!hideActions && !isSoldOut && (
           <div className="absolute bottom-3 right-3 flex gap-2 z-10">
             <button
               type="button"

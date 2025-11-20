@@ -12,7 +12,7 @@ import {
   ShoppingCart,
   Store as StoreIcon,
 } from 'lucide-react';
-import { Navbar, Footer, Button, ProductsError } from '@/components';
+import { Navbar, Footer, Button, ProductsError, QuantitySelector } from '@/components';
 import { useProductDetail } from '@/hooks/queries/useProductsQueries';
 import { transformProductFromAPI } from '@/utils/apiAdapters';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -529,9 +529,16 @@ export default function ProductDetailPage() {
                   <div className="flex flex-col gap-5">
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div className="space-y-3">
-                        <span className="badge badge-outline border-[var(--color-gold)] text-[var(--color-gold)]">
-                          {productDetail.category}
-                        </span>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="badge badge-outline border-[var(--color-gold)] text-[var(--color-gold)]">
+                            {productDetail.category}
+                          </span>
+                          {productDetail.stock_quantity === 0 && (
+                            <span className="badge badge-lg bg-error/10 text-error border-error/30 border font-semibold">
+                              품절
+                            </span>
+                          )}
+                        </div>
                         <h1 className="text-3xl font-bold leading-tight text-[var(--color-text)]">
                           {productDetail.name}
                         </h1>
@@ -555,7 +562,9 @@ export default function ProductDetailPage() {
                         )}
                       </div>
                       <span className="h-1 w-1 rounded-full bg-[var(--color-text)]/40" />
-                      <span>재고 {productDetail.stock_quantity ?? 0}개</span>
+                      <span className={productDetail.stock_quantity === 0 ? 'text-error font-semibold' : ''}>
+                        재고 {productDetail.stock_quantity ?? 0}개
+                      </span>
                     </div>
                   </div>
                 </section>
@@ -579,42 +588,23 @@ export default function ProductDetailPage() {
                   <div className="flex flex-col gap-6">
                     <div className="flex flex-wrap items-center justify-between gap-4">
                       <h2 className="text-lg font-semibold text-[var(--color-text)]">구매 수량</h2>
-                      <div className="join">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="join-item"
-                          onClick={() => handleQuantityChange(quantity - 1)}
-                          disabled={quantity <= 1}
-                          aria-label="수량 줄이기"
-                        >
-                          -
-                        </Button>
-                        <input
-                          type="number"
-                          min={1}
-                          value={quantity}
-                          onChange={(event) =>
-                            handleQuantityChange(Number(event.target.value))
-                          }
-                          className="join-item input input-sm input-bordered w-16 text-center font-semibold bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-gold)]"
-                          aria-label="구매 수량"
-                        />
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="join-item"
-                          onClick={() => handleQuantityChange(quantity + 1)}
-                          aria-label="수량 늘리기"
-                        >
-                          +
-                        </Button>
-                      </div>
+                      <QuantitySelector
+                        quantity={quantity}
+                        onDecrease={() => handleQuantityChange(quantity - 1)}
+                        onIncrease={() => handleQuantityChange(quantity + 1)}
+                        onChange={handleQuantityChange}
+                      />
                     </div>
 
                     {feedbackMessage && (
                       <div className="rounded-2xl border border-error/40 bg-error/10 px-4 py-3 text-sm text-error">
                         {feedbackMessage}
+                      </div>
+                    )}
+
+                    {productDetail.stock_quantity === 0 && (
+                      <div className="rounded-2xl border border-error/40 bg-error/10 px-4 py-3 text-sm text-error font-semibold text-center">
+                        죄송합니다. 이 상품은 현재 품절되었습니다.
                       </div>
                     )}
 
@@ -625,18 +615,20 @@ export default function ProductDetailPage() {
                         className="gap-2 sm:gap-3"
                         loading={isAddingToCart}
                         onClick={handleAddToCart}
+                        disabled={productDetail.stock_quantity === 0}
                       >
                         <ShoppingCart className="h-5 w-5" />
-                        장바구니 담기
+                        {productDetail.stock_quantity === 0 ? '품절' : '장바구니 담기'}
                       </Button>
                       <Button
                         variant="outline"
                         size="lg"
                         block
                         onClick={handleBuyNow}
+                        disabled={productDetail.stock_quantity === 0}
                       >
                         <CreditCard className="h-5 w-5" />
-                        바로 구매
+                        {productDetail.stock_quantity === 0 ? '품절' : '바로 구매'}
                       </Button>
                     </div>
                   </div>
