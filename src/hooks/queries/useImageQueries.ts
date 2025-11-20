@@ -7,14 +7,14 @@ import { useMutation } from '@tanstack/react-query';
 import { imageService } from '@/services/image';
 import type {
   ImageOptimizationResponse,
-  ImageUploadResponse,
 } from '@/schemas/image';
 
 /**
- * Upload image mutation
+ * Upload image using S3 Pre-signed URL
+ * Returns the final file URL directly
  */
 export function useUploadImage() {
-  return useMutation<ImageUploadResponse, Error, File>({
+  return useMutation<string, Error, File>({
     mutationFn: (file: File) => imageService.uploadImage(file),
   });
 }

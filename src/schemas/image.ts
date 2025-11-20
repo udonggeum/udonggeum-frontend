@@ -55,3 +55,27 @@ export const ImageUploadResponseSchema = z.object({
 });
 
 export type ImageUploadResponse = z.infer<typeof ImageUploadResponseSchema>;
+
+/**
+ * Pre-signed URL request schema
+ * Request to generate S3 pre-signed URL
+ */
+export const PresignedURLRequestSchema = z.object({
+  filename: z.string().min(1),
+  content_type: z.string().min(1),
+  file_size: z.number().int().positive(),
+});
+
+export type PresignedURLRequest = z.infer<typeof PresignedURLRequestSchema>;
+
+/**
+ * Pre-signed URL response schema
+ * Response containing upload URL and final file URL
+ */
+export const PresignedURLResponseSchema = z.object({
+  upload_url: z.string().url(),
+  file_url: z.string().min(1),
+  key: z.string().min(1),
+});
+
+export type PresignedURLResponse = z.infer<typeof PresignedURLResponseSchema>;

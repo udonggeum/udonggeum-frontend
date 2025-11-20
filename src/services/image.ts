@@ -9,9 +9,9 @@ import { ValidationError } from '@/utils/errors';
 import { ZodError } from 'zod';
 import {
   ImageOptimizationResponseSchema,
-  ImageUploadResponseSchema,
+  PresignedURLResponseSchema,
   type ImageOptimizationResponse,
-  type ImageUploadResponse,
+  type PresignedURLResponse,
 } from '@/schemas/image';
 
 /**
@@ -20,36 +20,54 @@ import {
  */
 class ImageService {
   /**
-   * Upload image without optimization
+   * Upload image using S3 Pre-signed URL
+   * Step 1: Get pre-signed URL from server
+   * Step 2: Upload directly to S3
+   * Step 3: Return the final file URL
    */
-  async uploadImage(file: File): Promise<ImageUploadResponse> {
+  async uploadImage(file: File): Promise<string> {
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      console.log('[ImageService] Uploading image:', {
+      console.log('[ImageService] Starting pre-signed URL upload:', {
         filename: file.name,
         size: file.size,
         type: file.type,
-        endpoint: ENDPOINTS.IMAGES.UPLOAD,
       });
 
-      const response = await apiClient.post<ImageUploadResponse>(
-        ENDPOINTS.IMAGES.UPLOAD,
-        formData,
+      // Step 1: Get pre-signed URL from backend
+      const presignedResponse = await apiClient.post<PresignedURLResponse>(
+        ENDPOINTS.IMAGES.PRESIGNED_URL,
         {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
+          filename: file.name,
+          content_type: file.type,
+          file_size: file.size,
         }
       );
 
-      console.log('[ImageService] Upload response:', response.data);
+      console.log('[ImageService] Pre-signed URL response:', presignedResponse.data);
 
-      const validatedData = ImageUploadResponseSchema.parse(response.data);
-      return validatedData;
+      const validatedData = PresignedURLResponseSchema.parse(presignedResponse.data);
+
+      // Step 2: Upload directly to S3 using pre-signed URL
+      console.log('[ImageService] Uploading to S3:', validatedData.upload_url);
+
+      const uploadResponse = await fetch(validatedData.upload_url, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type,
+        },
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`S3 upload failed: ${uploadResponse.statusText}`);
+      }
+
+      console.log('[ImageService] S3 upload successful');
+
+      // Step 3: Return the final file URL
+      return validatedData.file_url;
     } catch (error) {
-      console.error('[ImageService] Upload error:', error);
+      console.error('[ImageService] Pre-signed URL upload error:', error);
       if (error instanceof ZodError) {
         throw ValidationError.fromZod(error);
       }

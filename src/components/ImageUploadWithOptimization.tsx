@@ -63,12 +63,10 @@ export default function ImageUploadWithOptimization({
       // Auto-upload if optimization is disabled (simple mode)
       if (!showOptimization) {
         uploadImage(file, {
-          onSuccess: (data) => {
-            console.log('[Upload] Backend response:', data);
-            const absoluteUrl = getAbsoluteUrl(data.url);
-            console.log('[Upload] URL conversion:', { original: data.url, converted: absoluteUrl });
-            onImageSelect(absoluteUrl);
-            setPreviewUrl(absoluteUrl);
+          onSuccess: (fileUrl) => {
+            console.log('[Upload] S3 upload successful, file URL:', fileUrl);
+            onImageSelect(fileUrl);
+            setPreviewUrl(fileUrl);
           },
           onError: (error) => {
             alert(`이미지 업로드 실패: ${error.message}`);
@@ -98,12 +96,10 @@ export default function ImageUploadWithOptimization({
     if (!selectedFile) return;
 
     uploadImage(selectedFile, {
-      onSuccess: (data) => {
-        console.log('[Upload] Backend response:', data);
-        const absoluteUrl = getAbsoluteUrl(data.url);
-        console.log('[Upload] URL conversion:', { original: data.url, converted: absoluteUrl });
-        onImageSelect(absoluteUrl);
-        setPreviewUrl(absoluteUrl);
+      onSuccess: (fileUrl) => {
+        console.log('[Upload] S3 upload successful, file URL:', fileUrl);
+        onImageSelect(fileUrl);
+        setPreviewUrl(fileUrl);
         alert('이미지가 업로드되었습니다.');
       },
       onError: (error) => {
