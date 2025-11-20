@@ -151,7 +151,6 @@ export default function OrderPage() {
     return [];
   }, [addressesData?.addresses, user?.name, user?.phone]);
 
-  const defaultAddress = savedAddresses[0];
   const [selectedAddressId, setSelectedAddressId] = useState<string>('manual');
   const [hasAutoSelected, setHasAutoSelected] = useState(false);
 
@@ -550,7 +549,7 @@ export default function OrderPage() {
 
   if (isCartLoading && orderItems.length === 0) {
     return (
-      <div className="flex min-h-screen flex-col bg-[#F7F8FA]">
+      <div className="flex min-h-screen flex-col">
         <Navbar navigationItems={NAV_ITEMS} />
         <main className="flex flex-1 items-center justify-center px-4">
           <LoadingSpinner message="주문 정보를 준비하고 있습니다..." />
@@ -561,11 +560,11 @@ export default function OrderPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F7F8FA] pb-28 md:pb-0">
+    <div className="flex min-h-screen flex-col pb-28 md:pb-0">
       <Navbar navigationItems={NAV_ITEMS} />
       <main className="flex-1">
         <div className="container mx-auto max-w-6xl px-4 py-10">
-          <div className="mb-6 flex flex-wrap items-center gap-2 text-sm text-base-content/70">
+          <div className="mb-6 flex flex-wrap items-center gap-2 text-sm text-[var(--color-text)]/70">
             {['홈', '장바구니', '주문', '결제'].map((label, index, arr) => {
               const isLast = index === arr.length - 1;
               const href =
@@ -575,7 +574,7 @@ export default function OrderPage() {
                   {href ? (
                     <button
                       type="button"
-                      className="text-base-content/70 hover:text-primary"
+                      className="text-[var(--color-text)]/70 hover:text-primary"
                       onClick={() => {
                         void navigate(href);
                       }}
@@ -583,11 +582,11 @@ export default function OrderPage() {
                       {label}
                     </button>
                   ) : (
-                    <span className={isLast ? 'font-semibold text-base-content' : ''}>
+                    <span className={isLast ? 'font-semibold text-[var(--color-text)]' : ''}>
                       {label}
                     </span>
                   )}
-                  {!isLast && <ChevronRight className="h-4 w-4 text-base-content/30" />}
+                  {!isLast && <ChevronRight className="h-4 w-4 text-[var(--color-text)]/30" />}
                 </div>
               );
             })}
@@ -596,16 +595,16 @@ export default function OrderPage() {
           <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-sm uppercase tracking-wide text-primary">Order</p>
-              <h1 className="mt-1 text-3xl font-bold text-base-content">주문</h1>
-              <p className="text-sm text-base-content/70">
+              <h1 className="mt-1 text-3xl font-bold text-[var(--color-text)]">주문</h1>
+              <p className="text-sm text-[var(--color-text)]/70">
                 선택한 상품 정보를 확인하고 배송 또는 픽업 정보를 입력하세요.
               </p>
             </div>
-            <div className="flex items-center gap-3 rounded-2xl bg-base-100 px-4 py-3 text-sm shadow-sm">
+            <div className="flex items-center gap-3 rounded-2xl bg-[var(--color-primary)] px-4 py-3 text-sm shadow-sm">
               <Truck className="h-5 w-5 text-primary" />
               <div>
-                <p className="font-semibold text-base-content">결제 단계 전 확인</p>
-                <p className="text-xs text-base-content/60">
+                <p className="font-semibold text-[var(--color-text)]">결제 단계 전 확인</p>
+                <p className="text-xs text-[var(--color-text)]/60">
                   모든 정보가 정확한지 확인 후 결제하기로 이동합니다.
                 </p>
               </div>
@@ -695,11 +694,11 @@ export default function OrderPage() {
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
             <div className="space-y-6">
-              <section className="rounded-3xl border border-base-200 bg-base-100 p-6 shadow-sm">
+              <section className="rounded-3xl border border-base-200 bg-[var(--color-primary)] p-6 shadow-sm">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm text-base-content/60">주문 상품</p>
-                    <h2 className="text-xl font-semibold text-base-content">
+                    <p className="text-sm text-[var(--color-text)]/60">주문 상품</p>
+                    <h2 className="text-xl font-semibold text-[var(--color-text)]">
                       총 {orderItems.length}개
                     </h2>
                   </div>
@@ -724,34 +723,34 @@ export default function OrderPage() {
                         />
                         <span>전체 선택</span>
                       </label>
-                      <span className="text-base-content/40">|</span>
-                      <button
-                        type="button"
-                        className="btn btn-link btn-xs text-base-content/70"
+                      <span className="text-[var(--color-text)]/40">|</span>
+                      <Button
+                        variant="link"
+                        size="xs"
                         onClick={handleClearAll}
                         disabled={orderItems.length === 0 || isRemovingCart}
                       >
                         전체 삭제
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-link btn-xs text-base-content/70"
+                      </Button>
+                      <Button
+                        variant="link"
+                        size="xs"
                         onClick={handleRemoveSelected}
                         disabled={markedCount === 0 || isRemovingCart}
                       >
                         선택 삭제 ({markedCount})
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>
 
                 {orderItems.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-base-300 bg-base-200/50 p-10 text-center">
-                    <ShoppingBag className="mx-auto h-12 w-12 text-base-content/40" />
-                    <p className="mt-4 text-base font-semibold text-base-content">
+                  <div className="rounded-2xl border border-dashed border-base-300 bg-[var(--color-secondary)]/50 p-10 text-center">
+                    <ShoppingBag className="mx-auto h-12 w-12 text-[var(--color-text)]/40" />
+                    <p className="mt-4 text-base font-semibold text-[var(--color-text)]">
                       주문할 상품이 없습니다
                     </p>
-                    <p className="mt-2 text-sm text-base-content/60">
+                    <p className="mt-2 text-sm text-[var(--color-text)]/60">
                       장바구니에서 상품을 선택한 뒤 다시 시도해주세요.
                     </p>
                     <Button
@@ -805,16 +804,16 @@ export default function OrderPage() {
                             <div className="flex flex-1 flex-col gap-3">
                               <div className="flex flex-wrap items-start justify-between gap-3">
                                 <div>
-                                  <p className="text-lg font-semibold text-base-content">
+                                  <p className="text-lg font-semibold text-[var(--color-text)]">
                                     {item.product.name}
                                   </p>
-                                  <p className="text-sm text-base-content/60">
+                                  <p className="text-sm text-[var(--color-text)]/60">
                                     {item.product_option
                                       ? `${item.product_option.name} · ${item.product_option.value}`
                                       : '옵션 없음'}
                                   </p>
                                   {item.product.store?.name && (
-                                    <p className="text-xs text-base-content/50">
+                                    <p className="text-xs text-[var(--color-text)]/50">
                                       {item.product.store.name}
                                     </p>
                                   )}
@@ -823,37 +822,39 @@ export default function OrderPage() {
                                   <p className="text-lg font-semibold text-primary">
                                     {formatCurrency(unitPrice)}
                                   </p>
-                                  <p className="text-xs text-base-content/60">
+                                  <p className="text-xs text-[var(--color-text)]/60">
                                     수량 {item.quantity}개 · 소계 {formatCurrency(itemTotal)}
                                   </p>
                                 </div>
                               </div>
 
                               <div className="flex flex-wrap items-center gap-3">
-                                <div className="join rounded-full border border-base-200 bg-base-100">
-                                  <button
-                                    type="button"
-                                    className="btn join-item btn-sm btn-outline"
+                                <div className="join rounded-full border border-base-200 bg-[var(--color-primary)]">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="join-item"
                                     onClick={() =>
                                       handleQuantityChange(item.id, item.quantity - 1)
                                     }
                                     disabled={item.quantity <= 1 || isUpdatingCart}
                                   >
                                     -
-                                  </button>
+                                  </Button>
                                   <span className="join-item px-4 text-sm font-semibold">
                                     {item.quantity}
                                   </span>
-                                  <button
-                                    type="button"
-                                    className="btn join-item btn-sm btn-outline"
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="join-item"
                                     onClick={() =>
                                       handleQuantityChange(item.id, item.quantity + 1)
                                     }
                                     disabled={isUpdatingCart}
                                   >
                                     +
-                                  </button>
+                                  </Button>
                                 </div>
                                 {!directPurchase && (
                                   <Button
@@ -868,7 +869,7 @@ export default function OrderPage() {
                                 )}
                               </div>
 
-                              <div className="flex flex-wrap gap-3 text-xs text-base-content/60">
+                              <div className="flex flex-wrap gap-3 text-xs text-[var(--color-text)]/60">
                                 <span className="badge badge-outline border-dashed">
                                   {fulfillmentType === 'delivery'
                                     ? '배송 준비: 평균 2~3일'
@@ -897,12 +898,12 @@ export default function OrderPage() {
 
               </section>
 
-              <section className="rounded-3xl border border-base-200 bg-base-100 p-6 shadow-sm">
+              <section className="rounded-3xl border border-base-200 bg-[var(--color-primary)] p-6 shadow-sm">
                 <div className="mb-4 flex items-center gap-2">
                   <Truck className="h-5 w-5 text-primary" />
                   <div>
-                    <p className="text-sm text-base-content/60">수령 방법</p>
-                    <h2 className="text-lg font-semibold text-base-content">배송 또는 픽업 선택</h2>
+                    <p className="text-sm text-[var(--color-text)]/60">수령 방법</p>
+                    <h2 className="text-lg font-semibold text-[var(--color-text)]">배송 또는 픽업 선택</h2>
                   </div>
                 </div>
 
@@ -922,15 +923,15 @@ export default function OrderPage() {
                     </span>
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className="font-semibold text-base-content">배송 받기</p>
+                        <p className="font-semibold text-[var(--color-text)]">배송 받기</p>
                         {fulfillmentType === 'delivery' && (
                           <span className="badge badge-primary badge-outline badge-sm">선택됨</span>
                         )}
                       </div>
-                      <p className="text-sm text-base-content/70">
+                      <p className="text-sm text-[var(--color-text)]/70">
                         집이나 회사 등 원하는 주소로 안전하게 배송됩니다.
                       </p>
-                      <p className="mt-1 text-xs text-base-content/50">
+                      <p className="mt-1 text-xs text-[var(--color-text)]/50">
                         기본 배송비 {formatCurrency(DELIVERY_FEE)} · 평균 2~3일 소요
                       </p>
                     </div>
@@ -951,20 +952,20 @@ export default function OrderPage() {
                     </span>
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className="font-semibold text-base-content">매장 픽업</p>
+                        <p className="font-semibold text-[var(--color-text)]">매장 픽업</p>
                         {fulfillmentType === 'pickup' && (
                           <span className="badge badge-primary badge-outline badge-sm">선택됨</span>
                         )}
                       </div>
-                      <p className="text-sm text-base-content/70">
+                      <p className="text-sm text-[var(--color-text)]/70">
                         가까운 우동금 센터를 방문해 직접 수령할 수 있어요.
                       </p>
-                      <p className="mt-1 text-xs text-base-content/50">추가 비용 없음 · 준비되면 알림</p>
+                      <p className="mt-1 text-xs text-[var(--color-text)]/50">추가 비용 없음 · 준비되면 알림</p>
                     </div>
                   </button>
                 </div>
 
-                <p className="mt-4 text-sm text-base-content/70">
+                <p className="mt-4 text-sm text-[var(--color-text)]/70">
                   {fulfillmentType === 'delivery'
                     ? '배송을 선택하면 아래에서 배송지 정보를 입력해주세요.'
                     : '픽업을 선택하면 방문할 센터를 선택한 뒤 안내에 따라 수령해 주세요.'}
@@ -972,12 +973,12 @@ export default function OrderPage() {
               </section>
 
               {fulfillmentType === 'delivery' && (
-                <section className="rounded-3xl border border-base-200 bg-base-100 p-6 shadow-sm">
+                <section className="rounded-3xl border border-base-200 bg-[var(--color-primary)] p-6 shadow-sm">
                 <div className="mb-4 flex items-center gap-2">
                   <MapPin className="h-5 w-5 text-primary" />
                   <div>
-                    <p className="text-sm text-base-content/60">배송지</p>
-                    <h2 className="text-lg font-semibold text-base-content">배송지 정보</h2>
+                    <p className="text-sm text-[var(--color-text)]/60">배송지</p>
+                    <h2 className="text-lg font-semibold text-[var(--color-text)]">배송지 정보</h2>
                   </div>
                 </div>
 
@@ -985,7 +986,7 @@ export default function OrderPage() {
                 {savedAddresses.length > 0 && (
                   <div className="mb-4">
                     <label className="form-control w-full">
-                      <span className="label-text text-sm text-base-content">저장된 배송지</span>
+                      <span className="label-text text-sm text-[var(--color-text)]">저장된 배송지</span>
                       <select
                         className="select select-bordered w-full"
                         value={selectedAddressId}
@@ -1007,7 +1008,7 @@ export default function OrderPage() {
                   {/* 수령인 / 연락처 - 1:1 비율 */}
                   <div className="mt-4 grid grid-cols-2 gap-4">
                     <label className="form-control">
-                      <span className="label-text text-sm text-base-content">수령인</span>
+                      <span className="label-text text-sm text-[var(--color-text)]">수령인</span>
                       <input
                         type="text"
                         name="recipient"
@@ -1025,7 +1026,7 @@ export default function OrderPage() {
                       )}
                     </label>
                     <label className="form-control">
-                      <span className="label-text text-sm text-base-content">연락처</span>
+                      <span className="label-text text-sm text-[var(--color-text)]">연락처</span>
                       <input
                         type="tel"
                         name="phone"
@@ -1047,7 +1048,7 @@ export default function OrderPage() {
                   {/* 우편번호 + 검색버튼 */}
                   <div className="mt-4">
                     <label className="form-control w-full">
-                      <span className="label-text text-sm text-base-content">우편번호</span>
+                      <span className="label-text text-sm text-[var(--color-text)]">우편번호</span>
                       <div className="flex gap-2">
                         <input
                           type="text"
@@ -1081,7 +1082,7 @@ export default function OrderPage() {
                   {/* 도로명 주소 / 상세 주소 - 1:1 비율 */}
                   <div className="mt-4 grid grid-cols-2 gap-4">
                     <label className="form-control">
-                      <span className="label-text text-sm text-base-content">도로명 주소</span>
+                      <span className="label-text text-sm text-[var(--color-text)]">도로명 주소</span>
                       <input
                         type="text"
                         name="address1"
@@ -1099,7 +1100,7 @@ export default function OrderPage() {
                       )}
                     </label>
                     <label className="form-control">
-                      <span className="label-text text-sm text-base-content">상세 주소</span>
+                      <span className="label-text text-sm text-[var(--color-text)]">상세 주소</span>
                       <input
                         type="text"
                         name="address2"
@@ -1111,7 +1112,7 @@ export default function OrderPage() {
                     </label>
                   </div>
 
-                <label className="mt-4 flex items-center gap-2 text-sm text-base-content/80">
+                <label className="mt-4 flex items-center gap-2 text-sm text-[var(--color-text)]/80">
                   <input
                     type="checkbox"
                     name="saveAsDefault"
@@ -1140,17 +1141,17 @@ export default function OrderPage() {
               )}
 
               {fulfillmentType === 'pickup' && (
-                <section className="rounded-3xl border border-base-200 bg-base-100 p-6 shadow-sm">
+                <section className="rounded-3xl border border-base-200 bg-[var(--color-primary)] p-6 shadow-sm">
                   <div className="mb-4 flex items-center gap-2">
                     <Package className="h-5 w-5 text-primary" />
                     <div>
-                      <p className="text-sm text-base-content/60">픽업 안내</p>
-                      <h2 className="text-lg font-semibold text-base-content">상품별 매장 방문</h2>
+                      <p className="text-sm text-[var(--color-text)]/60">픽업 안내</p>
+                      <h2 className="text-lg font-semibold text-[var(--color-text)]">상품별 매장 방문</h2>
                     </div>
                   </div>
 
                   {pickupStoreInfos.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-base-300 bg-base-200/40 p-4 text-sm text-base-content/70">
+                    <div className="rounded-2xl border border-dashed border-base-300 bg-[var(--color-secondary)]/40 p-4 text-sm text-[var(--color-text)]/70">
                       선택한 상품의 픽업 매장을 찾을 수 없습니다. 잠시 후 다시 시도하거나 고객 센터에 문의해주세요.
                     </div>
                   ) : (
@@ -1160,11 +1161,11 @@ export default function OrderPage() {
                           key={store.id ?? store.name}
                           className="rounded-2xl border border-base-200 p-4"
                         >
-                          <p className="text-base font-semibold text-base-content">{store.name}</p>
-                          <p className="text-sm text-base-content/70">
+                          <p className="text-base font-semibold text-[var(--color-text)]">{store.name}</p>
+                          <p className="text-sm text-[var(--color-text)]/70">
                             {store.address || '주소 정보가 업데이트될 예정입니다.'}
                           </p>
-                          <p className="text-xs text-base-content/60">
+                          <p className="text-xs text-[var(--color-text)]/60">
                             연락처 {store.contact || '매장 연락처 준비 중'}
                           </p>
                         </div>
@@ -1172,19 +1173,19 @@ export default function OrderPage() {
                     </div>
                   )}
 
-                  <p className="mt-4 text-xs text-base-content/60">
+                  <p className="mt-4 text-xs text-[var(--color-text)]/60">
                     각 상품이 속한 매장을 직접 방문해 수령해야 하며, 준비 완료 시 매장에서 별도로 안내드립니다.
                     방문 시 주문자 본인 확인을 위한 신분증을 지참해주세요.
                   </p>
                 </section>
               )}
 
-              <section className="rounded-3xl border border-base-200 bg-base-100 p-6 shadow-sm">
+              <section className="rounded-3xl border border-base-200 bg-[var(--color-primary)] p-6 shadow-sm">
                 <div className="mb-4 flex items-center gap-2">
                   <Info className="h-5 w-5 text-primary" />
                   <div>
-                    <p className="text-sm text-base-content/60">주문 메모</p>
-                    <h2 className="text-lg font-semibold text-base-content">배송 요청사항</h2>
+                    <p className="text-sm text-[var(--color-text)]/60">주문 메모</p>
+                    <h2 className="text-lg font-semibold text-[var(--color-text)]">배송 요청사항</h2>
                   </div>
                 </div>
                 <textarea
@@ -1197,23 +1198,23 @@ export default function OrderPage() {
                     setOrderMemo(event.target.value);
                   }}
                 />
-                <div className="mt-2 text-right text-xs text-base-content/60">
+                <div className="mt-2 text-right text-xs text-[var(--color-text)]/60">
                   {orderMemo.length}/{MAX_MEMO_LENGTH}자
                 </div>
               </section>
             </div>
 
             <div className="self-start lg:sticky lg:top-6">
-              <section className="rounded-3xl border border-base-200 bg-base-100 p-6 shadow-lg">
-                <h2 className="text-lg font-semibold text-base-content">주문 요약</h2>
-                <div className="mt-4 space-y-3 text-sm text-base-content/70">
+              <section className="rounded-3xl border border-base-200 bg-[var(--color-primary)] p-6 shadow-lg">
+                <h2 className="text-lg font-semibold text-[var(--color-text)]">주문 요약</h2>
+                <div className="mt-4 space-y-3 text-sm text-[var(--color-text)]/70">
                   <div className="flex items-center justify-between">
                     <span>상품 합계</span>
-                    <strong className="text-base-content">{formatCurrency(itemsSubtotal)}</strong>
+                    <strong className="text-[var(--color-text)]">{formatCurrency(itemsSubtotal)}</strong>
                   </div>
                   <div className="flex items-center justify-between">
                     <span>{fulfillmentType === 'delivery' ? '배송비' : '픽업 수수료'}</span>
-                    <strong className="text-base-content">
+                    <strong className="text-[var(--color-text)]">
                       {shippingFee === 0 ? '무료' : `+ ${formatCurrency(shippingFee)}`}
                     </strong>
                   </div>
@@ -1222,8 +1223,8 @@ export default function OrderPage() {
                 <div className="mt-5 border-t border-base-200 pt-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-base-content/60">총 결제금액</p>
-                      <p className="text-2xl font-bold text-base-content">
+                      <p className="text-sm text-[var(--color-text)]/60">총 결제금액</p>
+                      <p className="text-2xl font-bold text-[var(--color-text)]">
                         {formatCurrency(totalDue)}
                       </p>
                     </div>
@@ -1248,7 +1249,7 @@ export default function OrderPage() {
                     필수 입력값을 모두 채우고 배송/픽업 정보를 확인해주세요.
                   </p>
                 )}
-                <p className="mt-4 text-xs text-base-content/60">
+                <p className="mt-4 text-xs text-[var(--color-text)]/60">
                   주문 제출 시{' '}
                   <a href="/" className="link link-primary">
                     이용약관
@@ -1263,11 +1264,11 @@ export default function OrderPage() {
       <Footer />
 
       {orderItems.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 border-t border-base-300 bg-base-100 px-4 py-4 shadow-2xl md:hidden">
+        <div className="fixed bottom-0 left-0 right-0 border-t border-base-300 bg-[var(--color-primary)] px-4 py-4 shadow-2xl md:hidden">
           <div className="mx-auto flex max-w-4xl items-center justify-between">
             <div>
-              <p className="text-xs text-base-content/60">총 결제금액</p>
-              <p className="text-xl font-bold text-base-content">{formatCurrency(totalDue)}</p>
+              <p className="text-xs text-[var(--color-text)]/60">총 결제금액</p>
+              <p className="text-xl font-bold text-[var(--color-text)]">{formatCurrency(totalDue)}</p>
             </div>
             <Button
               size="sm"

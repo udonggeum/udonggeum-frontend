@@ -44,8 +44,8 @@ export default function HeroCarousel({ slides }: HeroCarouselProps) {
 
   if (sortedSlides.length === 0) {
     return (
-      <div className="w-full h-96 bg-base-200 flex items-center justify-center">
-        <p className="text-base-content/50">슬라이드가 없습니다</p>
+      <div className="w-full h-96 bg-[var(--color-secondary)] flex items-center justify-center">
+        <p className="text-[var(--color-text)]/50">슬라이드가 없습니다</p>
       </div>
     );
   }

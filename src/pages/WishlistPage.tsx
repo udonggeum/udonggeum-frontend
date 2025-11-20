@@ -50,7 +50,7 @@ export default function WishlistPage() {
     : [];
 
   return (
-    <div className="flex min-h-screen flex-col bg-base-100">
+    <div className="flex min-h-screen flex-col">
       <Navbar navigationItems={NAV_ITEMS} />
 
       <main className="flex-grow">
@@ -58,7 +58,7 @@ export default function WishlistPage() {
           {/* Page Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold">찜한 상품</h1>
-            <p className="mt-2 text-base-content/70">
+            <p className="mt-2 text-[var(--color-text)]/70">
               마음에 드는 상품을 찜하고 나중에 확인하세요
             </p>
           </div>
@@ -91,10 +91,10 @@ export default function WishlistPage() {
             </div>
           ) : products.length === 0 ? (
             /* Empty State */
-            <div className="flex flex-col items-center justify-center rounded-xl bg-base-200 py-20 text-center">
+            <div className="flex flex-col items-center justify-center rounded-xl bg-[var(--color-secondary)] py-20 text-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-24 w-24 text-base-content/30 mb-6"
+                className="h-24 w-24 text-[var(--color-text)]/30 mb-6"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -107,7 +107,7 @@ export default function WishlistPage() {
                 />
               </svg>
               <h2 className="text-2xl font-bold mb-3">찜한 상품이 없습니다</h2>
-              <p className="text-base-content/70 mb-6 max-w-md">
+              <p className="text-[var(--color-text)]/70 mb-6 max-w-md">
                 마음에 드는 상품을 찜하고 언제든지 다시 확인하세요.
                 <br />
                 하트 아이콘을 클릭하여 찜 목록에 추가할 수 있습니다.
@@ -135,7 +135,7 @@ export default function WishlistPage() {
             <>
               {/* Product Count */}
               <div className="mb-6">
-                <p className="text-base-content/70">
+                <p className="text-[var(--color-text)]/70">
                   총 <span className="font-semibold text-primary">{products.length}</span>개의 상품을
                   찜하셨습니다
                 </p>

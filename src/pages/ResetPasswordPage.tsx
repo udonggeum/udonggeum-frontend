@@ -9,6 +9,7 @@ import { Lock, ArrowLeft } from 'lucide-react';
 import { useResetPassword } from '@/hooks/queries';
 import { ResetPasswordRequestSchema } from '@/schemas/auth';
 import PasswordInput from '@/components/PasswordInput';
+import Button from '@/components/Button';
 import { AUTH_ERRORS } from '@/constants/errors';
 
 interface FormData {
@@ -169,13 +170,15 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-base-200 px-4">
-      <div className="card w-full max-w-md bg-base-100 shadow-xl">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--color-secondary)] px-4">
+      <div className="card w-full max-w-md bg-[var(--color-primary)] shadow-xl">
         <div className="card-body">
           {/* Header */}
           <div className="flex items-center gap-2 mb-4">
-            <Link to="/login" className="btn btn-ghost btn-sm btn-circle">
-              <ArrowLeft size={20} />
+            <Link to="/login">
+              <Button variant="circle" size="sm">
+                <ArrowLeft size={20} />
+              </Button>
             </Link>
             <h2 className="card-title text-2xl">비밀번호 재설정</h2>
           </div>
@@ -207,7 +210,7 @@ export default function ResetPasswordPage() {
 
           {!isSuccess && !formErrors.token && (
             <form onSubmit={handleSubmit} className="space-y-4">
-              <p className="text-base-content/70">
+              <p className="text-[var(--color-text)]/70">
                 새로운 비밀번호를 입력하세요.
               </p>
 
@@ -248,9 +251,7 @@ export default function ResetPasswordPage() {
               </div>
 
               {/* Submit Button */}
-              <button
-                type="submit"
-                className="btn btn-primary w-full gap-2"
+              <Button type="submit" variant="primary" block className="gap-2"
                 disabled={isPending}
               >
                 {isPending ? (
@@ -264,7 +265,7 @@ export default function ResetPasswordPage() {
                     비밀번호 변경
                   </>
                 )}
-              </button>
+              </Button>
             </form>
           )}
 

@@ -1,2 +1,39 @@
 @import "tailwindcss";
 @plugin "daisyui";
+
+/* Tailwind CSS 4 테마 설정 */
+@theme {
+  --font-family-sans: "Gmarket Sans", -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+}
+
+/* 우동금 테마 CSS 변수 (App.tsx에서 동적으로 업데이트됨) */
+:root {
+  /* 기본값 (라이트 모드) */
+  --color-primary: #FFFFFF;
+  --color-secondary: #F3F3F4;
+  --color-gold: #D7B56D;
+  --color-text: #2A2A2A;
+  --color-line: #E5E5E5;
+}
+
+/* 전역 폰트 적용 (강력한 우선순위) */
+*,
+html,
+body,
+button,
+input,
+textarea,
+select {
+  font-family: "Gmarket Sans", -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif !important;
+}
+
+body {
+  background-color: var(--color-primary);
+  color: var(--color-text);
+}
+
+/* 최상위 앱 컨테이너도 배경색 적용 */
+#root {
+  background-color: var(--color-primary);
+  min-height: 100vh;
+}

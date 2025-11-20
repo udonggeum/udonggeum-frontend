@@ -54,7 +54,7 @@ export const ProductSchema = z.object({
   description: z.string().optional(),
   weight: z.number().nonnegative().optional(),
   purity: z.string().optional(),
-  image_url: z.string().url().optional(),
+  image_url: z.string().regex(/^(https?:\/\/.+|\/uploads\/.+)$/).optional().or(z.literal('')).optional(),
   store_id: z.number().int().positive().optional(),
   store: StoreSchema.optional(),
   options: z.array(ProductOptionSchema).optional(),

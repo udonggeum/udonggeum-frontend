@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   Navbar,
   Footer,
+  Button,
   LoadingSpinner,
   ErrorAlert,
   ProductCard,
@@ -113,7 +114,7 @@ export default function StoreDetailPage() {
 
   if (isInvalidId) {
     return (
-      <div className="flex min-h-screen flex-col bg-base-100">
+      <div className="flex min-h-screen flex-col">
         <Navbar navigationItems={NAV_ITEMS} />
         <main className="flex-grow">
           <section className="container mx-auto px-4 py-16">
@@ -155,7 +156,7 @@ export default function StoreDetailPage() {
   } else if (!storeSummary) {
     mainContent = (
       <section className="container mx-auto px-4 py-16">
-        <div className="rounded-xl bg-base-200 py-16 text-center text-base-content/70">
+        <div className="rounded-xl bg-[var(--color-secondary)] py-16 text-center text-[var(--color-text)]/70">
           매장 정보를 찾을 수 없습니다. 다른 매장을 선택해주세요.
         </div>
       </section>
@@ -163,17 +164,17 @@ export default function StoreDetailPage() {
   } else {
     mainContent = (
       <>
-        <section className="bg-gradient-to-br from-primary/10 via-base-200 to-base-100 py-10">
+        <section className="bg-[var(--color-secondary)] py-10">
           <div className="container mx-auto px-4">
-            <div className="mb-6 flex flex-wrap items-center gap-3 text-sm text-base-content/70">
-              <button
-                type="button"
-                className="btn btn-outline btn-sm"
+            <div className="mb-6 flex flex-wrap items-center gap-3 text-sm text-[var(--color-text)]/70">
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleBack}
               >
                 <ArrowLeft className="h-4 w-4" />
                 이전으로
-              </button>
+              </Button>
               <span className="hidden sm:block">|</span>
               <span>
                 {storeSummary.region ?? '지역 정보 없음'} ·{' '}
@@ -182,7 +183,7 @@ export default function StoreDetailPage() {
             </div>
 
             <div className="grid gap-10 lg:grid-cols-[2fr_3fr]">
-              <div className="overflow-hidden rounded-2xl bg-base-200 shadow-xl">
+              <div className="overflow-hidden rounded-2xl bg-[var(--color-primary)] shadow-xl border border-[var(--color-text)]/10">
                 <FallbackImage
                   src={storeSummary.imageUrl}
                   alt={`${storeSummary.name} 매장 이미지`}
@@ -193,17 +194,17 @@ export default function StoreDetailPage() {
 
               <div className="flex flex-col justify-between gap-6">
                 <div className="space-y-4">
-                  <span className="badge badge-primary badge-outline">매장 정보</span>
-                  <h1 className="text-4xl font-bold leading-tight">
+                  <span className="badge badge-outline border-[var(--color-gold)] text-[var(--color-gold)]">매장 정보</span>
+                  <h1 className="text-4xl font-bold leading-tight text-[var(--color-text)]">
                     {storeSummary.name}
                   </h1>
                   {storeSummary.description && (
-                    <p className="text-lg text-base-content/80 leading-relaxed">
+                    <p className="text-lg text-[var(--color-text)]/80 leading-relaxed">
                       {storeSummary.description}
                     </p>
                   )}
-                  <p className="flex items-start gap-2 text-base text-base-content/70">
-                    <MapPin className="mt-1 h-5 w-5 text-primary" />
+                  <p className="flex items-start gap-2 text-base text-[var(--color-text)]/70">
+                    <MapPin className="mt-1 h-5 w-5 text-[var(--color-gold)]" />
                     <span>
                       {[locationText, storeSummary.address]
                         .filter((value): value is string => Boolean(value))
@@ -217,10 +218,10 @@ export default function StoreDetailPage() {
                     {categoryCounts.map((category) => (
                       <span
                         key={category.id}
-                        className="badge badge-lg gap-2 bg-base-100 shadow-sm"
+                        className="badge badge-lg gap-2 bg-[var(--color-gold)]/10 border-[var(--color-gold)] text-[var(--color-gold)] shadow-sm"
                       >
                         {category.name}
-                        <span className="text-sm font-semibold text-base-content">
+                        <span className="text-sm font-semibold">
                           {category.count.toLocaleString('ko-KR')}개
                         </span>
                       </span>
@@ -229,14 +230,14 @@ export default function StoreDetailPage() {
                 )}
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-2xl bg-base-100 p-5 shadow-sm">
+                  <div className="rounded-2xl bg-[var(--color-primary)] p-5 shadow-sm border border-[var(--color-text)]/10">
                     <div className="flex items-center gap-3">
-                      <div className="rounded-full bg-primary/10 p-2 text-primary">
+                      <div className="rounded-full bg-[var(--color-gold)]/10 p-2 text-[var(--color-gold)]">
                         <PackageSearch className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="text-xs font-semibold text-base-content/60">등록 상품</p>
-                        <p className="text-xl font-semibold">
+                        <p className="text-xs font-semibold text-[var(--color-text)]/60">등록 상품</p>
+                        <p className="text-xl font-semibold text-[var(--color-text)]">
                           {typeof totalProductCount === 'number'
                             ? `${totalProductCount.toLocaleString('ko-KR')}개`
                             : '정보 준비 중'}
@@ -245,42 +246,42 @@ export default function StoreDetailPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl bg-base-100 p-5 shadow-sm">
+                  <div className="rounded-2xl bg-[var(--color-primary)] p-5 shadow-sm border border-[var(--color-text)]/10">
                     <div className="flex items-center gap-3">
-                      <div className="rounded-full bg-primary/10 p-2 text-primary">
+                      <div className="rounded-full bg-[var(--color-gold)]/10 p-2 text-[var(--color-gold)]">
                         <Clock className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="text-xs font-semibold text-base-content/60">영업시간</p>
-                        <p className="text-lg font-semibold">
+                        <p className="text-xs font-semibold text-[var(--color-text)]/60">영업시간</p>
+                        <p className="text-lg font-semibold text-[var(--color-text)]">
                           {storeSummary.businessHours ?? '정보 준비 중'}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="rounded-2xl bg-base-100 p-5 shadow-sm">
+                  <div className="rounded-2xl bg-[var(--color-primary)] p-5 shadow-sm border border-[var(--color-text)]/10">
                     <div className="flex items-center gap-3">
-                      <div className="rounded-full bg-primary/10 p-2 text-primary">
+                      <div className="rounded-full bg-[var(--color-gold)]/10 p-2 text-[var(--color-gold)]">
                         <Phone className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="text-xs font-semibold text-base-content/60">연락처</p>
-                        <p className="text-lg font-semibold">
+                        <p className="text-xs font-semibold text-[var(--color-text)]/60">연락처</p>
+                        <p className="text-lg font-semibold text-[var(--color-text)]">
                           {storeSummary.phone ?? '정보 준비 중'}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="rounded-2xl bg-base-100 p-5 shadow-sm">
+                  <div className="rounded-2xl bg-[var(--color-primary)] p-5 shadow-sm border border-[var(--color-text)]/10">
                     <div className="flex items-center gap-3">
-                      <div className="rounded-full bg-primary/10 p-2 text-primary">
+                      <div className="rounded-full bg-[var(--color-gold)]/10 p-2 text-[var(--color-gold)]">
                         <MapPin className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="text-xs font-semibold text-base-content/60">지역</p>
-                        <p className="text-lg font-semibold">
+                        <p className="text-xs font-semibold text-[var(--color-text)]/60">지역</p>
+                        <p className="text-lg font-semibold text-[var(--color-text)]">
                           {locationText || '정보 준비 중'}
                         </p>
                       </div>
@@ -292,16 +293,16 @@ export default function StoreDetailPage() {
                   {sanitizedPhone ? (
                     <a
                       href={`tel:${sanitizedPhone}`}
-                      className="btn btn-primary"
+                      className="btn bg-[var(--color-gold)] hover:bg-[var(--color-gold)]/80 text-[var(--color-primary)] border-[var(--color-gold)]"
                       aria-label={`${storeSummary.name}에 전화하기`}
                     >
                       <Phone className="h-5 w-5" />
                       전화 연결
                     </a>
                   ) : (
-                    <button type="button" className="btn" disabled>
+                    <Button variant="ghost" className="border-[var(--color-text)]/20 text-[var(--color-text)]/50" disabled>
                       연락처 정보 준비 중
-                    </button>
+                    </Button>
                   )}
 
                   {mapUrl ? (
@@ -309,7 +310,7 @@ export default function StoreDetailPage() {
                       href={mapUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn btn-outline"
+                      className="btn border-[var(--color-gold)] text-[var(--color-gold)] hover:bg-[var(--color-gold)] hover:text-[var(--color-primary)]"
                     >
                       <ExternalLink className="h-5 w-5" />
                       지도에서 보기
@@ -324,15 +325,15 @@ export default function StoreDetailPage() {
         <section className="container mx-auto px-4 py-12">
           <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-2xl font-bold">매장 상품</h2>
-              <p className="text-sm text-base-content/60">
+              <h2 className="text-2xl font-bold text-[var(--color-text)]">매장 상품</h2>
+              <p className="text-sm text-[var(--color-text)]/60">
                 {typeof totalProductCount === 'number'
                   ? `총 ${totalProductCount.toLocaleString('ko-KR')}개의 상품이 등록되어 있습니다.`
                   : '등록된 상품 정보를 불러오고 있습니다.'}
               </p>
             </div>
             {isFetchingProducts && (
-              <span className="text-sm text-primary">데이터 새로고침 중...</span>
+              <span className="text-sm text-[var(--color-gold)]">데이터 새로고침 중...</span>
             )}
           </div>
 
@@ -352,7 +353,7 @@ export default function StoreDetailPage() {
           ) : productsLoading ? (
             <ProductsLoadingSkeleton count={8} />
           ) : products.length === 0 ? (
-            <div className="rounded-xl bg-base-200 py-16 text-center text-base-content/70">
+            <div className="rounded-xl bg-[var(--color-secondary)] py-16 text-center text-[var(--color-text)]/70">
               아직 등록된 상품이 없습니다. 곧 업데이트될 예정입니다.
             </div>
           ) : (
@@ -368,7 +369,7 @@ export default function StoreDetailPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-base-100">
+    <div className="flex min-h-screen flex-col">
       <Navbar navigationItems={NAV_ITEMS} />
       <main className="flex-grow">{mainContent}</main>
       <Footer />

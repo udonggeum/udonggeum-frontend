@@ -171,7 +171,10 @@ apiClient.interceptors.response.use(
         })
           .then(() => {
             // Retry with new token
-            if (error.config && error.config.headers) {
+            if (!error.config) {
+              return Promise.reject(new Error('No config available for retry'));
+            }
+            if (error.config.headers) {
               const token = useAuthStore.getState().tokens?.access_token;
               error.config.headers.Authorization = `Bearer ${token}`;
             }

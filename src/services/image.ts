@@ -25,7 +25,14 @@ class ImageService {
   async uploadImage(file: File): Promise<ImageUploadResponse> {
     try {
       const formData = new FormData();
-      formData.append('image', file);
+      formData.append('file', file);
+
+      console.log('[ImageService] Uploading image:', {
+        filename: file.name,
+        size: file.size,
+        type: file.type,
+        endpoint: ENDPOINTS.IMAGES.UPLOAD,
+      });
 
       const response = await apiClient.post<ImageUploadResponse>(
         ENDPOINTS.IMAGES.UPLOAD,
@@ -37,9 +44,12 @@ class ImageService {
         }
       );
 
+      console.log('[ImageService] Upload response:', response.data);
+
       const validatedData = ImageUploadResponseSchema.parse(response.data);
       return validatedData;
     } catch (error) {
+      console.error('[ImageService] Upload error:', error);
       if (error instanceof ZodError) {
         throw ValidationError.fromZod(error);
       }

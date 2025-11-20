@@ -31,7 +31,7 @@ export default function ProductsFilterBar({
   onCategoryChange,
 }: ProductsFilterBarProps) {
   return (
-    <section className="bg-base-200 py-6" aria-label="상품 필터">
+    <section className="bg-[var(--color-secondary)] py-6" aria-label="상품 필터">
       <div className="container mx-auto px-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-6">

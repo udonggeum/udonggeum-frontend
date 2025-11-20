@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   Navbar,
   Footer,
+  Button,
   StoreCard,
   StoresLoadingSkeleton,
   PaginationControls,
@@ -37,7 +38,6 @@ export default function StoresPage() {
 
   const {
     data: locationsData,
-    isLoading: locationsLoading,
   } = useStoreLocations();
 
   const categoryOptions = useMemo(
@@ -101,11 +101,19 @@ export default function StoresPage() {
     // Filter by category on client-side using category_counts
     if (selectedCategoryId) {
       const apiCategory = uiCategoryToAPICategory(selectedCategoryId);
-      filteredStores = filteredStores.filter((store) => {
-        // Check if store has products in the selected category
-        const categoryCounts = store.category_counts || {};
-        return (categoryCounts[apiCategory] || 0) > 0;
-      });
+      if (apiCategory) {
+        filteredStores = filteredStores.filter((store) => {
+          // Check if store has products in the selected category
+          const categoryCounts = store.category_counts;
+          if (!categoryCounts) return false;
+
+          // Handle both Record and Array formats
+          if (Array.isArray(categoryCounts)) {
+            return categoryCounts.some((cc) => cc.category === apiCategory && (cc.count ?? 0) > 0);
+          }
+          return (categoryCounts[apiCategory as keyof typeof categoryCounts] || 0) > 0;
+        });
+      }
     }
 
     return filteredStores.map((store) =>
@@ -124,16 +132,16 @@ export default function StoresPage() {
     ? CATEGORY_LABEL_MAP.get(selectedCategoryId) ?? '선택된 카테고리'
     : '전체 카테고리';
 
-  const handleRegionChange = (value: string) => {
-    setSelectedRegionId(value || null);
+  const handleRegionChange = (value: string | null) => {
+    setSelectedRegionId(value);
   };
 
-  const handleCategoryChange = (value: string) => {
-    setSelectedCategoryId(value || null);
+  const handleCategoryChange = (value: string | null) => {
+    setSelectedCategoryId(value);
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-base-100">
+    <div className="flex min-h-screen flex-col">
       <Navbar navigationItems={NAV_ITEMS} />
 
       <main className="flex-grow">
@@ -154,13 +162,13 @@ export default function StoresPage() {
               <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h1 className="text-2xl font-bold">전체 매장</h1>
-                  <p className="text-sm text-base-content/70">
+                  <p className="text-sm text-[var(--color-text)]/70">
                     총 {totalCount.toLocaleString('ko-KR')}개의 매장이 있습니다.
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 text-sm text-base-content/60">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--color-text)]/60">
                   <span>{selectedRegionLabel}</span>
-                  <span className="text-base-content/40">·</span>
+                  <span className="text-[var(--color-text)]/40">·</span>
                   <span>{selectedCategoryLabel}</span>
                   {isFetching && (
                     <span className="ml-2 text-primary">데이터 새로고침 중...</span>
@@ -184,16 +192,15 @@ export default function StoresPage() {
                   error={error instanceof Error ? error : undefined}
                 />
               ) : isEmpty ? (
-                <div className="flex flex-col items-center justify-center gap-4 rounded-xl bg-base-200 py-20 text-center">
+                <div className="flex flex-col items-center justify-center gap-4 rounded-xl bg-[var(--color-secondary)] py-20 text-center">
                   <h2 className="text-xl font-semibold">
                     조건에 맞는 매장이 없습니다
                   </h2>
-                  <p className="text-base-content/70">
+                  <p className="text-[var(--color-text)]/70">
                     다른 지역이나 카테고리를 선택해보세요.
                   </p>
-                  <button
-                    type="button"
-                    className="btn btn-primary"
+                  <Button
+                    variant="primary"
                     onClick={() => {
                       setSelectedRegionId(null);
                       setSelectedCategoryId(null);
@@ -201,7 +208,7 @@ export default function StoresPage() {
                     }}
                   >
                     전체 매장 보기
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <>

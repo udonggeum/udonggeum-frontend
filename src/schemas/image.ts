@@ -48,6 +48,7 @@ export type ImageOptimizationResponse = z.infer<typeof ImageOptimizationResponse
  * Simple image upload without optimization
  */
 export const ImageUploadResponseSchema = z.object({
+  message: z.string().optional(),
   url: z.string().min(1),
   filename: z.string(),
   size_bytes: z.number().int().nonnegative(),

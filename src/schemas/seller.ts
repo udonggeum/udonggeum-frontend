@@ -31,7 +31,7 @@ export const CreateStoreRequestSchema = z.object({
     .string()
     .regex(/^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/, '올바른 전화번호 형식이 아닙니다')
     .optional(),
-  image_url: z.string().url('올바른 URL 형식이 아닙니다').optional().or(z.literal('')),
+  image_url: z.string().regex(/^(https?:\/\/.+|\/uploads\/.+)$/, '올바른 URL 형식이 아닙니다').optional().or(z.literal('')),
   description: z.string().optional(),
   open_time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, '올바른 시간 형식이 아닙니다 (예: 09:00)').optional(),
   close_time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, '올바른 시간 형식이 아닙니다 (예: 20:00)').optional(),
@@ -53,7 +53,7 @@ export const UpdateStoreRequestSchema = z.object({
     .string()
     .regex(/^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/, '올바른 전화번호 형식이 아닙니다')
     .optional(),
-  image_url: z.string().url('올바른 URL 형식이 아닙니다').optional().or(z.literal('')),
+  image_url: z.string().regex(/^(https?:\/\/.+|\/uploads\/.+)$/, '올바른 URL 형식이 아닙니다').optional().or(z.literal('')),
   description: z.string().optional(),
   open_time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, '올바른 시간 형식이 아닙니다 (예: 09:00)').optional(),
   close_time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, '올바른 시간 형식이 아닙니다 (예: 20:00)').optional(),
@@ -89,7 +89,7 @@ export const CreateProductRequestSchema = z.object({
   category: z.string().min(1, '카테고리를 선택하세요'),
   material: z.string().min(1, '재질을 선택하세요'),
   stock_quantity: z.number().int().nonnegative().default(0),
-  image_url: z.string().url('올바른 URL 형식이 아닙니다').optional(),
+  image_url: z.string().regex(/^(https?:\/\/.+|\/uploads\/.+)$/, '올바른 URL 형식이 아닙니다').optional(),
   options: z.array(ProductOptionInputSchema).optional().default([]),
 });
 
@@ -109,7 +109,7 @@ export const UpdateProductRequestSchema = z.object({
   category: z.string().min(1, '카테고리를 선택하세요').optional(),
   material: z.string().min(1, '재질을 선택하세요').optional(),
   stock_quantity: z.number().int().nonnegative().optional(),
-  image_url: z.string().url('올바른 URL 형식이 아닙니다').optional(),
+  image_url: z.string().regex(/^(https?:\/\/.+|\/uploads\/.+)$/, '올바른 URL 형식이 아닙니다').optional(),
   options: z.array(ProductOptionInputSchema).optional(),
 });
 

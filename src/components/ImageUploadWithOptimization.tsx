@@ -14,11 +14,15 @@ const BACKEND_URL = 'http://localhost:8080';
 interface ImageUploadWithOptimizationProps {
   onImageSelect: (imageUrl: string) => void;
   currentImageUrl?: string;
+  showOptimization?: boolean; // Whether to show AI optimization features (default: true)
+  label?: string; // Label text (default: "상품 이미지")
 }
 
 export default function ImageUploadWithOptimization({
   onImageSelect,
   currentImageUrl,
+  showOptimization = true,
+  label = '상품 이미지',
 }: ImageUploadWithOptimizationProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -55,14 +59,39 @@ export default function ImageUploadWithOptimization({
       setPreviewUrl(reader.result as string);
       setOptimizedUrl('');
       setShowComparison(false);
+
+      // Auto-upload if optimization is disabled (simple mode)
+      if (!showOptimization) {
+        uploadImage(file, {
+          onSuccess: (data) => {
+            console.log('[Upload] Backend response:', data);
+            const absoluteUrl = getAbsoluteUrl(data.url);
+            console.log('[Upload] URL conversion:', { original: data.url, converted: absoluteUrl });
+            onImageSelect(absoluteUrl);
+            setPreviewUrl(absoluteUrl);
+          },
+          onError: (error) => {
+            alert(`이미지 업로드 실패: ${error.message}`);
+          },
+        });
+      }
     };
     reader.readAsDataURL(file);
   };
 
-  // Helper function to convert relative URL to absolute URL
+  // Helper function to normalize image URL for proxy access
+  // Converts absolute backend URLs to relative URLs that work with Vite proxy
   const getAbsoluteUrl = (url: string) => {
-    if (url.startsWith('http')) return url;
-    return `${BACKEND_URL}${url}`;
+    // If already a relative path, return as is
+    if (!url.startsWith('http')) return url;
+
+    // Convert http://localhost:8080/uploads/xxx.jpg to /uploads/xxx.jpg
+    // This allows Vite proxy to forward the request to backend
+    if (url.startsWith(BACKEND_URL)) {
+      return url.replace(BACKEND_URL, '');
+    }
+
+    return url;
   };
 
   const handleNormalUpload = () => {
@@ -70,7 +99,9 @@ export default function ImageUploadWithOptimization({
 
     uploadImage(selectedFile, {
       onSuccess: (data) => {
+        console.log('[Upload] Backend response:', data);
         const absoluteUrl = getAbsoluteUrl(data.url);
+        console.log('[Upload] URL conversion:', { original: data.url, converted: absoluteUrl });
         onImageSelect(absoluteUrl);
         setPreviewUrl(absoluteUrl);
         alert('이미지가 업로드되었습니다.');
@@ -142,7 +173,7 @@ export default function ImageUploadWithOptimization({
       {/* File Input */}
       <div className="form-control w-full">
         <label className="label">
-          <span className="label-text font-semibold">상품 이미지</span>
+          <span className="label-text font-semibold">{label}</span>
         </label>
 
         <input
@@ -154,15 +185,49 @@ export default function ImageUploadWithOptimization({
         />
 
         <label className="label">
-          <span className="label-text-alt text-base-content/60">
+          <span className="label-text-alt text-[var(--color-text)]/60">
             JPG, PNG, GIF 형식 (최대 10MB)
           </span>
         </label>
       </div>
 
-      {/* Preview */}
-      {previewUrl && !showComparison && (
-        <div className="card bg-base-200 shadow-sm">
+      {/* Simple Mode: Show upload status or uploaded thumbnail */}
+      {!showOptimization && previewUrl && (
+        <div className="flex items-center gap-3 p-3 bg-[var(--color-secondary)] rounded-lg border border-[var(--color-text)]/10">
+          {isUploading ? (
+            <>
+              <div className="loading loading-spinner loading-md text-primary"></div>
+              <span className="text-sm text-[var(--color-text)]">업로드 중...</span>
+            </>
+          ) : (
+            <>
+              <img
+                src={previewUrl}
+                alt="Uploaded"
+                className="w-16 h-16 object-cover rounded-lg"
+              />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-[var(--color-text)] flex items-center gap-2">
+                  <Check className="w-4 h-4 text-success" />
+                  업로드 완료
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleReset}
+                className="btn btn-ghost btn-sm"
+              >
+                <X className="w-4 h-4" />
+                변경
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Preview with Optimization Options */}
+      {showOptimization && previewUrl && !showComparison && (
+        <div className="card bg-[var(--color-secondary)] shadow-sm">
           <div className="card-body">
             <div className="flex justify-between items-center mb-2">
               <h3 className="font-semibold flex items-center gap-2">
@@ -200,7 +265,7 @@ export default function ImageUploadWithOptimization({
                 rows={2}
               />
               <label className="label">
-                <span className="label-text-alt text-base-content/60">
+                <span className="label-text-alt text-[var(--color-text)]/60">
                   설명을 추가하면 AI가 더 정확하게 보정합니다
                 </span>
               </label>
@@ -232,7 +297,7 @@ export default function ImageUploadWithOptimization({
 
       {/* Comparison View */}
       {showComparison && optimizedUrl && (
-        <div className="card bg-base-200 shadow-sm">
+        <div className="card bg-[var(--color-secondary)] shadow-sm">
           <div className="card-body">
             <h3 className="font-semibold mb-4">이미지 비교</h3>
 
@@ -258,7 +323,7 @@ export default function ImageUploadWithOptimization({
               {/* Original */}
               <div className="space-y-2">
                 <div className="text-center font-medium">원본</div>
-                <div className="border-2 border-base-300 rounded-lg p-2 bg-base-100">
+                <div className="border-2 border-base-300 rounded-lg p-2 bg-[var(--color-primary)]">
                   <img
                     src={previewUrl}
                     alt="Original"
@@ -281,7 +346,7 @@ export default function ImageUploadWithOptimization({
                   <Sparkles className="w-4 h-4 text-primary" />
                   AI 보정
                 </div>
-                <div className="border-2 border-primary rounded-lg p-2 bg-base-100">
+                <div className="border-2 border-primary rounded-lg p-2 bg-[var(--color-primary)]">
                   <img
                     src={optimizedUrl}
                     alt="Optimized"

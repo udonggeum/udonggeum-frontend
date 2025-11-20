@@ -5,11 +5,11 @@
 
 import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User as UserIcon, ArrowLeft, Save } from 'lucide-react';
+import { User as UserIcon, ArrowLeft, Save, Lock, Edit3, Shield, Mail, Phone, Key } from 'lucide-react';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useUpdateProfile } from '@/hooks/queries/useAuthQueries';
 import { UpdateProfileRequestSchema, type UpdateProfileRequest } from '@/schemas/auth';
-import { Navbar, Footer, ErrorAlert, LoadingSpinner } from '@/components';
+import { Navbar, Footer, ErrorAlert, LoadingSpinner, Button } from '@/components';
 import { NAV_ITEMS } from '@/constants/navigation';
 
 interface FormErrors {
@@ -149,29 +149,29 @@ export default function ProfileEditPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-base-100">
+    <div className="flex min-h-screen flex-col">
       <Navbar navigationItems={NAV_ITEMS} />
 
-      <main className="flex-grow">
-        <section className="container mx-auto px-4 py-10">
+      <main className="flex-grow py-8">
+        <section className="container mx-auto px-4 max-w-3xl">
           {/* Page Header */}
           <div className="mb-8">
-            <button
-              type="button"
-              onClick={() => navigate('/mypage')}
-              className="btn btn-ghost btn-sm gap-2 mb-4"
+            <Button onClick={() => navigate('/mypage')}
+              variant="outline"
+              size="sm"
+              className="gap-2 mb-4"
             >
               <ArrowLeft className="w-4 h-4" />
               마이페이지로 돌아가기
-            </button>
-            <h1 className="text-3xl font-bold">프로필 수정</h1>
-            <p className="mt-2 text-base-content/70">
+            </Button>
+            <h1 className="text-3xl font-bold text-[var(--color-text)]">프로필 수정</h1>
+            <p className="mt-2 text-[var(--color-text)]/60">
               회원 정보를 수정하세요
             </p>
           </div>
 
           {/* Form Card */}
-          <div className="card bg-base-100 shadow-xl max-w-2xl mx-auto">
+          <div className="card bg-[var(--color-primary)] shadow border border-[var(--color-text)]/10">
             <div className="card-body">
               {/* Success Message */}
               {isSuccess && (
@@ -208,103 +208,151 @@ export default function ProfileEditPage() {
               )}
 
               {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Email (Read-only) */}
-                <div className="form-control">
-                  <label className="label" htmlFor="email">
-                    <span className="label-text font-semibold">이메일</span>
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    value={user?.email || ''}
-                    disabled
-                    className="input input-bordered bg-base-200 cursor-not-allowed"
-                  />
-                  <label className="label">
-                    <span className="label-text-alt text-base-content/60">
-                      이메일은 변경할 수 없습니다
-                    </span>
-                  </label>
+              <form onSubmit={handleSubmit} className="space-y-8">
+                {/* 🔒 계정 정보 (변경 불가) */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Lock className="w-5 h-5 text-[var(--color-text)]/70" />
+                    <h3 className="text-lg font-bold text-[var(--color-text)]">계정 정보</h3>
+                    <span className="badge badge-sm bg-[var(--color-text)]/10 text-[var(--color-text)]/70 border-none">변경 불가</span>
+                  </div>
+
+                  <div className="bg-[var(--color-secondary)] p-4 rounded-lg border border-[var(--color-text)]/10">
+                    <div className="flex items-center gap-3">
+                      <Mail className="w-5 h-5 text-[var(--color-text)]/50" />
+                      <div className="flex-1">
+                        <p className="text-xs text-[var(--color-text)]/70 mb-1">이메일</p>
+                        <p className="text-sm font-semibold text-[var(--color-text)]">{user?.email || '-'}</p>
+                      </div>
+                      <Lock className="w-4 h-4 text-[var(--color-text)]/30" />
+                    </div>
+                    <p className="text-xs text-[var(--color-text)]/60 mt-3 ml-8">
+                      이메일은 계정 식별에 사용되어 변경할 수 없습니다
+                    </p>
+                  </div>
                 </div>
 
-                {/* Name */}
-                <div className="form-control">
-                  <label className="label" htmlFor="name">
-                    <span className="label-text font-semibold">
-                      이름 <span className="text-error">*</span>
-                    </span>
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className={`input input-bordered ${
-                      touched.name && formErrors.name ? 'input-error' : ''
-                    }`}
-                    placeholder="홍길동"
-                    disabled={isPending}
-                    required
-                  />
-                  {touched.name && formErrors.name && (
-                    <label className="label">
-                      <span className="label-text-alt text-error">
-                        {formErrors.name}
-                      </span>
-                    </label>
-                  )}
+                {/* ✏️ 개인 정보 */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Edit3 className="w-5 h-5 text-[var(--color-gold)]" />
+                    <h3 className="text-lg font-bold text-[var(--color-text)]">개인 정보</h3>
+                    <span className="badge badge-sm bg-[var(--color-gold)]/10 text-[var(--color-gold)] border-none">수정 가능</span>
+                  </div>
+
+                  <div className="space-y-4">
+                    {/* Name */}
+                    <div className="form-control">
+                      <label className="label pb-2" htmlFor="name">
+                        <span className="label-text font-medium text-[var(--color-text)] flex items-center gap-2">
+                          <UserIcon className="w-4 h-4" />
+                          이름 <span className="text-error">*</span>
+                        </span>
+                      </label>
+                      <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={`input input-bordered bg-[var(--color-secondary)] text-[var(--color-text)] border-[var(--color-text)]/20 h-12 ${
+                          touched.name && formErrors.name ? 'input-error' : ''
+                        }`}
+                        placeholder="홍길동"
+                        disabled={isPending}
+                        required
+                      />
+                      {touched.name && formErrors.name && (
+                        <label className="label pt-2">
+                          <span className="label-text-alt text-error">
+                            {formErrors.name}
+                          </span>
+                        </label>
+                      )}
+                    </div>
+
+                    {/* Phone */}
+                    <div className="form-control">
+                      <label className="label pb-2" htmlFor="phone">
+                        <span className="label-text font-medium text-[var(--color-text)] flex items-center gap-2">
+                          <Phone className="w-4 h-4" />
+                          전화번호
+                        </span>
+                      </label>
+                      <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        value={formData.phone || ''}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={`input input-bordered bg-[var(--color-secondary)] text-[var(--color-text)] border-[var(--color-text)]/20 h-12 ${
+                          touched.phone && formErrors.phone ? 'input-error' : ''
+                        }`}
+                        placeholder="010-1234-5678"
+                        disabled={isPending}
+                      />
+                      {touched.phone && formErrors.phone && (
+                        <label className="label pt-2">
+                          <span className="label-text-alt text-error">
+                            {formErrors.phone}
+                          </span>
+                        </label>
+                      )}
+                      <label className="label pt-2">
+                        <span className="label-text-alt text-[var(--color-text)]/60">
+                          형식: 010-1234-5678 또는 01012345678
+                        </span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Phone */}
-                <div className="form-control">
-                  <label className="label" htmlFor="phone">
-                    <span className="label-text font-semibold">전화번호</span>
-                  </label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    value={formData.phone || ''}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className={`input input-bordered ${
-                      touched.phone && formErrors.phone ? 'input-error' : ''
-                    }`}
-                    placeholder="010-1234-5678"
-                    disabled={isPending}
-                  />
-                  {touched.phone && formErrors.phone && (
-                    <label className="label">
-                      <span className="label-text-alt text-error">
-                        {formErrors.phone}
-                      </span>
-                    </label>
-                  )}
-                  <label className="label">
-                    <span className="label-text-alt text-base-content/60">
-                      형식: 010-1234-5678 또는 01012345678
-                    </span>
-                  </label>
+                {/* 🔐 보안 설정 */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Shield className="w-5 h-5 text-[var(--color-text)]/70" />
+                    <h3 className="text-lg font-bold text-[var(--color-text)]">보안 설정</h3>
+                  </div>
+
+                  <div className="bg-[var(--color-secondary)] p-4 rounded-lg border border-[var(--color-text)]/10">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Key className="w-5 h-5 text-[var(--color-text)]/50" />
+                        <div>
+                          <p className="text-sm font-semibold text-[var(--color-text)]">비밀번호</p>
+                          <p className="text-xs text-[var(--color-text)]/60 mt-1">
+                            계정 보안을 위해 정기적으로 변경하세요
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          // TODO: 비밀번호 변경 페이지로 이동
+                          alert('비밀번호 변경 기능은 곧 제공될 예정입니다');
+                        }}
+                      >
+                        변경하기
+                      </Button>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="divider"></div>
+                <div className="divider my-6"></div>
 
                 {/* Submit Button */}
-                <div className="card-actions justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => navigate('/mypage')}
-                    className="btn btn-outline"
+                <div className="flex justify-end gap-3 pt-2">
+                  <Button onClick={() => navigate('/mypage')}
+                    variant="outline"
                     disabled={isPending}
                   >
                     취소
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-primary gap-2"
+                  </Button>
+                  <Button type="submit" variant="primary" className="gap-2"
                     disabled={isPending}
                   >
                     {isPending ? (
@@ -315,25 +363,15 @@ export default function ProfileEditPage() {
                     ) : (
                       <>
                         <Save className="w-4 h-4" />
-                        <span>저장</span>
+                        <span>변경사항 저장</span>
                       </>
                     )}
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>
           </div>
 
-          {/* Info Card */}
-          <div className="alert alert-info max-w-2xl mx-auto mt-6">
-            <UserIcon className="w-5 h-5" />
-            <div>
-              <p className="font-semibold">비밀번호 변경</p>
-              <p className="text-sm">
-                비밀번호를 변경하시려면 별도의 비밀번호 변경 페이지를 이용해주세요.
-              </p>
-            </div>
-          </div>
         </section>
       </main>
 

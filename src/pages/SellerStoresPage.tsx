@@ -11,7 +11,7 @@ import {
   useUpdateStore,
   useDeleteStore,
 } from '@/hooks/queries';
-import { LoadingSpinner, ErrorAlert } from '@/components';
+import { LoadingSpinner, ErrorAlert, Button, ImageUploadWithOptimization } from '@/components';
 import type { CreateStoreRequest, UpdateStoreRequest } from '@/schemas/seller';
 import type { Store as StoreType } from '@/schemas';
 
@@ -134,9 +134,7 @@ export default function SellerStoresPage() {
       errors.phone_number = '올바른 전화번호 형식이 아닙니다';
     }
 
-    if (formData.image_url && formData.image_url.trim() && !/^https?:\/\/.+/.test(formData.image_url)) {
-      errors.image_url = '올바른 URL 형식이 아닙니다';
-    }
+    // Image URL validation removed - handled by ImageUploadWithOptimization component
 
     if (formData.open_time && !/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(formData.open_time)) {
       errors.open_time = '올바른 시간 형식이 아닙니다 (예: 09:00)';
@@ -216,7 +214,7 @@ export default function SellerStoresPage() {
   if (isError) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <ErrorAlert error={error} />
+        <ErrorAlert error={error} message="가게 목록을 불러오는 중 오류가 발생했습니다" />
       </div>
     );
   }
@@ -226,51 +224,51 @@ export default function SellerStoresPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-[var(--color-text)] flex items-center gap-3">
             <Store className="w-8 h-8" aria-hidden="true" />
             가게 관리
           </h1>
-          <p className="text-base-content/70 mt-2">
+          <p className="text-[var(--color-text)]/70 mt-2">
             판매할 가게를 관리하세요
           </p>
         </div>
-        <button
-          type="button"
+        <Button
+          variant="primary"
           onClick={openCreateModal}
-          className="btn btn-primary gap-2"
+          className="gap-2"
         >
           <Plus className="w-5 h-5" />
           가게 추가
-        </button>
+        </Button>
       </div>
 
       {/* Stores List */}
       {!stores || stores.length === 0 ? (
-        <div className="card bg-base-100 shadow-md">
+        <div className="card bg-[var(--color-secondary)] border border-[var(--color-text)]/10 shadow-md">
           <div className="card-body text-center">
-            <Store className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
+            <Store className="w-16 h-16 mx-auto text-[var(--color-text)]/30 mb-4" />
             <p className="text-lg font-semibold">등록된 가게가 없습니다</p>
-            <p className="text-base-content/70 mb-4">
+            <p className="text-[var(--color-text)]/70 mb-4">
               첫 번째 가게를 추가해보세요
             </p>
-            <button
-              type="button"
+            <Button
+              variant="primary"
               onClick={openCreateModal}
-              className="btn btn-primary gap-2 mx-auto"
+              className="gap-2 mx-auto"
             >
               <Plus className="w-5 h-5" />
               가게 추가
-            </button>
+            </Button>
           </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {stores.map((store) => (
-            <div key={store.id} className="card bg-base-100 shadow-md">
+            <div key={store.id} className="card bg-[var(--color-secondary)] border border-[var(--color-text)]/10 shadow-md">
               <div className="card-body">
                 <h2 className="card-title">{store.name}</h2>
                 {store.description && (
-                  <p className="text-base-content/70 text-sm mb-4">
+                  <p className="text-[var(--color-text)]/70 text-sm mb-4">
                     {store.description}
                   </p>
                 )}
@@ -305,24 +303,26 @@ export default function SellerStoresPage() {
                 </div>
 
                 <div className="card-actions justify-end mt-4">
-                  <button
-                    type="button"
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => openEditModal(store)}
-                    className="btn btn-sm btn-outline gap-2"
+                    className="gap-2"
                     disabled={isUpdating || isDeleting}
                   >
                     <Edit className="w-4 h-4" />
                     수정
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="error"
+                    size="sm"
                     onClick={() => handleDelete(store.id)}
-                    className="btn btn-sm btn-error btn-outline gap-2"
+                    className="gap-2"
                     disabled={isUpdating || isDeleting}
                   >
                     <Trash2 className="w-4 h-4" />
                     삭제
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -333,7 +333,7 @@ export default function SellerStoresPage() {
       {/* Create/Edit Modal */}
       {isModalOpen && (
         <div className="modal modal-open">
-          <div className="modal-box max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="modal-box bg-[var(--color-secondary)] border border-[var(--color-text)]/20 max-w-2xl max-h-[90vh] overflow-y-auto">
             <h3 className="font-bold text-lg mb-4">
               {editingStore ? '가게 수정' : '가게 추가'}
             </h3>
@@ -350,7 +350,7 @@ export default function SellerStoresPage() {
                   type="text"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className={`input input-bordered w-full ${formErrors.name ? 'input-error' : ''}`}
+                  className={`input input-bordered bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 w-full ${formErrors.name ? 'input-error' : ''}`}
                   placeholder="우리 금은방"
                 />
                 {formErrors.name && (
@@ -371,7 +371,7 @@ export default function SellerStoresPage() {
                     name="region"
                     value={formData.region}
                     onChange={handleInputChange}
-                    className={`select select-bordered w-full ${formErrors.region ? 'select-error' : ''}`}
+                    className={`select select-bordered bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 w-full ${formErrors.region ? 'select-error' : ''}`}
                   >
                     <option value="">선택하세요</option>
                     {REGIONS.map((region) => (
@@ -398,7 +398,7 @@ export default function SellerStoresPage() {
                     type="text"
                     value={formData.district}
                     onChange={handleInputChange}
-                    className={`input input-bordered w-full ${formErrors.district ? 'input-error' : ''}`}
+                    className={`input input-bordered bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 w-full ${formErrors.district ? 'input-error' : ''}`}
                     placeholder="강남구"
                   />
                   {formErrors.district && (
@@ -420,7 +420,7 @@ export default function SellerStoresPage() {
                   type="text"
                   value={formData.address}
                   onChange={handleInputChange}
-                  className={`input input-bordered w-full ${formErrors.address ? 'input-error' : ''}`}
+                  className={`input input-bordered bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 w-full ${formErrors.address ? 'input-error' : ''}`}
                   placeholder="테헤란로 123"
                 />
                 {formErrors.address && (
@@ -441,7 +441,7 @@ export default function SellerStoresPage() {
                   type="tel"
                   value={formData.phone_number}
                   onChange={handleInputChange}
-                  className={`input input-bordered w-full ${formErrors.phone_number ? 'input-error' : ''}`}
+                  className={`input input-bordered bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 w-full ${formErrors.phone_number ? 'input-error' : ''}`}
                   placeholder="010-1234-5678"
                 />
                 {formErrors.phone_number && (
@@ -463,7 +463,7 @@ export default function SellerStoresPage() {
                     type="text"
                     value={formData.open_time}
                     onChange={handleInputChange}
-                    className={`input input-bordered w-full ${formErrors.open_time ? 'input-error' : ''}`}
+                    className={`input input-bordered bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 w-full ${formErrors.open_time ? 'input-error' : ''}`}
                     placeholder="09:00"
                   />
                   {formErrors.open_time && (
@@ -483,7 +483,7 @@ export default function SellerStoresPage() {
                     type="text"
                     value={formData.close_time}
                     onChange={handleInputChange}
-                    className={`input input-bordered w-full ${formErrors.close_time ? 'input-error' : ''}`}
+                    className={`input input-bordered bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 w-full ${formErrors.close_time ? 'input-error' : ''}`}
                     placeholder="20:00"
                   />
                   {formErrors.close_time && (
@@ -494,19 +494,18 @@ export default function SellerStoresPage() {
                 </div>
               </div>
 
-              {/* Image URL */}
+              {/* Store Image */}
               <div className="form-control w-full mb-4">
-                <label htmlFor="image_url" className="label">
-                  <span className="label-text">매장 이미지 URL</span>
-                </label>
-                <input
-                  id="image_url"
-                  name="image_url"
-                  type="text"
-                  value={formData.image_url}
-                  onChange={handleInputChange}
-                  className={`input input-bordered w-full ${formErrors.image_url ? 'input-error' : ''}`}
-                  placeholder="https://example.com/image.jpg"
+                <ImageUploadWithOptimization
+                  onImageSelect={(url) => {
+                    setFormData((prev) => ({ ...prev, image_url: url }));
+                    if (formErrors.image_url) {
+                      setFormErrors((prev) => ({ ...prev, image_url: undefined }));
+                    }
+                  }}
+                  currentImageUrl={formData.image_url}
+                  showOptimization={false}
+                  label="매장 이미지"
                 />
                 {formErrors.image_url && (
                   <label className="label">
@@ -525,7 +524,7 @@ export default function SellerStoresPage() {
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  className={`textarea textarea-bordered w-full ${formErrors.description ? 'textarea-error' : ''}`}
+                  className={`textarea textarea-bordered bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 w-full ${formErrors.description ? 'textarea-error' : ''}`}
                   placeholder="최고의 품질로 고객님을 찾아갑니다"
                   rows={3}
                 />
@@ -538,17 +537,16 @@ export default function SellerStoresPage() {
 
               {/* Modal Actions */}
               <div className="modal-action">
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
                   onClick={closeModal}
-                  className="btn btn-ghost"
                   disabled={isCreating || isUpdating}
                 >
                   취소
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="primary"
                   type="submit"
-                  className="btn btn-primary"
                   disabled={isCreating || isUpdating}
                 >
                   {isCreating || isUpdating
@@ -558,7 +556,7 @@ export default function SellerStoresPage() {
                     : editingStore
                       ? '수정'
                       : '추가'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

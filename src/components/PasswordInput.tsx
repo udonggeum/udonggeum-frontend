@@ -53,7 +53,7 @@ export default function PasswordInput({
   return (
     <div className="form-control w-full">
       <label htmlFor={id} className="label">
-        <span className="label-text">{label}</span>
+        <span className="label-text text-[var(--color-text)]">{label}</span>
       </label>
       <div className="relative">
         <input
@@ -67,13 +67,15 @@ export default function PasswordInput({
           required={required}
           disabled={disabled}
           autoComplete={autoComplete}
-          className={`input input-bordered w-full pr-10 ${error ? 'input-error' : ''}`}
+          className={`input input-bordered w-full pr-10 bg-[var(--color-primary)] text-[var(--color-text)] ${
+            error ? 'border-red-400' : 'border-[var(--color-text)]/20'
+          }`}
         />
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
           aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보이기'}
-          className="absolute right-2 top-1/2 -translate-y-1/2 btn btn-ghost btn-sm btn-circle"
+          className="absolute right-2 top-1/2 -translate-y-1/2 btn btn-ghost btn-sm btn-circle text-[var(--color-text)]"
         >
           {showPassword ? (
             <EyeOff className="w-5 h-5" aria-hidden="true" />
@@ -84,7 +86,7 @@ export default function PasswordInput({
       </div>
       {error && (
         <label className="label">
-          <span className="label-text-alt text-error">{error}</span>
+          <span className="label-text-alt text-red-400">{error}</span>
         </label>
       )}
     </div>

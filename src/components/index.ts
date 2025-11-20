@@ -26,6 +26,9 @@ export { default as AddToCartModal } from './AddToCartModal';
 export { default as OrderCard } from './OrderCard';
 export { OrderStatusBadge, PaymentStatusBadge } from './OrderStatusBadge';
 
+// Cart Components
+export { default as CartItem } from './CartItem';
+
 // Store Components
 export { default as StoreCard } from './StoreCard';
 export { default as StoresLoadingSkeleton } from './StoresLoadingSkeleton';

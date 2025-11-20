@@ -64,15 +64,15 @@ export default function MainHeroSection({ onSearch }: MainHeroSectionProps) {
   };
 
   return (
-    <section className="min-h-screen flex items-center justify-center bg-base-100">
+    <section className="min-h-screen flex items-center justify-center bg-[var(--color-primary)]">
       <div className="container mx-auto px-4 py-12">
         {/* Title */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-[var(--color-gold)]">
             우리 동네 금은방
           </h1>
-          <p className="text-2xl md:text-3xl text-base-content/80">
-            소식을 확인해보세요.
+          <p className="text-2xl md:text-3xl text-[var(--color-text)] opacity-80">
+            가까운 금은방의 상품/시세/매장을 한 번에.
           </p>
         </div>
 
@@ -83,7 +83,7 @@ export default function MainHeroSection({ onSearch }: MainHeroSectionProps) {
             <select
               value={selectedRegionId}
               onChange={(e) => setSelectedRegionId(e.target.value)}
-              className="select select-bordered flex-1 h-14 text-lg"
+              className="select select-bordered flex-1 h-14 text-lg focus:outline-none bg-[var(--color-secondary)] text-[var(--color-text)] border-[var(--color-text)]/20"
               aria-label="지역 선택"
             >
               <option value="">전체 지역</option>
@@ -98,7 +98,7 @@ export default function MainHeroSection({ onSearch }: MainHeroSectionProps) {
             <select
               value={selectedCategoryId}
               onChange={(e) => setSelectedCategoryId(e.target.value)}
-              className="select select-bordered flex-1 h-14 text-lg"
+              className="select select-bordered flex-1 h-14 text-lg focus:outline-none bg-[var(--color-secondary)] text-[var(--color-text)] border-[var(--color-text)]/20"
               aria-label="카테고리 선택"
             >
               <option value="">전체 카테고리</option>
@@ -112,24 +112,23 @@ export default function MainHeroSection({ onSearch }: MainHeroSectionProps) {
             {/* Search Button */}
             <button
               type="submit"
-              className="btn btn-primary h-14 px-8 text-lg"
+              className="btn h-14 w-14 min-h-0 p-0 border-none font-bold hover:opacity-80 bg-[var(--color-gold)] text-[var(--color-primary)]"
               aria-label="검색하기"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 mr-2"
+                className="h-6 w-6"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
+                strokeWidth={2.5}
               >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={2}
                   d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                 />
               </svg>
-              검색
             </button>
           </div>
         </form>
@@ -142,10 +141,21 @@ export default function MainHeroSection({ onSearch }: MainHeroSectionProps) {
             className="flex flex-col items-center gap-3 group"
             aria-label="상품 보기"
           >
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-base-200 flex items-center justify-center group-hover:bg-base-300 transition-colors shadow-md">
+            <div
+              className="w-20 h-20 md:w-24 md:h-24 rounded-2xl flex items-center justify-center transition-all shadow-md border group-hover:shadow-lg bg-[var(--color-secondary)] border-[var(--color-text)]/10"
+              onMouseEnter={(e) => {
+                const goldColor = getComputedStyle(document.documentElement).getPropertyValue('--color-gold').trim();
+                e.currentTarget.style.backgroundColor = goldColor;
+                e.currentTarget.style.borderColor = goldColor;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '';
+                e.currentTarget.style.borderColor = '';
+              }}
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-10 w-10 md:h-12 md:w-12"
+                className="h-10 w-10 md:h-12 md:w-12 transition-colors group-hover:text-white text-[var(--color-text)]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -158,7 +168,9 @@ export default function MainHeroSection({ onSearch }: MainHeroSectionProps) {
                 />
               </svg>
             </div>
-            <span className="text-base md:text-lg font-medium">상품</span>
+            <span className="text-base md:text-lg font-medium text-[var(--color-text)]">
+              상품
+            </span>
           </button>
 
           <button
@@ -167,10 +179,21 @@ export default function MainHeroSection({ onSearch }: MainHeroSectionProps) {
             className="flex flex-col items-center gap-3 group"
             aria-label="매장 보기"
           >
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-base-200 flex items-center justify-center group-hover:bg-base-300 transition-colors shadow-md">
+            <div
+              className="w-20 h-20 md:w-24 md:h-24 rounded-2xl flex items-center justify-center transition-all shadow-md border group-hover:shadow-lg bg-[var(--color-secondary)] border-[var(--color-text)]/10"
+              onMouseEnter={(e) => {
+                const goldColor = getComputedStyle(document.documentElement).getPropertyValue('--color-gold').trim();
+                e.currentTarget.style.backgroundColor = goldColor;
+                e.currentTarget.style.borderColor = goldColor;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '';
+                e.currentTarget.style.borderColor = '';
+              }}
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-10 w-10 md:h-12 md:w-12"
+                className="h-10 w-10 md:h-12 md:w-12 transition-colors group-hover:text-white text-[var(--color-text)]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -183,7 +206,9 @@ export default function MainHeroSection({ onSearch }: MainHeroSectionProps) {
                 />
               </svg>
             </div>
-            <span className="text-base md:text-lg font-medium">매장</span>
+            <span className="text-base md:text-lg font-medium text-[var(--color-text)]">
+              매장
+            </span>
           </button>
 
           <button
@@ -192,10 +217,21 @@ export default function MainHeroSection({ onSearch }: MainHeroSectionProps) {
             className="flex flex-col items-center gap-3 group"
             aria-label="금 시세 보기"
           >
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-base-200 flex items-center justify-center group-hover:bg-base-300 transition-colors shadow-md">
+            <div
+              className="w-20 h-20 md:w-24 md:h-24 rounded-2xl flex items-center justify-center transition-all shadow-md border group-hover:shadow-lg bg-[var(--color-secondary)] border-[var(--color-text)]/10"
+              onMouseEnter={(e) => {
+                const goldColor = getComputedStyle(document.documentElement).getPropertyValue('--color-gold').trim();
+                e.currentTarget.style.backgroundColor = goldColor;
+                e.currentTarget.style.borderColor = goldColor;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '';
+                e.currentTarget.style.borderColor = '';
+              }}
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-10 w-10 md:h-12 md:w-12"
+                className="h-10 w-10 md:h-12 md:w-12 transition-colors group-hover:text-white text-[var(--color-text)]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -208,7 +244,9 @@ export default function MainHeroSection({ onSearch }: MainHeroSectionProps) {
                 />
               </svg>
             </div>
-            <span className="text-base md:text-lg font-medium">금</span>
+            <span className="text-base md:text-lg font-medium text-[var(--color-text)]">
+              금
+            </span>
           </button>
 
           <button
@@ -217,10 +255,21 @@ export default function MainHeroSection({ onSearch }: MainHeroSectionProps) {
             className="flex flex-col items-center gap-3 group"
             aria-label="구매 / 예약"
           >
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-base-200 flex items-center justify-center group-hover:bg-base-300 transition-colors shadow-md">
+            <div
+              className="w-20 h-20 md:w-24 md:h-24 rounded-2xl flex items-center justify-center transition-all shadow-md border group-hover:shadow-lg bg-[var(--color-secondary)] border-[var(--color-text)]/10"
+              onMouseEnter={(e) => {
+                const goldColor = getComputedStyle(document.documentElement).getPropertyValue('--color-gold').trim();
+                e.currentTarget.style.backgroundColor = goldColor;
+                e.currentTarget.style.borderColor = goldColor;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '';
+                e.currentTarget.style.borderColor = '';
+              }}
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-10 w-10 md:h-12 md:w-12"
+                className="h-10 w-10 md:h-12 md:w-12 transition-colors group-hover:text-white text-[var(--color-text)]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -233,7 +282,7 @@ export default function MainHeroSection({ onSearch }: MainHeroSectionProps) {
                 />
               </svg>
             </div>
-            <span className="text-base md:text-lg font-medium whitespace-nowrap">
+            <span className="text-base md:text-lg font-medium whitespace-nowrap text-[var(--color-text)]">
               구매 / 예약
             </span>
           </button>

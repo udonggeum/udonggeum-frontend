@@ -12,7 +12,7 @@ import {
   useUpdateProduct,
   useDeleteProduct,
 } from '@/hooks/queries';
-import { LoadingSpinner, ErrorAlert, ImageUploadWithOptimization } from '@/components';
+import { LoadingSpinner, ErrorAlert, ImageUploadWithOptimization, Button } from '@/components';
 import type { CreateProductRequest, UpdateProductRequest, ProductOptionInput } from '@/schemas/seller';
 import type { Product } from '@/schemas';
 
@@ -164,7 +164,14 @@ export default function SellerProductsPage() {
     if (formData.price <= 0) errors.price = '가격은 0보다 커야 합니다';
     if (!formData.category.trim()) errors.category = '카테고리를 선택하세요';
     if (!formData.material.trim()) errors.material = '재질을 선택하세요';
-    if (formData.image_url && !/^https?:\/\/.+/.test(formData.image_url)) {
+
+    // Check store_id only when creating new product (not when editing)
+    if (!editingProduct && (!formData.store_id || formData.store_id === 0)) {
+      errors.store_id = '가게를 선택하세요';
+    }
+
+    // Allow both absolute URLs (http://, https://) and relative paths (/uploads/...)
+    if (formData.image_url && !/^(https?:\/\/.+|\/uploads\/.+)/.test(formData.image_url)) {
       errors.image_url = '올바른 URL 형식이 아닙니다';
     }
 
@@ -192,6 +199,9 @@ export default function SellerProductsPage() {
         options: formData.options,
       };
 
+      console.log('[Product Update] Product ID:', editingProduct.id);
+      console.log('[Product Update] Data:', updateData);
+
       updateProduct(
         { id: editingProduct.id, data: updateData },
         {
@@ -215,6 +225,9 @@ export default function SellerProductsPage() {
         image_url: formData.image_url || undefined,
         options: formData.options,
       };
+
+      console.log('[Product Create] Store ID:', formData.store_id, 'Selected Store:', selectedStoreId);
+      console.log('[Product Create] Data:', createData);
 
       createProduct(createData, {
         onSuccess: () => {
@@ -240,16 +253,16 @@ export default function SellerProductsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-3">
-          <Package className="w-8 h-8" aria-hidden="true" />
-          상품 관리
-        </h1>
-        <p className="text-base-content/70 mt-2">
-          판매할 상품을 관리하세요
-        </p>
-      </div>
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold flex items-center gap-3 text-[var(--color-text)]">
+            <Package className="w-8 h-8" aria-hidden="true" />
+            상품 관리
+          </h1>
+          <p className="text-[var(--color-text)]/70 mt-2">
+            판매할 상품을 관리하세요
+          </p>
+        </div>
 
       {/* Store Selection */}
       {!stores || stores.length === 0 ? (
@@ -265,7 +278,7 @@ export default function SellerProductsPage() {
             id="store-select"
             value={selectedStoreId || ''}
             onChange={(e) => setSelectedStoreId(Number(e.target.value) || undefined)}
-            className="select select-bordered w-full max-w-xs"
+            className="select select-bordered w-full max-w-xs bg-[var(--color-secondary)] text-[var(--color-text)] border-[var(--color-text)]/20"
           >
             <option value="">가게를 선택하세요</option>
             {stores.map((store) => (
@@ -279,11 +292,11 @@ export default function SellerProductsPage() {
 
       {/* Products List */}
       {!selectedStoreId ? (
-        <div className="card bg-base-100 shadow-md">
+        <div className="card bg-[var(--color-secondary)] shadow-md border border-[var(--color-text)]/10">
           <div className="card-body text-center">
-            <Package className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
-            <p className="text-lg font-semibold">가게를 선택하세요</p>
-            <p className="text-base-content/70">
+            <Package className="w-16 h-16 mx-auto text-[var(--color-text)]/30 mb-4" />
+            <p className="text-lg font-semibold text-[var(--color-text)]">가게를 선택하세요</p>
+            <p className="text-[var(--color-text)]/70">
               상품을 관리할 가게를 선택해주세요
             </p>
           </div>
@@ -295,39 +308,37 @@ export default function SellerProductsPage() {
       ) : isError ? (
         <ErrorAlert error={error} message={error?.message || '상품 목록을 불러오는데 실패했습니다'} />
       ) : !products || products.length === 0 ? (
-        <div className="card bg-base-100 shadow-md">
+        <div className="card bg-[var(--color-secondary)] shadow-md border border-[var(--color-text)]/10">
           <div className="card-body text-center">
-            <Package className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
-            <p className="text-lg font-semibold">등록된 상품이 없습니다</p>
-            <p className="text-base-content/70 mb-4">
+            <Package className="w-16 h-16 mx-auto text-[var(--color-text)]/30 mb-4" />
+            <p className="text-lg font-semibold text-[var(--color-text)]">등록된 상품이 없습니다</p>
+            <p className="text-[var(--color-text)]/70 mb-4">
               첫 번째 상품을 추가해보세요
             </p>
-            <button
-              type="button"
+            <Button
+              variant="primary"
               onClick={openCreateModal}
-              className="btn btn-primary gap-2 mx-auto"
+              className="gap-2 mx-auto"
             >
               <Plus className="w-5 h-5" />
               상품 추가
-            </button>
+            </Button>
           </div>
         </div>
       ) : (
         <>
           <div className="flex justify-end mb-4">
-            <button
-              type="button"
-              onClick={openCreateModal}
-              className="btn btn-primary gap-2"
+            <Button onClick={openCreateModal}
+              variant="primary" className="gap-2"
             >
               <Plus className="w-5 h-5" />
               상품 추가
-            </button>
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {products.map((product) => (
-              <div key={product.id} className="card bg-base-100 shadow-md">
+              <div key={product.id} className="card bg-[var(--color-secondary)] shadow-md border border-[var(--color-text)]/10 hover:border-[var(--color-gold)]/50 transition-all">
                 {product.image_url && (
                   <figure>
                     <img
@@ -338,43 +349,39 @@ export default function SellerProductsPage() {
                   </figure>
                 )}
                 <div className="card-body">
-                  <h2 className="card-title">{product.name}</h2>
-                  <p className="text-base-content/70 text-sm mb-2">
+                  <h2 className="card-title text-[var(--color-text)]">{product.name}</h2>
+                  <p className="text-[var(--color-text)]/70 text-sm mb-2">
                     {product.description}
                   </p>
 
                   <div className="space-y-1 text-sm">
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 flex-shrink-0" />
+                    <div className="flex items-center gap-2 text-[var(--color-text)]">
+                      <DollarSign className="w-4 h-4 flex-shrink-0 text-[var(--color-gold)]" />
                       <span className="font-semibold">
                         ₩{product.price.toLocaleString()}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 text-[var(--color-text)]">
                       <Tag className="w-4 h-4 flex-shrink-0" />
                       <span>{product.category}</span>
                     </div>
                   </div>
 
                   <div className="card-actions justify-end mt-4">
-                    <button
-                      type="button"
-                      onClick={() => openEditModal(product)}
-                      className="btn btn-sm btn-outline gap-2"
+                    <Button onClick={() => openEditModal(product)}
+                      variant="outline" size="sm" className="gap-2"
                       disabled={isUpdating || isDeleting}
                     >
                       <Edit className="w-4 h-4" />
                       수정
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(product.id)}
-                      className="btn btn-sm btn-error btn-outline gap-2"
+                    </Button>
+                    <Button onClick={() => handleDelete(product.id)}
+                      variant="error" size="sm" className="gap-2"
                       disabled={isUpdating || isDeleting}
                     >
                       <Trash2 className="w-4 h-4" />
                       삭제
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -386,8 +393,8 @@ export default function SellerProductsPage() {
       {/* Create/Edit Modal */}
       {isModalOpen && (
         <div className="modal modal-open">
-          <div className="modal-box max-w-5xl max-h-[90vh] overflow-y-auto">
-            <h3 className="font-bold text-lg mb-6">
+          <div className="modal-box max-w-5xl max-h-[90vh] overflow-y-auto bg-[var(--color-secondary)] border border-[var(--color-text)]/20">
+            <h3 className="font-bold text-lg mb-6 text-[var(--color-text)]">
               {editingProduct ? '상품 수정' : '상품 추가'}
             </h3>
 
@@ -426,7 +433,7 @@ export default function SellerProductsPage() {
                   type="text"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className={`input input-bordered w-full ${formErrors.name ? 'input-error' : ''}`}
+                  className={`input input-bordered w-full bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 ${formErrors.name ? 'input-error' : ''}`}
                   placeholder="금반지"
                 />
                 {formErrors.name && (
@@ -446,7 +453,7 @@ export default function SellerProductsPage() {
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  className={`textarea textarea-bordered w-full ${formErrors.description ? 'textarea-error' : ''}`}
+                  className={`textarea textarea-bordered w-full bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 ${formErrors.description ? 'textarea-error' : ''}`}
                   placeholder="24K 순금으로 제작된 고급 반지입니다"
                   rows={3}
                 />
@@ -468,7 +475,7 @@ export default function SellerProductsPage() {
                   type="number"
                   value={formData.price}
                   onChange={handleInputChange}
-                  className={`input input-bordered w-full ${formErrors.price ? 'input-error' : ''}`}
+                  className={`input input-bordered w-full bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 ${formErrors.price ? 'input-error' : ''}`}
                   placeholder="500000"
                   min="0"
                   step="1000"
@@ -492,7 +499,7 @@ export default function SellerProductsPage() {
                   name="category"
                   value={formData.category}
                   onChange={handleInputChange}
-                  className={`select select-bordered w-full ${formErrors.category ? 'select-error' : ''}`}
+                  className={`select select-bordered w-full bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 ${formErrors.category ? 'select-error' : ''}`}
                 >
                   <option value="">카테고리를 선택하세요</option>
                   <option value="반지">반지</option>
@@ -518,7 +525,7 @@ export default function SellerProductsPage() {
                   name="material"
                   value={formData.material}
                   onChange={handleInputChange}
-                  className={`select select-bordered w-full ${formErrors.material ? 'select-error' : ''}`}
+                  className={`select select-bordered w-full bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 ${formErrors.material ? 'select-error' : ''}`}
                 >
                   <option value="">재질을 선택하세요</option>
                   <option value="금">금</option>
@@ -547,7 +554,7 @@ export default function SellerProductsPage() {
                   type="number"
                   value={formData.weight || ''}
                   onChange={handleInputChange}
-                  className="input input-bordered w-full"
+                  className="input input-bordered bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 w-full"
                   placeholder="3.75"
                       step="0.01"
                       min="0"
@@ -565,7 +572,7 @@ export default function SellerProductsPage() {
                   type="text"
                   value={formData.purity || ''}
                   onChange={handleInputChange}
-                      className="input input-bordered w-full"
+                      className="input input-bordered bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 w-full"
                       placeholder="18K, 24K, 925 등"
                     />
                     </div>
@@ -582,7 +589,7 @@ export default function SellerProductsPage() {
                   type="number"
                   value={formData.stock_quantity}
                   onChange={handleInputChange}
-                  className="input input-bordered w-full"
+                  className="input input-bordered bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 w-full"
                     placeholder="10"
                     min="0"
                   />
@@ -594,33 +601,29 @@ export default function SellerProductsPage() {
               <div className="form-control w-full mt-6">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="font-semibold text-base">상품 옵션 (선택)</h4>
-                  <button
-                    type="button"
-                    onClick={addOption}
-                    className="btn btn-sm btn-outline gap-2"
+                  <Button onClick={addOption}
+                    variant="outline" size="sm" className="gap-2"
                   >
                     <Plus className="w-4 h-4" />
                     옵션 추가
-                  </button>
+                  </Button>
                 </div>
 
                 {formData.options.length === 0 ? (
-                  <div className="text-sm text-base-content/60 p-4 border border-dashed rounded-lg text-center">
+                  <div className="text-sm text-[var(--color-text)]/60 p-4 border border-dashed rounded-lg text-center">
                     사이즈, 색상 등의 옵션을 추가할 수 있습니다
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {formData.options.map((option, index) => (
-                      <div key={index} className="border rounded-lg p-4 space-y-3">
+                      <div key={index} className="border border-[var(--color-text)]/20 rounded-lg bg-[var(--color-primary)] p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-semibold">옵션 {index + 1}</span>
-                          <button
-                            type="button"
-                            onClick={() => removeOption(index)}
-                            className="btn btn-sm btn-ghost btn-circle"
+                          <Button onClick={() => removeOption(index)}
+                            variant="circle" size="sm"
                           >
                             <Trash2 className="w-4 h-4" />
-                          </button>
+                          </Button>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
@@ -632,7 +635,7 @@ export default function SellerProductsPage() {
                               type="text"
                               value={option.name}
                               onChange={(e) => updateOption(index, 'name', e.target.value)}
-                              className="input input-bordered input-sm w-full"
+                              className="input input-bordered bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 input-sm w-full"
                               placeholder="사이즈, 색상 등"
                             />
                           </div>
@@ -645,7 +648,7 @@ export default function SellerProductsPage() {
                               type="text"
                               value={option.value}
                               onChange={(e) => updateOption(index, 'value', e.target.value)}
-                              className="input input-bordered input-sm w-full"
+                              className="input input-bordered bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 input-sm w-full"
                               placeholder="10호, 골드 등"
                             />
                           </div>
@@ -658,7 +661,7 @@ export default function SellerProductsPage() {
                               type="number"
                               value={option.additional_price}
                               onChange={(e) => updateOption(index, 'additional_price', parseFloat(e.target.value) || 0)}
-                              className="input input-bordered input-sm w-full"
+                              className="input input-bordered bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 input-sm w-full"
                               placeholder="0"
                               min="0"
                             />
@@ -672,7 +675,7 @@ export default function SellerProductsPage() {
                               type="number"
                               value={option.stock_quantity}
                               onChange={(e) => updateOption(index, 'stock_quantity', parseInt(e.target.value) || 0)}
-                              className="input input-bordered input-sm w-full"
+                              className="input input-bordered bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 input-sm w-full"
                               placeholder="0"
                               min="0"
                             />
@@ -698,17 +701,15 @@ export default function SellerProductsPage() {
 
               {/* Modal Actions */}
               <div className="modal-action">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="btn btn-ghost"
+                <Button onClick={closeModal}
+                  variant="ghost"
                   disabled={isCreating || isUpdating}
                 >
                   취소
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
-                  className="btn btn-primary"
+                  variant="primary"
                   disabled={isCreating || isUpdating}
                 >
                   {isCreating || isUpdating
@@ -718,7 +719,7 @@ export default function SellerProductsPage() {
                     : editingProduct
                       ? '수정'
                       : '추가'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

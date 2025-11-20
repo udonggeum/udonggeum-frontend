@@ -36,16 +36,16 @@ export default function ProductCarousel({
   }
 
   return (
-    <section className="py-8 border-t border-base-300">
+    <section className="py-8 border-t border-[var(--color-text)]/10 bg-[var(--color-primary)]">
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl md:text-3xl font-bold">{title}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-[var(--color-gold)]">{title}</h2>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => scroll('left')}
-              className="btn btn-circle btn-sm btn-ghost"
+              className="btn btn-circle btn-sm btn-ghost hover:bg-opacity-10 text-[var(--color-text)]"
               aria-label="이전 상품"
             >
               <svg
@@ -66,7 +66,7 @@ export default function ProductCarousel({
             <button
               type="button"
               onClick={() => scroll('right')}
-              className="btn btn-circle btn-sm btn-ghost"
+              className="btn btn-circle btn-sm btn-ghost hover:bg-opacity-10 text-[var(--color-text)]"
               aria-label="다음 상품"
             >
               <svg
@@ -106,7 +106,16 @@ export default function ProductCarousel({
               {/* Product Card */}
               <div className="w-32 md:w-40">
                 {/* Product Image */}
-                <div className="aspect-square bg-base-200 rounded-lg overflow-hidden mb-2">
+                <div
+                  className="aspect-square rounded-lg overflow-hidden mb-2 border-2 transition-all bg-[var(--color-secondary)] border-[var(--color-text)]/10"
+                  onMouseEnter={(e) => {
+                    const goldColor = getComputedStyle(document.documentElement).getPropertyValue('--color-gold').trim();
+                    e.currentTarget.style.borderColor = goldColor;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = '';
+                  }}
+                >
                   {product.imageUrl ? (
                     <img
                       src={product.imageUrl}
@@ -117,7 +126,7 @@ export default function ProductCarousel({
                     <div className="w-full h-full flex items-center justify-center">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-12 w-12 text-base-content/20"
+                        className="h-12 w-12 text-[var(--color-text)]/20"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -136,17 +145,26 @@ export default function ProductCarousel({
                 {/* Product Info */}
                 <div className="space-y-1">
                   {/* Store Name */}
-                  <p className="text-xs text-base-content/60 truncate">
+                  <p className="text-xs truncate text-[var(--color-text)] opacity-60">
                     {product.storeName || '우동금'}
                   </p>
 
                   {/* Product Name */}
-                  <h3 className="text-sm font-medium line-clamp-2 group-hover:text-primary transition-colors">
+                  <h3
+                    className="text-sm font-medium line-clamp-2 transition-colors group-hover:opacity-80 text-[var(--color-text)]"
+                    onMouseEnter={(e) => {
+                      const goldColor = getComputedStyle(document.documentElement).getPropertyValue('--color-gold').trim();
+                      e.currentTarget.style.color = goldColor;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = '';
+                    }}
+                  >
                     {product.name}
                   </h3>
 
                   {/* Price */}
-                  <p className="text-sm font-bold">
+                  <p className="text-sm font-bold text-[var(--color-gold)]">
                     {product.price.toLocaleString('ko-KR')}원
                   </p>
                 </div>

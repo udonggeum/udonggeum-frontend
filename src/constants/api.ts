@@ -94,7 +94,7 @@ export const ENDPOINTS = {
   },
 
   IMAGES: {
-    UPLOAD: '/api/v1/images/upload',
+    UPLOAD: '/api/v1/upload/image',
     OPTIMIZE: '/api/v1/images/optimize',
   },
 } as const;

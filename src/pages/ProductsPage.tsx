@@ -1,8 +1,9 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import {
   Navbar,
   Footer,
+  Button,
   ProductCard,
   ProductsLoadingSkeleton,
   ProductsError,
@@ -238,29 +239,30 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-base-100">
+    <div className="flex min-h-screen flex-col">
       <Navbar navigationItems={NAV_ITEMS} />
       <main className="flex-grow">
         {/* Popular Products Section - Banner Style */}
         {popularProducts.length > 0 && (
-          <section className="bg-gradient-to-b from-base-200 to-base-100 py-8">
+          <section className="py-8" style={{ background: `linear-gradient(to bottom, var(--color-secondary), var(--color-primary))` }}>
             {isLoadingPopular ? (
               <div className="container mx-auto px-4">
-                <div className="skeleton h-96 w-full rounded-3xl"></div>
+                <div className="skeleton h-96 w-full rounded-3xl bg-[var(--color-secondary)]"></div>
               </div>
             ) : (
               <div className="container mx-auto px-4">
-                <div className="group relative h-96 w-full overflow-hidden rounded-3xl bg-base-100 shadow-2xl">
+                <div className="group relative h-96 w-full overflow-hidden rounded-3xl bg-[var(--color-primary)] shadow-2xl">
                   <div
                     className="flex h-full transition-transform duration-500 ease-in-out"
                     style={{ transform: `translateX(-${currentSlide * 100}%)` }}
                   >
                     {popularProducts.map((product) => (
-                      <div
+                      <Link
                         key={product.id}
-                        className="h-full w-full flex-shrink-0"
+                        to={`/products/${product.id}`}
+                        className="h-full w-full flex-shrink-0 block"
                       >
-                        <div className="card card-side h-96 w-full bg-base-100">
+                        <div className="card card-side h-96 w-full bg-[var(--color-primary)] transition-transform hover:scale-[1.01] cursor-pointer">
                           <figure className="w-1/2">
                             <FallbackImage
                               src={product.imageUrl}
@@ -270,35 +272,19 @@ export default function ProductsPage() {
                           </figure>
                           <div className="card-body w-1/2 justify-center p-10">
                             <div className="space-y-4">
-                              <div className="badge badge-primary">인기</div>
-                              <h3 className="text-3xl font-bold line-clamp-2">{product.name}</h3>
-                              <p className="text-base text-base-content/70">
+                              <div className="badge bg-[var(--color-gold)] text-[var(--color-primary)] border-[var(--color-gold)]">인기</div>
+                              <h3 className="text-3xl font-bold line-clamp-2 text-[var(--color-text)]">{product.name}</h3>
+                              <p className="text-base text-[var(--color-text)]/70">
                                 {product.storeName && `${product.storeName} · `}
                                 {MOCK_CATEGORIES.find((c) => c.id === product.categoryId)?.name}
                               </p>
-                              <p className="text-4xl font-bold text-primary">
+                              <p className="text-4xl font-bold text-[var(--color-gold)]">
                                 {product.price.toLocaleString()}원
                               </p>
-                              <div className="flex gap-3 pt-4">
-                                <button
-                                  type="button"
-                                  className="btn btn-outline flex-1"
-                                  onClick={() => handleWishlist(product.id)}
-                                >
-                                  찜하기
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn btn-primary flex-1"
-                                  onClick={() => handleAddToCart(product.id)}
-                                >
-                                  장바구니
-                                </button>
-                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
 
@@ -309,7 +295,7 @@ export default function ProductsPage() {
                       <button
                         type="button"
                         onClick={handlePrevSlide}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-base-100/60 p-2 opacity-0 shadow-lg backdrop-blur-sm transition-opacity hover:bg-base-100/80 group-hover:opacity-100"
+                        className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-[var(--color-primary)]/60 p-2 opacity-0 shadow-lg backdrop-blur-sm transition-opacity hover:bg-[var(--color-primary)]/80 group-hover:opacity-100 text-[var(--color-text)]"
                         aria-label="이전 상품"
                       >
                         <svg
@@ -328,7 +314,7 @@ export default function ProductsPage() {
                       <button
                         type="button"
                         onClick={handleNextSlide}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-base-100/60 p-2 opacity-0 shadow-lg backdrop-blur-sm transition-opacity hover:bg-base-100/80 group-hover:opacity-100"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-[var(--color-primary)]/60 p-2 opacity-0 shadow-lg backdrop-blur-sm transition-opacity hover:bg-[var(--color-primary)]/80 group-hover:opacity-100 text-[var(--color-text)]"
                         aria-label="다음 상품"
                       >
                         <svg
@@ -357,7 +343,7 @@ export default function ProductsPage() {
                       type="button"
                       onClick={() => handleSlideClick(index)}
                       className={`h-2 rounded-full transition-all ${
-                        currentSlide === index ? 'w-8 bg-primary' : 'w-2 bg-base-content/30'
+                        currentSlide === index ? 'w-8 bg-[var(--color-gold)]' : 'w-2 bg-[var(--color-text)]/30'
                       }`}
                       aria-label={`슬라이드 ${index + 1}로 이동`}
                     />
@@ -390,17 +376,17 @@ export default function ProductsPage() {
               {/* Header with sorting */}
               <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="text-xl font-bold">
+                  <h2 className="text-xl font-bold text-[var(--color-text)]">
                     {selectedCategoryId
                       ? MOCK_CATEGORIES.find((category) => category.id === selectedCategoryId)?.name ?? '전체 상품'
                       : '전체 상품'}
                   </h2>
-                  <p className="text-sm text-base-content/70">
+                  <p className="text-sm text-[var(--color-text)]/70">
                     총 {products.length}개의 상품
                   </p>
                 </div>
                 <div className="dropdown dropdown-end">
-                  <label tabIndex={0} className="btn btn-sm btn-outline gap-1">
+                  <label tabIndex={0} className="btn btn-sm bg-[var(--color-secondary)] border-[var(--color-text)]/30 text-[var(--color-text)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold)] gap-1">
                     {SORT_OPTIONS.find((opt) => opt.value === selectedSort)?.label ?? '정렬'}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -415,13 +401,13 @@ export default function ProductsPage() {
                   </label>
                   <ul
                     tabIndex={0}
-                    className="menu dropdown-content z-[1] mt-2 w-40 rounded-box bg-base-100 p-2 shadow-lg"
+                    className="menu dropdown-content z-[1] mt-2 w-40 rounded-box bg-[var(--color-primary)] p-2 shadow-lg"
                   >
                     {SORT_OPTIONS.map((option) => (
                       <li key={option.id}>
                         <button
                           type="button"
-                          className={selectedSort === option.value ? 'active' : ''}
+                          className={selectedSort === option.value ? 'bg-[var(--color-gold)] text-[var(--color-primary)]' : 'text-[var(--color-text)]'}
                           onClick={() => setSelectedSort(option.value)}
                         >
                           {option.label}
@@ -442,14 +428,13 @@ export default function ProductsPage() {
               }}
             />
           ) : isEmpty ? (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-xl bg-base-200 py-20 text-center">
-              <h2 className="text-xl font-semibold">조건에 맞는 상품이 없습니다</h2>
-              <p className="text-base-content/70">
+            <div className="flex flex-col items-center justify-center gap-4 rounded-xl bg-[var(--color-secondary)] py-20 text-center">
+              <h2 className="text-xl font-semibold text-[var(--color-text)]">조건에 맞는 상품이 없습니다</h2>
+              <p className="text-[var(--color-text)]/70">
                 다른 지역이나 카테고리를 선택하여 다시 검색해보세요.
               </p>
-              <button
-                type="button"
-                className="btn btn-primary"
+              <Button
+                variant="primary"
                 onClick={() => {
                   setSelectedRegionId(null);
                   setSelectedCategoryId(null);
@@ -457,7 +442,7 @@ export default function ProductsPage() {
                 }}
               >
                 필터 초기화
-              </button>
+              </Button>
             </div>
           ) : (
             <>

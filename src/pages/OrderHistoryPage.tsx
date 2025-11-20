@@ -44,7 +44,7 @@ export default function OrderHistoryPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-base-100">
+    <div className="flex min-h-screen flex-col">
       <Navbar navigationItems={NAV_ITEMS} />
 
       <main className="flex-grow">
@@ -52,7 +52,7 @@ export default function OrderHistoryPage() {
           {/* Page Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold">주문 내역</h1>
-            <p className="mt-2 text-base-content/70">
+            <p className="mt-2 text-[var(--color-text)]/70">
               지금까지의 주문 내역을 확인하세요
             </p>
           </div>
@@ -131,10 +131,10 @@ export default function OrderHistoryPage() {
             </div>
           ) : filteredOrders.length === 0 ? (
             /* Empty State */
-            <div className="flex flex-col items-center justify-center rounded-xl bg-base-200 py-20 text-center">
+            <div className="flex flex-col items-center justify-center rounded-xl bg-[var(--color-secondary)] py-20 text-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-24 w-24 text-base-content/30 mb-6"
+                className="h-24 w-24 text-[var(--color-text)]/30 mb-6"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -151,7 +151,7 @@ export default function OrderHistoryPage() {
                   ? '주문 내역이 없습니다'
                   : '해당 상태의 주문이 없습니다'}
               </h2>
-              <p className="text-base-content/70 mb-6 max-w-md">
+              <p className="text-[var(--color-text)]/70 mb-6 max-w-md">
                 {statusFilter === 'all' ? (
                   <>
                     아직 주문하신 상품이 없습니다.
@@ -199,7 +199,7 @@ export default function OrderHistoryPage() {
             <>
               {/* Order Count */}
               <div className="mb-6">
-                <p className="text-base-content/70">
+                <p className="text-[var(--color-text)]/70">
                   {statusFilter === 'all' ? '전체' : ''}{' '}
                   <span className="font-semibold text-primary">
                     {filteredOrders.length}

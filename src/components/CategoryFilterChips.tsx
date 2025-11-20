@@ -51,7 +51,7 @@ export default function CategoryFilterChips({
           className={`btn btn-sm flex-shrink-0 rounded-full px-4 transition-all ${
             isAllSelected
               ? 'bg-primary text-primary-content hover:bg-primary-focus'
-              : 'bg-base-100 text-base-content hover:bg-base-200 border border-base-300'
+              : 'bg-[var(--color-primary)] text-[var(--color-text)] hover:bg-[var(--color-secondary)] border border-base-300'
           }`}
           aria-pressed={isAllSelected}
         >
@@ -70,7 +70,7 @@ export default function CategoryFilterChips({
               className={`btn btn-sm flex-shrink-0 rounded-full px-4 transition-all ${
                 isSelected
                   ? 'bg-primary text-primary-content hover:bg-primary-focus'
-                  : 'bg-base-100 text-base-content hover:bg-base-200 border border-base-300'
+                  : 'bg-[var(--color-primary)] text-[var(--color-text)] hover:bg-[var(--color-secondary)] border border-base-300'
               }`}
               aria-pressed={isSelected}
             >

@@ -37,12 +37,12 @@ export default function ComponentsDemo() {
   ];
 
   return (
-    <div className="min-h-screen bg-base-200">
+    <div className="min-h-screen bg-[var(--color-secondary)]">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-2">우동금 컴포넌트 데모</h1>
-          <p className="text-base-content/70">
+          <p className="text-[var(--color-text)]/70">
             모든 재사용 가능한 컴포넌트와 daisyUI 베이스 컴포넌트 쇼케이스
           </p>
           <div className="badge badge-primary badge-lg mt-4">
@@ -52,7 +52,7 @@ export default function ComponentsDemo() {
 
         {/* Tabs */}
         <div className="flex justify-center mb-8">
-          <div role="tablist" className="tabs tabs-boxed bg-base-100 p-2">
+          <div role="tablist" className="tabs tabs-boxed bg-[var(--color-primary)] p-2">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -70,7 +70,7 @@ export default function ComponentsDemo() {
         </div>
 
         {/* Tab Content */}
-        <div className="bg-base-100 rounded-lg shadow-xl p-6">
+        <div className="bg-[var(--color-primary)] rounded-lg shadow-xl p-6">
           {activeTab === 'buttons' && <ButtonsTab />}
           {activeTab === 'alerts' && <AlertsTab />}
           {activeTab === 'loading' && <LoadingTab />}
@@ -403,9 +403,9 @@ function CardsTab({ product }: { product: Product }) {
       </Section>
 
       <Section title="daisyUI Base Cards" description="daisyUI 기본 카드">
-        <SubSection title="Card with Image" code={`<div className="card bg-base-100 shadow-xl">`}>
+        <SubSection title="Card with Image" code={`<div className="card bg-[var(--color-primary)] shadow-xl">`}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="card bg-base-100 shadow-xl">
+            <div className="card bg-[var(--color-primary)] shadow-xl">
               <figure>
                 <FallbackImage
                   src="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400"
@@ -422,7 +422,7 @@ function CardsTab({ product }: { product: Product }) {
               </div>
             </div>
 
-            <div className="card bg-base-100 shadow-xl">
+            <div className="card bg-[var(--color-primary)] shadow-xl">
               <div className="card-body">
                 <h3 className="card-title">Card without Image</h3>
                 <p>This is a simple card with text only content.</p>
@@ -432,7 +432,7 @@ function CardsTab({ product }: { product: Product }) {
               </div>
             </div>
 
-            <div className="card bg-base-100 shadow-xl image-full">
+            <div className="card bg-[var(--color-primary)] shadow-xl image-full">
               <figure>
                 <FallbackImage
                   src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400"
@@ -633,7 +633,7 @@ function DaisyUITab() {
             </div>
             <ul
               tabIndex={0}
-              className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow"
+              className="dropdown-content menu bg-[var(--color-primary)] rounded-box z-[1] w-52 p-2 shadow"
             >
               <li>
                 <a>Item 1</a>
@@ -665,7 +665,7 @@ function Section({
     <section className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold">{title}</h2>
-        <p className="text-base-content/70">{description}</p>
+        <p className="text-[var(--color-text)]/70">{description}</p>
       </div>
       {children}
     </section>
@@ -687,7 +687,7 @@ function SubSection({
   return (
     <div className="space-y-3">
       <h3 className="text-lg font-semibold">{title}</h3>
-      <div className="p-6 bg-base-200 rounded-lg">{children}</div>
+      <div className="p-6 bg-[var(--color-secondary)] rounded-lg">{children}</div>
       <div className="mockup-code text-xs">
         <pre data-prefix="$">
           <code>{code}</code>

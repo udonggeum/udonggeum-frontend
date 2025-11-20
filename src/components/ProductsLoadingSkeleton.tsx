@@ -26,11 +26,11 @@ export default function ProductsLoadingSkeleton({ count = 8 }: ProductsLoadingSk
       {skeletonItems.map((skeletonId) => (
         <div
           key={skeletonId}
-          className="card bg-base-100 shadow-xl"
+          className="card bg-[var(--color-primary)] shadow-xl"
           aria-label="상품 로딩 중"
         >
           {/* Image skeleton */}
-          <figure className="aspect-square overflow-hidden bg-base-200">
+          <figure className="aspect-square overflow-hidden bg-[var(--color-secondary)]">
             <div className="skeleton w-full h-full" />
           </figure>
 

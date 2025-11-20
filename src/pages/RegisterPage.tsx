@@ -227,13 +227,13 @@ export default function RegisterPage() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="card bg-base-100 shadow-xl">
+      <div className="card bg-[var(--color-primary)] shadow-xl">
         <div className="card-body">
           {/* Header */}
           <div className="flex flex-col items-center mb-6">
             <UserPlus className="w-12 h-12 text-primary mb-3" aria-hidden="true" />
             <h1 className="text-2xl font-bold">회원가입</h1>
-            <p className="text-sm text-base-content/70 mt-1">
+            <p className="text-sm text-[var(--color-text)]/70 mt-1">
               우동금 서비스에 가입하세요
             </p>
           </div>
@@ -388,7 +388,7 @@ export default function RegisterPage() {
 
             {/* Login Link */}
             <div className="text-center text-sm">
-              <span className="text-base-content/70">이미 계정이 있으신가요? </span>
+              <span className="text-[var(--color-text)]/70">이미 계정이 있으신가요? </span>
               <Link to="/login" className="link link-primary">
                 로그인
               </Link>
