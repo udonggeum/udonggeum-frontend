@@ -1,6 +1,6 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, Link } from 'react-router-dom';
 import { useThemeStore } from '@/stores/useThemeStore';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, Home } from 'lucide-react';
 
 /**
  * MinimalLayout Component
@@ -22,17 +22,30 @@ export default function MinimalLayout() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative bg-[var(--color-primary)]">
-      {/* Theme Toggle Button */}
-      <button
-        type="button"
-        onClick={toggleTheme}
-        className="btn btn-ghost btn-circle absolute top-4 right-4 hover:bg-opacity-10 text-[var(--color-text)]"
-        style={{ backgroundColor: 'transparent' }}
-        aria-label={mode === 'light' ? '다크 모드로 전환' : '라이트 모드로 전환'}
-        title={mode === 'light' ? '다크 모드로 전환' : '라이트 모드로 전환'}
-      >
-        {mode === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-      </button>
+      {/* Top Right Actions */}
+      <div className="absolute top-4 right-4 flex gap-2">
+        {/* Home Button */}
+        <Link
+          to="/"
+          className="btn btn-ghost btn-circle hover:bg-opacity-10 text-[var(--color-text)]"
+          style={{ backgroundColor: 'transparent' }}
+          aria-label="홈으로"
+        >
+          <Home className="h-5 w-5" />
+        </Link>
+
+        {/* Theme Toggle Button */}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="btn btn-ghost btn-circle hover:bg-opacity-10 text-[var(--color-text)]"
+          style={{ backgroundColor: 'transparent' }}
+          aria-label={mode === 'light' ? '다크 모드로 전환' : '라이트 모드로 전환'}
+          title={mode === 'light' ? '다크 모드로 전환' : '라이트 모드로 전환'}
+        >
+          {mode === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+        </button>
+      </div>
 
       <Outlet />
     </div>

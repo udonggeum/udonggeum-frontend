@@ -28,7 +28,8 @@ export default function MainHeroSection({ onSearch }: MainHeroSectionProps) {
     e.preventDefault();
     const params = new URLSearchParams();
 
-    if (selectedRegion) {
+    // "all"이 아닌 경우에만 지역 필터 적용
+    if (selectedRegion && selectedRegionId !== 'all') {
       params.append('regionId', selectedRegion.id);
       if (selectedRegion.region) {
         params.append('region', selectedRegion.region);
@@ -38,12 +39,16 @@ export default function MainHeroSection({ onSearch }: MainHeroSectionProps) {
       }
     }
 
-    if (selectedCategoryId) {
+    // "all"이 아닌 경우에만 카테고리 필터 적용
+    if (selectedCategoryId && selectedCategoryId !== 'all') {
       params.append('category', selectedCategoryId);
     }
 
     if (onSearch) {
-      onSearch(selectedRegionId || undefined, selectedCategoryId || undefined);
+      onSearch(
+        selectedRegionId && selectedRegionId !== 'all' ? selectedRegionId : undefined,
+        selectedCategoryId && selectedCategoryId !== 'all' ? selectedCategoryId : undefined
+      );
       return;
     }
 
@@ -86,7 +91,10 @@ export default function MainHeroSection({ onSearch }: MainHeroSectionProps) {
               className="select select-bordered flex-1 h-14 text-lg focus:outline-none bg-[var(--color-secondary)] text-[var(--color-text)] border-[var(--color-text)]/20"
               aria-label="지역 선택"
             >
-              <option value="">전체 지역</option>
+              <option value="" disabled hidden>
+                지역
+              </option>
+              <option value="all">전체 지역</option>
               {regionOptions.map((region) => (
                 <option key={region.id} value={region.id}>
                   {region.label}
@@ -101,7 +109,10 @@ export default function MainHeroSection({ onSearch }: MainHeroSectionProps) {
               className="select select-bordered flex-1 h-14 text-lg focus:outline-none bg-[var(--color-secondary)] text-[var(--color-text)] border-[var(--color-text)]/20"
               aria-label="카테고리 선택"
             >
-              <option value="">전체 카테고리</option>
+              <option value="" disabled hidden>
+                카테고리
+              </option>
+              <option value="all">전체 카테고리</option>
               {MOCK_CATEGORIES.map((category) => (
                 <option key={category.id} value={category.id}>
                   {category.name}
