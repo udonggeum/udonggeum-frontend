@@ -13,18 +13,15 @@ import {
   Store as StoreIcon,
 } from 'lucide-react';
 import { Navbar, Footer, Button, ProductsError, QuantitySelector } from '@/components';
+import { LoginRequiredModal, CartSuccessModal } from '@/components/product';
 import { useProductDetail } from '@/hooks/queries/useProductsQueries';
 import { transformProductFromAPI } from '@/utils/apiAdapters';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useAddToCart } from '@/hooks/queries/useCartQueries';
 import { useWishlist, useAddToWishlist, useRemoveFromWishlist } from '@/hooks/queries/useWishlistQueries';
+import { formatCurrency } from '@/utils/formatting';
 import { NAV_ITEMS } from '@/constants/navigation';
 import FallbackImage from '@/components/FallbackImage';
-
-function formatPrice(price?: number) {
-  if (typeof price !== 'number') return '가격 정보 없음';
-  return `₩${price.toLocaleString('ko-KR')}`;
-}
 
 function ProductDetailSkeleton() {
   return (
@@ -352,89 +349,6 @@ export default function ProductDetailPage() {
     );
   };
 
-  const renderLoginModal = () => {
-    if (!isLoginModalOpen) return null;
-
-    return (
-      <dialog className="modal modal-open">
-        <div className="modal-box bg-[var(--color-secondary)] border border-[var(--color-text)]/10">
-          <h3 className="text-lg font-bold text-[var(--color-text)]">로그인이 필요합니다</h3>
-          <p className="py-3 text-sm text-[var(--color-text)]/70">
-            장바구니 담기 기능을 이용하려면 먼저 로그인해 주세요.
-          </p>
-          <div className="modal-action flex justify-end gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => {
-                closeLoginModal();
-              }}
-            >
-              취소
-            </Button>
-            <Button
-              onClick={() => {
-                closeLoginModal();
-                void navigate('/login', { replace: false });
-              }}
-            >
-              로그인하기
-            </Button>
-          </div>
-        </div>
-        <form method="dialog" className="modal-backdrop">
-          <button
-            type="button"
-            aria-label="모달 닫기"
-            onClick={closeLoginModal}
-          >
-            닫기
-          </button>
-        </form>
-      </dialog>
-    );
-  };
-
-  const renderCartModal = () => {
-    if (!isCartResultModalOpen) return null;
-
-    return (
-      <dialog className="modal modal-open">
-        <div className="modal-box bg-[var(--color-secondary)] border border-[var(--color-text)]/10">
-          <h3 className="text-lg font-bold text-[var(--color-text)]">장바구니에 담았습니다</h3>
-          <p className="py-3 text-sm text-[var(--color-text)]/70">
-            계속 쇼핑하시겠어요, 아니면 장바구니를 확인하시겠어요?
-          </p>
-          <div className="modal-action flex justify-end gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => {
-                closeCartModal();
-              }}
-            >
-              더 둘러보기
-            </Button>
-            <Button
-              onClick={() => {
-                closeCartModal();
-                void navigate('/cart');
-              }}
-            >
-              장바구니로 이동
-            </Button>
-          </div>
-        </div>
-        <form method="dialog" className="modal-backdrop">
-          <button
-            type="button"
-            aria-label="모달 닫기"
-            onClick={closeCartModal}
-          >
-            닫기
-          </button>
-        </form>
-      </dialog>
-    );
-  };
 
   const handleQuantityChange = (value: number) => {
     if (Number.isNaN(value) || value < 1) return;
@@ -544,7 +458,7 @@ export default function ProductDetailPage() {
                         </h1>
                       </div>
                       <div className="shrink-0 rounded-full bg-[var(--color-gold)]/10 px-4 py-2 text-xl font-semibold text-[var(--color-gold)]">
-                        {formatPrice(productDetail.price)}
+                        {formatCurrency(productDetail.price)}
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--color-text)]/70">
@@ -787,8 +701,23 @@ export default function ProductDetailPage() {
       </main>
       <Footer />
 
-      {renderLoginModal()}
-      {renderCartModal()}
+      <LoginRequiredModal
+        isOpen={isLoginModalOpen}
+        onClose={closeLoginModal}
+        onLogin={() => {
+          closeLoginModal();
+          void navigate('/login', { replace: false });
+        }}
+      />
+
+      <CartSuccessModal
+        isOpen={isCartResultModalOpen}
+        onClose={closeCartModal}
+        onGoToCart={() => {
+          closeCartModal();
+          void navigate('/cart');
+        }}
+      />
     </div>
   );
 }
