@@ -3,9 +3,11 @@ import { ENDPOINTS } from '@/constants/api';
 import {
   ProductSchema,
   ProductsResponseSchema,
+  ProductFiltersResponseSchema,
   type Product,
   type ProductsRequest,
   type ProductsResponse,
+  type ProductFiltersResponse,
 } from '@/schemas/products';
 
 /**
@@ -67,6 +69,17 @@ class ProductsService {
 
     // Validate response
     return ProductSchema.parse(rawData);
+  }
+
+  /**
+   * Get product filters
+   * @returns Available categories and materials from backend
+   */
+  async getProductFilters(): Promise<ProductFiltersResponse> {
+    const response = await apiClient.get(ENDPOINTS.PRODUCTS.FILTERS);
+
+    // Validate response
+    return ProductFiltersResponseSchema.parse(response.data);
   }
 }
 

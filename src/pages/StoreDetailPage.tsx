@@ -12,7 +12,7 @@ import {
 } from '@/components';
 import { MapPin, Phone, Clock, PackageSearch, ArrowLeft, ExternalLink } from 'lucide-react';
 import { useStoreDetail } from '@/hooks/queries/useStoresQueries';
-import { useStoreProducts } from '@/hooks/queries/useProductsQueries';
+import { useStoreProducts, useProductFilters } from '@/hooks/queries/useProductsQueries';
 import { NAV_ITEMS } from '@/constants/navigation';
 import { MOCK_CATEGORIES } from '@/constants/mockData';
 import {
@@ -20,13 +20,24 @@ import {
   mapStoreDetailToSummary,
 } from '@/utils/storeAdapters';
 import { transformProductsFromAPI } from '@/utils/apiAdapters';
+import { adaptFiltersToCategories } from '@/utils/filterAdapters';
 import type { StoreSummary, Product } from '@/types';
-
-const CATEGORY_LABEL_MAP = buildCategoryLabelMap(MOCK_CATEGORIES);
 
 export default function StoreDetailPage() {
   const navigate = useNavigate();
   const params = useParams<{ storeId: string }>();
+
+  const { data: filtersData } = useProductFilters();
+
+  const categories = useMemo(
+    () => (filtersData ? adaptFiltersToCategories(filtersData) : MOCK_CATEGORIES),
+    [filtersData]
+  );
+
+  const CATEGORY_LABEL_MAP = useMemo(
+    () => buildCategoryLabelMap(categories),
+    [categories]
+  );
 
   const storeId = useMemo(() => {
     if (!params.storeId) return undefined;

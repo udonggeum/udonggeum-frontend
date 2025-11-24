@@ -12,7 +12,7 @@ import {
   FallbackImage,
   AddToCartModal,
 } from '@/components';
-import { useProducts, usePopularProducts } from '@/hooks/queries/useProductsQueries';
+import { useProducts, usePopularProducts, useProductFilters } from '@/hooks/queries/useProductsQueries';
 import { useStoreLocations } from '@/hooks/queries/useStoresQueries';
 import { useAddToCart } from '@/hooks/queries/useCartQueries';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -21,6 +21,7 @@ import {
   transformProductsFromAPI,
   uiCategoryToAPICategory,
 } from '@/utils/apiAdapters';
+import { adaptFiltersToCategories, getMaterialLabel } from '@/utils/filterAdapters';
 import { MOCK_CATEGORIES } from '@/constants/mockData';
 import { NAV_ITEMS } from '@/constants/navigation';
 import type { Product } from '@/types';
@@ -53,12 +54,28 @@ export default function ProductsPage() {
   const [selectedProductForCart, setSelectedProductForCart] = useState<APIProduct | null>(null);
 
   const { data: locationsData } = useStoreLocations();
+  const { data: filtersData } = useProductFilters();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { mutate: addToCart, isPending: isAddingToCart } = useAddToCart();
 
   const regionOptions: RegionOption[] = useMemo(
     () => getRegionOptions(locationsData),
     [locationsData]
+  );
+
+  // Use dynamic categories from backend, fallback to MOCK_CATEGORIES
+  const categories = useMemo(
+    () => (filtersData ? adaptFiltersToCategories(filtersData) : MOCK_CATEGORIES),
+    [filtersData]
+  );
+
+  // Get materials from backend filters
+  const materials = useMemo(
+    () => filtersData?.materials.map((mat: string) => ({
+      id: mat,
+      name: getMaterialLabel(mat),
+    })) || [],
+    [filtersData]
   );
 
   const resolvedRegionIdFromParams = useMemo(
@@ -75,6 +92,7 @@ export default function ProductsPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     resolvedCategoryIdFromParams
   );
+  const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(null);
 
   const lastRegionParamRef = useRef(resolvedRegionIdFromParams);
   const lastCategoryParamRef = useRef(resolvedCategoryIdFromParams);
@@ -105,6 +123,7 @@ export default function ProductsPage() {
     page: currentPage,
     page_size: PAGE_SIZE,
     category: uiCategoryToAPICategory(selectedCategoryId),
+    material: selectedMaterialId || undefined,
     sort: selectedSort,
     region: selectedRegion?.region,
     district: selectedRegion?.district,
@@ -362,7 +381,7 @@ export default function ProductsPage() {
             <div className="w-full lg:w-56">
               <CategorySidebar
                 regions={regionOptions}
-                categories={MOCK_CATEGORIES}
+                categories={categories}
                 selectedRegionId={selectedRegionId}
                 selectedCategoryId={selectedCategoryId}
                 onRegionChange={(regionId) => setSelectedRegionId(regionId)}
@@ -378,7 +397,7 @@ export default function ProductsPage() {
                 <div>
                   <h2 className="text-xl font-bold text-[var(--color-text)]">
                     {selectedCategoryId
-                      ? MOCK_CATEGORIES.find((category) => category.id === selectedCategoryId)?.name ?? '전체 상품'
+                      ? categories.find((category) => category.id === selectedCategoryId)?.name ?? '전체 상품'
                       : '전체 상품'}
                   </h2>
                   <p className="text-sm text-[var(--color-text)]/70">
@@ -417,6 +436,28 @@ export default function ProductsPage() {
                   </ul>
                 </div>
               </div>
+
+              {/* Material Filter Chips - Show only when category is selected */}
+              {selectedCategoryId && materials.length > 0 && (
+                <div className="mb-4 flex flex-wrap gap-2">
+                  <span className="text-sm font-medium text-[var(--color-text)]/70">재질:</span>
+                  <button
+                    onClick={() => setSelectedMaterialId(null)}
+                    className={`btn btn-xs ${!selectedMaterialId ? 'btn-primary bg-[var(--color-gold)] border-[var(--color-gold)] text-[var(--color-primary)]' : 'bg-[var(--color-secondary)] border-[var(--color-text)]/30 text-[var(--color-text)]'}`}
+                  >
+                    전체
+                  </button>
+                  {materials.map((material) => (
+                    <button
+                      key={material.id}
+                      onClick={() => setSelectedMaterialId(material.id)}
+                      className={`btn btn-xs ${selectedMaterialId === material.id ? 'btn-primary bg-[var(--color-gold)] border-[var(--color-gold)] text-[var(--color-primary)]' : 'bg-[var(--color-secondary)] border-[var(--color-text)]/30 text-[var(--color-text)]'}`}
+                    >
+                      {material.name}
+                    </button>
+                  ))}
+                </div>
+              )}
 
           {isLoading ? (
             <ProductsLoadingSkeleton count={PAGE_SIZE} />
