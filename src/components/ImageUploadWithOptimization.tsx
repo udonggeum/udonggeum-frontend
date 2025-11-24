@@ -8,14 +8,12 @@ import { Upload, Sparkles, Image as ImageIcon, X, Check, Info } from 'lucide-rea
 import { useUploadImage, useOptimizeImage } from '@/hooks/queries';
 import type { ProductAnalysis } from '@/schemas/image';
 
-// Backend base URL for serving uploaded images
-const BACKEND_URL = 'http://localhost:8080';
-
 interface ImageUploadWithOptimizationProps {
   onImageSelect: (imageUrl: string) => void;
   currentImageUrl?: string;
   showOptimization?: boolean; // Whether to show AI optimization features (default: true)
   label?: string; // Label text (default: "상품 이미지")
+  uploadType?: 'store' | 'product'; // Upload folder type (default: "product")
 }
 
 export default function ImageUploadWithOptimization({
@@ -23,6 +21,7 @@ export default function ImageUploadWithOptimization({
   currentImageUrl,
   showOptimization = true,
   label = '상품 이미지',
+  uploadType = 'product',
 }: ImageUploadWithOptimizationProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -62,7 +61,7 @@ export default function ImageUploadWithOptimization({
 
       // Auto-upload if optimization is disabled (simple mode)
       if (!showOptimization) {
-        uploadImage(file, {
+        uploadImage({ file, uploadType }, {
           onSuccess: (fileUrl) => {
             console.log('[Upload] S3 upload successful, file URL:', fileUrl);
             onImageSelect(fileUrl);
@@ -77,25 +76,10 @@ export default function ImageUploadWithOptimization({
     reader.readAsDataURL(file);
   };
 
-  // Helper function to normalize image URL for proxy access
-  // Converts absolute backend URLs to relative URLs that work with Vite proxy
-  const getAbsoluteUrl = (url: string) => {
-    // If already a relative path, return as is
-    if (!url.startsWith('http')) return url;
-
-    // Convert http://localhost:8080/uploads/xxx.jpg to /uploads/xxx.jpg
-    // This allows Vite proxy to forward the request to backend
-    if (url.startsWith(BACKEND_URL)) {
-      return url.replace(BACKEND_URL, '');
-    }
-
-    return url;
-  };
-
   const handleNormalUpload = () => {
     if (!selectedFile) return;
 
-    uploadImage(selectedFile, {
+    uploadImage({ file: selectedFile, uploadType }, {
       onSuccess: (fileUrl) => {
         console.log('[Upload] S3 upload successful, file URL:', fileUrl);
         onImageSelect(fileUrl);
@@ -121,12 +105,8 @@ export default function ImageUploadWithOptimization({
       {
         onSuccess: (data) => {
           console.log('Optimization response:', data);
-          const absoluteOriginalUrl = getAbsoluteUrl(data.original_url);
-          const absoluteOptimizedUrl = getAbsoluteUrl(data.optimized_url);
-          console.log('Original URL:', data.original_url, '→', absoluteOriginalUrl);
-          console.log('Optimized URL:', data.optimized_url, '→', absoluteOptimizedUrl);
-          setPreviewUrl(absoluteOriginalUrl);
-          setOptimizedUrl(absoluteOptimizedUrl);
+          setPreviewUrl(data.original_url);
+          setOptimizedUrl(data.optimized_url);
           setProductAnalysis(data.product_analysis || null);
           setShowComparison(true);
         },
@@ -140,16 +120,14 @@ export default function ImageUploadWithOptimization({
 
   const handleSelectOriginal = () => {
     if (previewUrl) {
-      const absoluteUrl = getAbsoluteUrl(previewUrl);
-      onImageSelect(absoluteUrl);
+      onImageSelect(previewUrl);
       setShowComparison(false);
     }
   };
 
   const handleSelectOptimized = () => {
     if (optimizedUrl) {
-      const absoluteUrl = getAbsoluteUrl(optimizedUrl);
-      onImageSelect(absoluteUrl);
+      onImageSelect(optimizedUrl);
       setShowComparison(false);
     }
   };

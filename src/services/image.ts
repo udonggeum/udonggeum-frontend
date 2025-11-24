@@ -25,12 +25,13 @@ class ImageService {
    * Step 2: Upload directly to S3
    * Step 3: Return the final file URL
    */
-  async uploadImage(file: File): Promise<string> {
+  async uploadImage(file: File, uploadType: 'store' | 'product' = 'product'): Promise<string> {
     try {
       console.log('[ImageService] Starting pre-signed URL upload:', {
         filename: file.name,
         size: file.size,
         type: file.type,
+        uploadType,
       });
 
       // Step 1: Get pre-signed URL from backend
@@ -40,6 +41,7 @@ class ImageService {
           filename: file.name,
           content_type: file.type,
           file_size: file.size,
+          upload_type: uploadType,
         }
       );
 

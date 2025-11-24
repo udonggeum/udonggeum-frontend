@@ -14,8 +14,8 @@ import type {
  * Returns the final file URL directly
  */
 export function useUploadImage() {
-  return useMutation<string, Error, File>({
-    mutationFn: (file: File) => imageService.uploadImage(file),
+  return useMutation<string, Error, { file: File; uploadType?: 'store' | 'product' }>({
+    mutationFn: ({ file, uploadType }) => imageService.uploadImage(file, uploadType),
   });
 }
 
