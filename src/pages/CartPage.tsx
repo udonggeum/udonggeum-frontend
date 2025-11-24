@@ -8,6 +8,7 @@ import {
   ProductsError,
   CartItem as CartItemComponent,
 } from '@/components';
+import { OptionChangeModal, CartSummary, type OptionSelection } from '@/components/cart';
 import { NAV_ITEMS } from '@/constants/navigation';
 import {
   useCart,
@@ -20,15 +21,6 @@ import { ShoppingBag, ShoppingCart, Trash2, Undo2 } from 'lucide-react';
 
 interface SelectedState {
   [cartItemId: number]: boolean;
-}
-
-type OptionSelection = 'keep' | 'none' | number;
-
-function formatCurrency(amount: number | undefined) {
-  if (!amount || Number.isNaN(amount)) {
-    return '₩0';
-  }
-  return `₩${amount.toLocaleString('ko-KR')}`;
 }
 
 export default function CartPage() {
@@ -52,6 +44,7 @@ export default function CartPage() {
   const [optionModalItem, setOptionModalItem] = useState<CartItem | null>(null);
   const [optionModalSelection, setOptionModalSelection] = useState<OptionSelection>('keep');
   const [optionModalError, setOptionModalError] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   useEffect(() => {
     setSelectedItems((prev) => {
@@ -84,6 +77,11 @@ export default function CartPage() {
       total,
     };
   }, [selectedCartItems]);
+
+  // Clear checkout error when selection changes
+  useEffect(() => {
+    setCheckoutError(null);
+  }, [selectedSummary.count]);
 
   const toggleSelectAll = () => {
     if (allSelected) {
@@ -148,8 +146,7 @@ export default function CartPage() {
         onSuccess: () => {
           closeOptionModal();
         },
-        onError: (mutationError) => {
-          console.error('장바구니 옵션 변경 실패', mutationError);
+        onError: () => {
           setOptionModalError('옵션 변경에 실패했습니다. 다시 시도해주세요.');
         },
       }
@@ -158,23 +155,11 @@ export default function CartPage() {
 
   const handleQuantityChange = useCallback((id: number, nextQuantity: number) => {
     if (nextQuantity < 1) return;
-
-    updateCartItem(
-      { id, payload: { quantity: nextQuantity } },
-      {
-        onError: (mutationError) => {
-          console.error('장바구니 수량 업데이트 실패', mutationError);
-        },
-      }
-    );
+    updateCartItem({ id, payload: { quantity: nextQuantity } });
   }, [updateCartItem]);
 
   const handleRemoveItem = useCallback((id: number) => {
-    removeCartItem(id, {
-      onError: (mutationError) => {
-        console.error('장바구니 항목 삭제 실패', mutationError);
-      },
-    });
+    removeCartItem(id);
   }, [removeCartItem]);
 
   const handleRemoveSelected = useCallback(() => {
@@ -186,7 +171,7 @@ export default function CartPage() {
 
   const handleProceedToCheckout = useCallback(() => {
     if (selectedSummary.count === 0) {
-      alert('결제할 상품을 선택해주세요.');
+      setCheckoutError('결제할 상품을 선택해주세요.');
       return;
     }
     const selectedIds = selectedCartItems.map((item) => item.id);
@@ -352,275 +337,30 @@ export default function CartPage() {
                 </div>
               </section>
 
-              <aside className="flex flex-col gap-4">
-                <section className="rounded-3xl border border-[var(--color-text)]/10 bg-[var(--color-secondary)] p-6 shadow-sm">
-                  <h2 className="text-lg font-semibold text-[var(--color-text)]">주문 요약</h2>
-                  <div className="mt-4 space-y-3 text-sm text-[var(--color-text)]/70">
-                    <div className="flex items-center justify-between">
-                      <span>선택 상품 수</span>
-                      <span className="font-semibold text-[var(--color-text)]">{selectedSummary.count}개</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>선택 상품 합계</span>
-                      <span className="text-base font-semibold text-[var(--color-text)]">
-                        {formatCurrency(selectedSummary.total)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between border-t border-[var(--color-text)]/10 pt-3 text-base font-semibold">
-                      <span>총 결제 예상 금액</span>
-                      <span className="text-[var(--color-gold)]">{formatCurrency(selectedSummary.total)}</span>
-                    </div>
-                  </div>
-                  <Button
-                    block
-                    size="lg"
-                    className="mt-5"
-                    onClick={handleProceedToCheckout}
-                    disabled={selectedSummary.count === 0}
-                  >
-                    <ShoppingCart className="h-5 w-5" />
-                    선택 상품 결제하기
-                  </Button>
-                  <Button
-                    block
-                    size="lg"
-                    variant="ghost"
-                    className="mt-2"
-                    onClick={() => {
-                      void navigate('/products');
-                    }}
-                  >
-                    계속 쇼핑하기
-                  </Button>
-                </section>
-
-                <section className="rounded-3xl border border-[var(--color-text)]/10 bg-[var(--color-secondary)] p-5 text-sm text-[var(--color-text)]/70">
-                  <h3 className="text-base font-semibold text-[var(--color-text)]">안내 사항</h3>
-                  <ul className="mt-3 space-y-2">
-                    <li>장바구니 상품은 최대 30일까지 보관됩니다.</li>
-                    <li>상품 가격과 재고는 주문 시점에 확정됩니다.</li>
-                    <li>옵션 변경 시 상품 상세 페이지에서 수정 후 다시 담아주세요.</li>
-                  </ul>
-                </section>
-              </aside>
+              <CartSummary
+                selectedCount={selectedSummary.count}
+                selectedTotal={selectedSummary.total}
+                onCheckout={handleProceedToCheckout}
+                onContinueShopping={() => {
+                  void navigate('/products');
+                }}
+                checkoutError={checkoutError}
+              />
             </div>
           )}
         </div>
       </main>
       <Footer />
 
-      {optionModalItem && (
-        <dialog className="modal modal-open">
-          <div className="modal-box max-w-2xl">
-            <h3 className="text-lg font-semibold text-[var(--color-text)]">옵션 변경</h3>
-            <p className="mt-2 text-sm text-[var(--color-text)]/70">
-              {optionModalItem.product.name}의 옵션을 선택해주세요.
-            </p>
-
-            {optionModalItem.product.options && optionModalItem.product.options.length > 0 ? (
-              <div className="mt-5 space-y-4">
-                <p className="rounded-2xl bg-[var(--color-secondary)]/60 px-4 py-3 text-xs text-[var(--color-text)]/60">
-                  옵션을 변경하지 않으면 기존 설정이 유지되며, 옵션 제거를 선택하면 옵션이 삭제됩니다.
-                </p>
-
-                {optionModalItem.product.options.length > 6 ? (
-                  (() => {
-                    const existingOption = optionModalItem.product_option;
-                    const selectValue =
-                      optionModalSelection === 'keep'
-                        ? '__KEEP__'
-                        : optionModalSelection === 'none'
-                          ? '__NONE__'
-                          : String(optionModalSelection);
-
-                    return (
-                      <label className="form-control w-full">
-                        <span className="label-text text-sm text-[var(--color-text)]">옵션 목록</span>
-                        <select
-                          className="select select-bordered"
-                          value={selectValue}
-                          onChange={(event) => {
-                            const { value } = event.target;
-                            if (value === '__KEEP__') {
-                              setOptionModalSelection('keep');
-                            } else if (value === '__NONE__') {
-                              setOptionModalSelection('none');
-                            } else {
-                              setOptionModalSelection(Number(value));
-                            }
-                            setOptionModalError(null);
-                          }}
-                        >
-                          <option value="__KEEP__">
-                            현재 옵션 유지 (
-                            {existingOption
-                              ? `${existingOption.name} · ${existingOption.value}`
-                              : '옵션 없음'}
-                            )
-                          </option>
-                          {existingOption && <option value="__NONE__">옵션 제거 (옵션 없이 담기)</option>}
-                          {optionModalItem.product.options.map((option) => {
-                            const additionalText =
-                              option.additional_price && option.additional_price > 0
-                                ? `(+₩${option.additional_price.toLocaleString('ko-KR')})`
-                                : '';
-                            return (
-                              <option key={option.id} value={option.id}>
-                                {option.name} {option.value} {additionalText}
-                              </option>
-                            );
-                          })}
-                        </select>
-                      </label>
-                    );
-                  })()
-                ) : (
-                  (() => {
-                    const existingOption = optionModalItem.product_option;
-                    const keepSelected = optionModalSelection === 'keep';
-                    const noneSelected = optionModalSelection === 'none';
-
-                    return (
-                      <div className="space-y-3">
-                        <label
-                          className={`flex cursor-pointer flex-col gap-2 rounded-2xl border p-4 transition-all ${
-                            keepSelected
-                              ? 'border-primary bg-primary/10 shadow-sm'
-                              : 'border-base-200 hover:border-primary/60 hover:bg-[var(--color-secondary)]/40'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-4">
-                            <div className="space-y-1 text-sm">
-                              <p className="font-semibold text-[var(--color-text)]">현재 옵션 유지</p>
-                              <p className="text-xs text-[var(--color-text)]/60">
-                                {existingOption
-                                  ? `${existingOption.name} · ${existingOption.value}`
-                                  : '현재 옵션 없음'}
-                              </p>
-                            </div>
-                            <input
-                              type="radio"
-                              name="cart-option"
-                              className="radio radio-primary"
-                              checked={keepSelected}
-                              onChange={() => {
-                                setOptionModalSelection('keep');
-                                setOptionModalError(null);
-                              }}
-                            />
-                          </div>
-                        </label>
-
-                        {existingOption && (
-                          <label
-                            className={`flex cursor-pointer flex-col gap-2 rounded-2xl border p-4 transition-all ${
-                              noneSelected
-                                ? 'border-primary bg-primary/10 shadow-sm'
-                                : 'border-base-200 hover:border-primary/60 hover:bg-[var(--color-secondary)]/40'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between gap-4">
-                              <div className="space-y-1 text-sm">
-                                <p className="font-semibold text-[var(--color-text)]">옵션 제거</p>
-                                <p className="text-xs text-[var(--color-text)]/60">옵션 없이 담기</p>
-                              </div>
-                              <input
-                                type="radio"
-                                name="cart-option"
-                                className="radio radio-primary"
-                                checked={noneSelected}
-                                onChange={() => {
-                                  setOptionModalSelection('none');
-                                  setOptionModalError(null);
-                                }}
-                              />
-                            </div>
-                          </label>
-                        )}
-
-                        {optionModalItem.product.options.map((option) => {
-                          const isSelected = optionModalSelection === option.id;
-                          const additionalText =
-                            option.additional_price && option.additional_price > 0
-                              ? `+₩${option.additional_price.toLocaleString('ko-KR')}`
-                              : '추가 금액 없음';
-                          const stockText =
-                            option.stock_quantity !== undefined
-                              ? `재고 ${option.stock_quantity}개`
-                              : '재고 정보 없음';
-
-                          return (
-                            <label
-                              key={option.id}
-                              className={`flex cursor-pointer flex-col gap-2 rounded-2xl border p-4 transition-all ${
-                                isSelected
-                                  ? 'border-primary bg-primary/10 shadow-sm'
-                                  : 'border-base-200 hover:border-primary/60 hover:bg-[var(--color-secondary)]/40'
-                              }`}
-                            >
-                              <div className="flex items-center justify-between gap-4">
-                                <div className="space-y-1 text-sm">
-                                  <p className="font-semibold text-[var(--color-text)]">
-                                    {option.name} {option.value}
-                                  </p>
-                                  <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--color-text)]/60">
-                                    <span
-                                      className={`rounded-full px-3 py-1 font-medium ${
-                                        option.additional_price && option.additional_price > 0
-                                          ? 'bg-primary/10 text-primary'
-                                          : 'bg-[var(--color-secondary)] text-[var(--color-text)]/70'
-                                      }`}
-                                    >
-                                      {additionalText}
-                                    </span>
-                                    <span>{stockText}</span>
-                                  </div>
-                                </div>
-                                <input
-                                  type="radio"
-                                  name="cart-option"
-                                  className="radio radio-primary"
-                                  checked={isSelected}
-                                  onChange={() => {
-                                    setOptionModalSelection(option.id);
-                                    setOptionModalError(null);
-                                  }}
-                                />
-                              </div>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    );
-                  })()
-                )}
-              </div>
-            ) : (
-              <p className="mt-5 rounded-2xl bg-[var(--color-secondary)]/60 px-4 py-5 text-sm text-[var(--color-text)]/70">
-                변경 가능한 옵션이 없습니다.
-              </p>
-            )}
-
-            {optionModalError && (
-              <p className="mt-4 text-sm text-error">{optionModalError}</p>
-            )}
-
-            <div className="modal-action">
-              <Button variant="ghost" onClick={closeOptionModal} disabled={isUpdating}>
-                취소
-              </Button>
-              <Button onClick={handleApplyOptionChange} loading={isUpdating} disabled={isUpdating}>
-                적용하기
-              </Button>
-            </div>
-          </div>
-          <form method="dialog" className="modal-backdrop">
-            <button type="button" onClick={closeOptionModal} aria-label="옵션 변경 닫기">
-              닫기
-            </button>
-          </form>
-        </dialog>
-      )}
+      <OptionChangeModal
+        item={optionModalItem}
+        selection={optionModalSelection}
+        error={optionModalError}
+        isUpdating={isUpdating}
+        onSelectionChange={setOptionModalSelection}
+        onClose={closeOptionModal}
+        onApply={handleApplyOptionChange}
+      />
     </div>
   );
 }

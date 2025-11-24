@@ -3,12 +3,16 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Navbar,
   Footer,
-  Button,
   LoadingSpinner,
   ErrorAlert,
-  FallbackImage,
-  QuantitySelector,
 } from '@/components';
+import {
+  OrderSummary,
+  FulfillmentSelector,
+  PickupInfo,
+  OrderItemsList,
+  ShippingForm,
+} from '@/components/order';
 import { NAV_ITEMS } from '@/constants/navigation';
 import {
   useCart,
@@ -18,17 +22,22 @@ import {
 import { useCreateOrder } from '@/hooks/queries/useOrdersQueries';
 import { useAddresses, useAddAddress } from '@/hooks/queries/useAddressQueries';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { buildShippingAddress, formatCurrency } from '@/utils/formatting';
+import {
+  MAX_MEMO_LENGTH,
+  ALERT_TIMEOUT,
+  VALIDATION_PATTERNS,
+  VALIDATION_MESSAGES,
+  DELIVERY_FEE,
+  type FulfillmentType,
+  type OrderFieldName,
+} from '@/constants/orderDefaults';
 import type { CartItem } from '@/schemas/cart';
 import type { Address } from '@/schemas/address';
 import {
   AlertTriangle,
   ChevronRight,
   Info,
-  MapPin,
-  Package,
-  ShoppingBag,
-  Trash2,
-  Truck,
 } from 'lucide-react';
 
 interface OrderLocationState {
@@ -54,28 +63,11 @@ interface SavedAddress extends ShippingFormState {
   label: string;
 }
 
-type FulfillmentType = 'delivery' | 'pickup';
-
-type FieldName = 'recipient' | 'phone' | 'postalCode' | 'address1';
 interface PickupStoreInfo {
   id?: number;
   name: string;
   address?: string | null;
   contact?: string | null;
-}
-
-const DELIVERY_FEE = 3000;
-const MAX_MEMO_LENGTH = 200;
-
-function formatCurrency(amount: number) {
-  if (!Number.isFinite(amount)) {
-    return '₩0';
-  }
-  return `₩${amount.toLocaleString('ko-KR')}`;
-}
-
-function buildShippingAddress(form: ShippingFormState) {
-  return `(${form.postalCode}) ${form.address1} ${form.address2}`.trim();
 }
 
 /**
@@ -152,8 +144,12 @@ export default function OrderPage() {
     return [];
   }, [addressesData?.addresses, user?.name, user?.phone]);
 
-  const [selectedAddressId, setSelectedAddressId] = useState<string>('manual');
-  const [hasAutoSelected, setHasAutoSelected] = useState(false);
+  // Initialize with first address if available
+  const initialAddressId = useMemo(() => {
+    return savedAddresses.length > 0 ? savedAddresses[0].id : 'manual';
+  }, [savedAddresses.length]);
+
+  const [selectedAddressId, setSelectedAddressId] = useState<string>(initialAddressId);
 
   const [shippingForm, setShippingForm] = useState<ShippingFormState>({
     recipient: user?.name ?? '',
@@ -164,22 +160,12 @@ export default function OrderPage() {
     saveAsDefault: false,
   });
 
-  // Auto-select first address when addresses are loaded (only once)
+  // Update selectedAddressId when addresses are loaded (only once on mount)
   useEffect(() => {
-    if (savedAddresses.length > 0 && selectedAddressId === 'manual' && !hasAutoSelected) {
-      const firstAddress = savedAddresses[0];
-      setSelectedAddressId(firstAddress.id);
-      setShippingForm({
-        recipient: firstAddress.recipient,
-        phone: firstAddress.phone,
-        postalCode: firstAddress.postalCode,
-        address1: firstAddress.address1,
-        address2: firstAddress.address2,
-        saveAsDefault: false,
-      });
-      setHasAutoSelected(true);
+    if (savedAddresses.length > 0 && selectedAddressId === 'manual') {
+      setSelectedAddressId(savedAddresses[0].id);
     }
-  }, [savedAddresses, selectedAddressId, hasAutoSelected]);
+  }, [savedAddresses.length]); // Only depend on length, not the array itself
 
   // Update form when selected address changes
   useEffect(() => {
@@ -188,8 +174,8 @@ export default function OrderPage() {
     if (selectedAddressId === 'manual') {
       // 새 배송지 입력 모드: 빈 폼으로 초기화
       setShippingForm({
-        recipient: '',
-        phone: '',
+        recipient: user?.name ?? '',
+        phone: user?.phone ?? '',
         postalCode: '',
         address1: '',
         address2: '',
@@ -210,7 +196,7 @@ export default function OrderPage() {
         saveAsDefault: false,
       });
     }
-  }, [savedAddresses, selectedAddressId]);
+  }, [selectedAddressId, savedAddresses, user?.name, user?.phone]);
 
   const filteredCartSelection = useMemo(() => {
     // 바로구매일 경우 임시 CartItem 생성
@@ -269,9 +255,6 @@ export default function OrderPage() {
     }, 0);
   }, [orderItems]);
 
-  const shippingFee = fulfillmentType === 'delivery' ? DELIVERY_FEE : 0;
-  const totalDue = Math.max(itemsSubtotal + shippingFee, 0);
-
   const lowStockItems = orderItems.filter(
     (item) => item.product.stock_quantity > 0 && item.product.stock_quantity <= 3
   );
@@ -296,17 +279,12 @@ export default function OrderPage() {
     return Array.from(map.values());
   }, [orderItems]);
 
-  const markedCount = useMemo(
-    () => Object.values(markedItems).filter(Boolean).length,
-    [markedItems]
-  );
-
   // Auto-dismiss alerts after delay
   useEffect(() => {
     if (directPurchase && showDirectPurchaseAlert) {
       const timer = setTimeout(() => {
         setShowDirectPurchaseAlert(false);
-      }, 5000); // 5초 후 사라짐
+      }, ALERT_TIMEOUT.DIRECT_PURCHASE);
       return () => clearTimeout(timer);
     }
   }, [directPurchase, showDirectPurchaseAlert]);
@@ -315,7 +293,7 @@ export default function OrderPage() {
     if (!directPurchase && !selectedItemIds?.length && showNoSelectionAlert) {
       const timer = setTimeout(() => {
         setShowNoSelectionAlert(false);
-      }, 5000); // 5초 후 사라짐
+      }, ALERT_TIMEOUT.NO_SELECTION);
       return () => clearTimeout(timer);
     }
   }, [directPurchase, selectedItemIds, showNoSelectionAlert]);
@@ -324,7 +302,7 @@ export default function OrderPage() {
     if (lowStockItems.length > 0 && showLowStockAlert) {
       const timer = setTimeout(() => {
         setShowLowStockAlert(false);
-      }, 7000); // 7초 후 사라짐
+      }, ALERT_TIMEOUT.LOW_STOCK);
       return () => clearTimeout(timer);
     }
   }, [lowStockItems.length, showLowStockAlert]);
@@ -333,27 +311,27 @@ export default function OrderPage() {
     ? selectedItemIds.length - filteredCartSelection.length
     : 0;
 
-  const validateField = (name: FieldName, value: string) => {
+  const validateField = (name: OrderFieldName, value: string) => {
     let message = '';
     if (name === 'recipient' && !value.trim()) {
-      message = '수령인을 입력해주세요.';
+      message = VALIDATION_MESSAGES.RECIPIENT_REQUIRED;
     }
     if (name === 'phone') {
       if (!value.trim()) {
-        message = '연락처를 입력해주세요.';
-      } else if (!/^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/.test(value.trim())) {
-        message = '010-1234-5678 형식으로 입력해주세요.';
+        message = VALIDATION_MESSAGES.PHONE_REQUIRED;
+      } else if (!VALIDATION_PATTERNS.PHONE.test(value.trim())) {
+        message = VALIDATION_MESSAGES.PHONE_INVALID;
       }
     }
     if (name === 'postalCode') {
       if (!value.trim()) {
-        message = '우편번호를 입력해주세요.';
-      } else if (!/^\d{5}$/.test(value.trim())) {
-        message = '5자리 우편번호를 입력해주세요.';
+        message = VALIDATION_MESSAGES.POSTAL_CODE_REQUIRED;
+      } else if (!VALIDATION_PATTERNS.POSTAL_CODE.test(value.trim())) {
+        message = VALIDATION_MESSAGES.POSTAL_CODE_INVALID;
       }
     }
     if (name === 'address1' && !value.trim()) {
-      message = '도로명 주소를 입력해주세요.';
+      message = VALIDATION_MESSAGES.ADDRESS1_REQUIRED;
     }
 
     setFormErrors((prev) => ({
@@ -364,7 +342,7 @@ export default function OrderPage() {
   };
 
   const validateForm = () => {
-    const fieldNames: FieldName[] = ['recipient', 'phone', 'postalCode', 'address1'];
+    const fieldNames: OrderFieldName[] = ['recipient', 'phone', 'postalCode', 'address1'];
     let isValid = true;
 
     if (fulfillmentType === 'delivery') {
@@ -403,7 +381,7 @@ export default function OrderPage() {
 
     if (touchedFields[name]) {
       if (name === 'address2' || name === 'saveAsDefault') return;
-      validateField(name as FieldName, value);
+      validateField(name as OrderFieldName, value);
     }
   };
 
@@ -414,7 +392,7 @@ export default function OrderPage() {
       [name]: true,
     }));
     if (name === 'address2' || name === 'saveAsDefault') return;
-    validateField(name as FieldName, value);
+    validateField(name as OrderFieldName, value);
   };
 
   const handleQuantityChange = (itemId: number, quantity: number) => {
@@ -438,8 +416,7 @@ export default function OrderPage() {
         payload: { quantity },
       },
       {
-        onError: (mutationError) => {
-          console.error('주문 페이지 수량 변경 실패', mutationError);
+        onError: () => {
           refetchCart();
         },
       }
@@ -455,8 +432,7 @@ export default function OrderPage() {
     const previousItems = orderItems;
     setOrderItems((prev) => prev.filter((item) => item.id !== itemId));
     removeCartItem(itemId, {
-      onError: (mutationError) => {
-        console.error('주문 페이지 상품 삭제 실패', mutationError);
+      onError: () => {
         setOrderItems(previousItems);
       },
     });
@@ -469,8 +445,7 @@ export default function OrderPage() {
     setOrderItems(remaining);
     targets.forEach((item) => {
       removeCartItem(item.id, {
-        onError: (mutationError) => {
-          console.error('선택 삭제 실패', mutationError);
+        onError: () => {
           refetchCart();
         },
       });
@@ -483,13 +458,27 @@ export default function OrderPage() {
     setOrderItems([]);
     orderItems.forEach((item) => {
       removeCartItem(item.id, {
-        onError: (mutationError) => {
-          console.error('전체 삭제 실패', mutationError);
+        onError: () => {
           refetchCart();
         },
       });
     });
     setMarkedItems({});
+  };
+
+  const handleMarkItem = (itemId: number) => {
+    setMarkedItems((prev) => ({
+      ...prev,
+      [itemId]: !prev[itemId],
+    }));
+  };
+
+  const handleMarkAll = (checked: boolean) => {
+    const next: Record<number, boolean> = {};
+    orderItems.forEach((item) => {
+      next[item.id] = checked;
+    });
+    setMarkedItems(next);
   };
 
   const handleAddNewAddress = () => {
@@ -550,7 +539,11 @@ export default function OrderPage() {
         ? {
             items,
             fulfillment_type: 'delivery' as const,
-            shipping_address: `${shippingForm.recipient} | ${shippingForm.phone} | ${buildShippingAddress(shippingForm)}`,
+            shipping_address: `${shippingForm.recipient} | ${shippingForm.phone} | ${buildShippingAddress(
+              shippingForm.postalCode,
+              shippingForm.address1,
+              shippingForm.address2
+            )}`,
           }
         : {
             items,
@@ -564,7 +557,7 @@ export default function OrderPage() {
           replace: true,
           state: {
             orderId: response.order.id,
-            totalDue,
+            totalDue: itemsSubtotal + (fulfillmentType === 'delivery' ? DELIVERY_FEE : 0),
           },
         });
       },
@@ -641,18 +634,10 @@ export default function OrderPage() {
                   선택한 상품 정보를 확인하고 배송 또는 픽업 정보를 입력하세요.
                 </p>
               </div>
-              <div className="flex items-center gap-3 rounded-xl border border-[var(--color-text)]/10 px-4 py-3 text-sm">
-                <Truck className="h-5 w-5 text-[var(--color-gold)]" />
-                <div>
-                  <p className="font-semibold text-[var(--color-text)]">결제 단계 전 확인</p>
-                  <p className="text-xs text-[var(--color-text)]/60">
-                    모든 정보가 정확한지 확인 후 결제하기로 이동합니다.
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
 
+          {/* Error Alerts */}
           {cartError && (
             <div className="mb-6">
               <ErrorAlert
@@ -707,7 +692,7 @@ export default function OrderPage() {
 
           {lowStockItems.length > 0 && showLowStockAlert && (
             <div className="alert alert-info mb-6">
-              <Package className="h-5 w-5" />
+              <Info className="h-5 w-5" />
               <span>
                 {lowStockItems.map((item) => item.product.name).join(', ')} 상품의 재고가 얼마 남지
                 않았습니다.
@@ -760,570 +745,98 @@ export default function OrderPage() {
 
           <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
             <div className="space-y-8">
-              <section className="pb-8 border-b border-[var(--color-text)]/10">
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm text-[var(--color-text)]/60">주문 상품</p>
-                    <h2 className="text-xl font-semibold text-[var(--color-text)]">
-                      총 {orderItems.length}개
-                    </h2>
-                  </div>
-                  {!directPurchase && (
-                    <div className="flex flex-wrap items-center gap-2 text-sm">
-                      <label className="flex cursor-pointer items-center gap-2">
-                        <input
-                          type="checkbox"
-                          className="checkbox checkbox-sm checkbox-primary"
-                          checked={
-                            orderItems.length > 0 &&
-                            orderItems.every((item) => markedItems[item.id])
-                          }
-                          onChange={(event) => {
-                            const checked = event.target.checked;
-                            const next: Record<number, boolean> = {};
-                            orderItems.forEach((item) => {
-                              next[item.id] = checked;
-                            });
-                            setMarkedItems(next);
-                          }}
-                        />
-                        <span>전체 선택</span>
-                      </label>
-                      <span className="text-[var(--color-text)]/40">|</span>
-                      <Button
-                        variant="link"
-                        size="xs"
-                        onClick={handleClearAll}
-                        disabled={orderItems.length === 0 || isRemovingCart}
-                      >
-                        전체 삭제
-                      </Button>
-                      <Button
-                        variant="link"
-                        size="xs"
-                        onClick={handleRemoveSelected}
-                        disabled={markedCount === 0 || isRemovingCart}
-                      >
-                        선택 삭제 ({markedCount})
-                      </Button>
-                    </div>
-                  )}
-                </div>
+              {/* Order Items List */}
+              <OrderItemsList
+                orderItems={orderItems}
+                markedItems={markedItems}
+                fulfillmentType={fulfillmentType}
+                isDirectPurchase={Boolean(directPurchase)}
+                isUpdatingCart={isUpdatingCart}
+                isRemovingCart={isRemovingCart}
+                onMarkItem={handleMarkItem}
+                onMarkAll={handleMarkAll}
+                onQuantityChange={handleQuantityChange}
+                onRemoveItem={handleRemoveItem}
+                onRemoveSelected={handleRemoveSelected}
+                onClearAll={handleClearAll}
+              />
 
-                {orderItems.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-[var(--color-text)]/20 p-10 text-center">
-                    <ShoppingBag className="mx-auto h-12 w-12 text-[var(--color-text)]/30" />
-                    <p className="mt-4 text-base font-semibold text-[var(--color-text)]">
-                      주문할 상품이 없습니다
-                    </p>
-                    <p className="mt-2 text-sm text-[var(--color-text)]/60">
-                      장바구니에서 상품을 선택한 뒤 다시 시도해주세요.
-                    </p>
-                    <Button
-                      className="mt-4"
-                      onClick={() => {
-                        void navigate('/cart');
-                      }}
-                    >
-                      장바구니로 이동
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {orderItems.map((item) => {
-                      const optionExtra = item.product_option?.additional_price ?? 0;
-                      const unitPrice = item.product.price + optionExtra;
-                      const itemTotal = unitPrice * item.quantity;
-                      const remainingStock = item.product.stock_quantity;
-                      const isLowStock = remainingStock > 0 && remainingStock <= 3;
-                      const insufficient = remainingStock < item.quantity;
-                      return (
-                        <article
-                          key={item.id}
-                          className="rounded-xl border border-[var(--color-text)]/10 p-4"
-                        >
-                          <div className="flex flex-col gap-4 md:flex-row md:items-start">
-                            <div className="flex items-start gap-3">
-                              {!directPurchase && (
-                                <input
-                                  type="checkbox"
-                                  className="checkbox checkbox-primary mt-2"
-                                  checked={Boolean(markedItems[item.id])}
-                                  onChange={() =>
-                                    setMarkedItems((prev) => ({
-                                      ...prev,
-                                      [item.id]: !prev[item.id],
-                                    }))
-                                  }
-                                  aria-label="삭제 대상 선택"
-                                />
-                              )}
-                              <div className="h-24 w-24 overflow-hidden rounded-2xl border border-base-200">
-                                <FallbackImage
-                                  src={item.product.image_url}
-                                  alt={item.product.name}
-                                  className="h-full w-full object-cover"
-                                />
-                              </div>
-                            </div>
+              {/* Fulfillment Selector */}
+              <FulfillmentSelector
+                fulfillmentType={fulfillmentType}
+                onFulfillmentTypeChange={setFulfillmentType}
+              />
 
-                            <div className="flex flex-1 flex-col gap-3">
-                              <div className="flex flex-wrap items-start justify-between gap-3">
-                                <div>
-                                  <p className="text-lg font-semibold text-[var(--color-text)]">
-                                    {item.product.name}
-                                  </p>
-                                  <p className="text-sm text-[var(--color-text)]/60">
-                                    {item.product_option
-                                      ? `${item.product_option.name} · ${item.product_option.value}`
-                                      : '옵션 없음'}
-                                  </p>
-                                  {item.product.store?.name && (
-                                    <p className="text-xs text-[var(--color-text)]/50">
-                                      {item.product.store.name}
-                                    </p>
-                                  )}
-                                </div>
-                                <div className="text-right">
-                                  <p className="text-lg font-semibold text-primary">
-                                    {formatCurrency(unitPrice)}
-                                  </p>
-                                  <p className="text-xs text-[var(--color-text)]/60">
-                                    수량 {item.quantity}개 · 소계 {formatCurrency(itemTotal)}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div className="flex flex-wrap items-center gap-3">
-                                <QuantitySelector
-                                  quantity={item.quantity}
-                                  onDecrease={() => handleQuantityChange(item.id, item.quantity - 1)}
-                                  onIncrease={() => handleQuantityChange(item.id, item.quantity + 1)}
-                                  disabled={isUpdatingCart}
-                                  showInput={false}
-                                />
-                                {!directPurchase && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleRemoveItem(item.id)}
-                                    disabled={isRemovingCart}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                    삭제
-                                  </Button>
-                                )}
-                              </div>
-
-                              <div className="flex flex-wrap gap-3 text-xs text-[var(--color-text)]/60">
-                                <span className="badge badge-outline border-dashed">
-                                  {fulfillmentType === 'delivery'
-                                    ? '배송 준비: 평균 2~3일'
-                                    : '픽업 준비: 준비 완료 시 알림'}
-                                </span>
-                                {isLowStock && !insufficient && (
-                                  <span className="flex items-center gap-1 text-warning">
-                                    <AlertTriangle className="h-3 w-3" />
-                                    남은 재고 {remainingStock}개
-                                  </span>
-                                )}
-                                {insufficient && (
-                                  <span className="flex items-center gap-1 text-error">
-                                    <AlertTriangle className="h-3 w-3" />
-                                    재고 부족
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </article>
-                      );
-                    })}
-                  </div>
-                )}
-
-              </section>
-
-              <section className="pb-8 border-b border-[var(--color-text)]/10">
-                <div className="mb-4 flex items-center gap-2">
-                  <Truck className="h-5 w-5 text-[var(--color-gold)]" />
-                  <div>
-                    <p className="text-sm text-[var(--color-text)]/60">수령 방법</p>
-                    <h2 className="text-lg font-semibold text-[var(--color-text)]">배송 또는 픽업 선택</h2>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <button
-                    type="button"
-                    className={`flex items-start gap-3 rounded-xl border p-4 text-left transition ${
-                      fulfillmentType === 'delivery'
-                        ? 'border-[var(--color-gold)] bg-[var(--color-gold)]/5'
-                        : 'border-[var(--color-text)]/10 hover:border-[var(--color-text)]/20'
-                    }`}
-                    onClick={() => setFulfillmentType('delivery')}
-                    aria-pressed={fulfillmentType === 'delivery'}
-                  >
-                    <span className="rounded-full bg-[var(--color-gold)]/10 p-3 text-[var(--color-gold)]">
-                      <Truck className="h-5 w-5" />
-                    </span>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold text-[var(--color-text)]">배송 받기</p>
-                        {fulfillmentType === 'delivery' && (
-                          <span className="badge badge-outline border-[var(--color-gold)] text-[var(--color-gold)] badge-sm">선택됨</span>
-                        )}
-                      </div>
-                      <p className="text-sm text-[var(--color-text)]/70">
-                        집이나 회사 등 원하는 주소로 안전하게 배송됩니다.
-                      </p>
-                      <p className="mt-1 text-xs text-[var(--color-text)]/50">
-                        기본 배송비 {formatCurrency(DELIVERY_FEE)} · 평균 2~3일 소요
-                      </p>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`flex items-start gap-3 rounded-xl border p-4 text-left transition ${
-                      fulfillmentType === 'pickup'
-                        ? 'border-[var(--color-gold)] bg-[var(--color-gold)]/5'
-                        : 'border-[var(--color-text)]/10 hover:border-[var(--color-text)]/20'
-                    }`}
-                    onClick={() => setFulfillmentType('pickup')}
-                    aria-pressed={fulfillmentType === 'pickup'}
-                  >
-                    <span className="rounded-full bg-[var(--color-gold)]/10 p-3 text-[var(--color-gold)]">
-                      <Package className="h-5 w-5" />
-                    </span>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold text-[var(--color-text)]">매장 픽업</p>
-                        {fulfillmentType === 'pickup' && (
-                          <span className="badge badge-outline border-[var(--color-gold)] text-[var(--color-gold)] badge-sm">선택됨</span>
-                        )}
-                      </div>
-                      <p className="text-sm text-[var(--color-text)]/70">
-                        가까운 우동금 센터를 방문해 직접 수령할 수 있어요.
-                      </p>
-                      <p className="mt-1 text-xs text-[var(--color-text)]/50">추가 비용 없음 · 준비되면 알림</p>
-                    </div>
-                  </button>
-                </div>
-
-                <p className="mt-4 text-sm text-[var(--color-text)]/70">
-                  {fulfillmentType === 'delivery'
-                    ? '배송을 선택하면 아래에서 배송지 정보를 입력해주세요.'
-                    : '픽업을 선택하면 방문할 센터를 선택한 뒤 안내에 따라 수령해 주세요.'}
-                </p>
-              </section>
-
+              {/* Shipping Form (if delivery) */}
               {fulfillmentType === 'delivery' && (
-                <section className="pb-8 border-b border-[var(--color-text)]/10">
-                <div className="mb-4 flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-[var(--color-gold)]" />
-                  <div>
-                    <p className="text-sm text-[var(--color-text)]/60">배송지</p>
-                    <h2 className="text-lg font-semibold text-[var(--color-text)]">배송지 정보</h2>
-                  </div>
-                </div>
-
-                {/* 저장된 배송지 선택 드롭다운 (있을 경우) */}
-                {savedAddresses.length > 0 && (
-                  <div className="mb-4">
-                    <label className="form-control w-full">
-                      <span className="label-text text-sm text-[var(--color-text)]">저장된 배송지</span>
-                      <select
-                        className="select w-full bg-[var(--color-text)]/5 border-[var(--color-gold)]/30 focus:border-[var(--color-gold)] text-[var(--color-text)]"
-                        value={selectedAddressId}
-                        onChange={(event) => setSelectedAddressId(event.target.value)}
-                      >
-                        {savedAddresses.map((address) => (
-                          <option key={address.id} value={address.id}>
-                            {address.label}
-                          </option>
-                        ))}
-                        <option value="manual">새 배송지로 입력하기</option>
-                      </select>
-                    </label>
-                  </div>
-                )}
-
-                {/* 입력 폼은 항상 표시 */}
-                <>
-                  {/* 수령인 / 연락처 - 1:1 비율 */}
-                  <div className="mt-4 grid grid-cols-2 gap-4">
-                    <label className="form-control">
-                      <span className="label-text text-sm text-[var(--color-text)]">수령인</span>
-                      <input
-                        type="text"
-                        name="recipient"
-                        className={`input ${formErrors.recipient ? 'input-error' : 'bg-[var(--color-text)]/5 border-[var(--color-gold)]/30 focus:border-[var(--color-gold)]'} text-[var(--color-text)] placeholder:text-[var(--color-text)]/40`}
-                        placeholder="홍길동"
-                        value={shippingForm.recipient}
-                        onChange={handleShippingInputChange}
-                        onBlur={handleFieldBlur}
-                        aria-describedby="recipient-error"
-                      />
-                      {formErrors.recipient && (
-                        <span id="recipient-error" className="label-text-alt text-error">
-                          {formErrors.recipient}
-                        </span>
-                      )}
-                    </label>
-                    <label className="form-control">
-                      <span className="label-text text-sm text-[var(--color-text)]">연락처</span>
-                      <input
-                        type="tel"
-                        name="phone"
-                        className={`input ${formErrors.phone ? 'input-error' : 'bg-[var(--color-text)]/5 border-[var(--color-gold)]/30 focus:border-[var(--color-gold)]'} text-[var(--color-text)] placeholder:text-[var(--color-text)]/40`}
-                        placeholder="010-1234-5678"
-                        value={shippingForm.phone}
-                        onChange={handleShippingInputChange}
-                        onBlur={handleFieldBlur}
-                        aria-describedby="phone-error"
-                      />
-                      {formErrors.phone && (
-                        <span id="phone-error" className="label-text-alt text-error">
-                          {formErrors.phone}
-                        </span>
-                      )}
-                    </label>
-                  </div>
-
-                  {/* 우편번호 + 검색버튼 */}
-                  <div className="mt-4">
-                    <label className="form-control w-full">
-                      <span className="label-text text-sm text-[var(--color-text)]">우편번호</span>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          name="postalCode"
-                          className={`input flex-1 ${formErrors.postalCode ? 'input-error' : 'bg-[var(--color-text)]/5 border-[var(--color-gold)]/30 focus:border-[var(--color-gold)]'} text-[var(--color-text)] placeholder:text-[var(--color-text)]/40`}
-                          placeholder="00000"
-                          value={shippingForm.postalCode}
-                          onChange={handleShippingInputChange}
-                          onBlur={handleFieldBlur}
-                          aria-describedby="postal-error"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="shrink-0"
-                          onClick={() => {
-                            alert('우편번호 검색 서비스는 추후 연동 예정입니다.');
-                          }}
-                        >
-                          우편번호 검색
-                        </Button>
-                      </div>
-                      {formErrors.postalCode && (
-                        <span id="postal-error" className="label-text-alt text-error">
-                          {formErrors.postalCode}
-                        </span>
-                      )}
-                    </label>
-                  </div>
-
-                  {/* 도로명 주소 / 상세 주소 - 1:1 비율 */}
-                  <div className="mt-4 grid grid-cols-2 gap-4">
-                    <label className="form-control">
-                      <span className="label-text text-sm text-[var(--color-text)]">도로명 주소</span>
-                      <input
-                        type="text"
-                        name="address1"
-                        className={`input ${formErrors.address1 ? 'input-error' : 'bg-[var(--color-text)]/5 border-[var(--color-gold)]/30 focus:border-[var(--color-gold)]'} text-[var(--color-text)] placeholder:text-[var(--color-text)]/40`}
-                        placeholder="도로명 주소"
-                        value={shippingForm.address1}
-                        onChange={handleShippingInputChange}
-                        onBlur={handleFieldBlur}
-                        aria-describedby="address1-error"
-                      />
-                      {formErrors.address1 && (
-                        <span id="address1-error" className="label-text-alt text-error">
-                          {formErrors.address1}
-                        </span>
-                      )}
-                    </label>
-                    <label className="form-control">
-                      <span className="label-text text-sm text-[var(--color-text)]">상세 주소</span>
-                      <input
-                        type="text"
-                        name="address2"
-                        className="input bg-[var(--color-text)]/5 border-[var(--color-gold)]/30 focus:border-[var(--color-gold)] text-[var(--color-text)] placeholder:text-[var(--color-text)]/40"
-                        placeholder="동/호수, 배송 참고사항"
-                        value={shippingForm.address2}
-                        onChange={handleShippingInputChange}
-                      />
-                    </label>
-                  </div>
-
-                <label className="mt-4 flex items-center gap-2 text-sm text-[var(--color-text)]">
-                  <input
-                    type="checkbox"
-                    name="saveAsDefault"
-                    className="checkbox border-[var(--color-gold)]/50 [--chkbg:var(--color-gold)] [--chkfg:var(--color-primary)]"
-                    checked={shippingForm.saveAsDefault}
-                    onChange={handleShippingInputChange}
-                  />
-                  기본 배송지로 저장
-                </label>
-
-                {/* 새 배송지 추가 버튼 (새 배송지 입력 모드일 때만) */}
-                {selectedAddressId === 'manual' && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="mt-4 w-full"
-                    onClick={handleAddNewAddress}
-                    disabled={isAddingAddress}
-                    loading={isAddingAddress}
-                  >
-                    새 배송지 추가
-                  </Button>
-                )}
-                </>
-                </section>
-              )}
-
-              {fulfillmentType === 'pickup' && (
-                <section className="pb-8 border-b border-[var(--color-text)]/10">
-                  <div className="mb-4 flex items-center gap-2">
-                    <Package className="h-5 w-5 text-[var(--color-gold)]" />
-                    <div>
-                      <p className="text-sm text-[var(--color-text)]/60">픽업 안내</p>
-                      <h2 className="text-lg font-semibold text-[var(--color-text)]">상품별 매장 방문</h2>
-                    </div>
-                  </div>
-
-                  {pickupStoreInfos.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-[var(--color-text)]/20 p-4 text-sm text-[var(--color-text)]/70">
-                      선택한 상품의 픽업 매장을 찾을 수 없습니다. 잠시 후 다시 시도하거나 고객 센터에 문의해주세요.
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {pickupStoreInfos.map((store) => (
-                        <div
-                          key={store.id ?? store.name}
-                          className="rounded-xl border border-[var(--color-text)]/10 p-4"
-                        >
-                          <p className="text-base font-semibold text-[var(--color-text)]">{store.name}</p>
-                          <p className="text-sm text-[var(--color-text)]/70">
-                            {store.address || '주소 정보가 업데이트될 예정입니다.'}
-                          </p>
-                          <p className="text-xs text-[var(--color-text)]/60">
-                            연락처 {store.contact || '매장 연락처 준비 중'}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <p className="mt-4 text-xs text-[var(--color-text)]/60">
-                    각 상품이 속한 매장을 직접 방문해 수령해야 하며, 준비 완료 시 매장에서 별도로 안내드립니다.
-                    방문 시 주문자 본인 확인을 위한 신분증을 지참해주세요.
-                  </p>
-                </section>
-              )}
-
-              <section className="pb-8">
-                <div className="mb-4 flex items-center gap-2">
-                  <Info className="h-5 w-5 text-[var(--color-gold)]" />
-                  <div>
-                    <p className="text-sm text-[var(--color-text)]/60">주문 메모</p>
-                    <h2 className="text-lg font-semibold text-[var(--color-text)]">배송 요청사항</h2>
-                  </div>
-                </div>
-                <textarea
-                  name="orderMemo"
-                  className="textarea min-h-[120px] bg-[var(--color-text)]/5 border-[var(--color-gold)]/30 focus:border-[var(--color-gold)] text-[var(--color-text)] placeholder:text-[var(--color-text)]/40"
-                  placeholder="예) 부재 시 경비실에 맡겨주세요."
-                  value={orderMemo}
-                  onChange={(event) => {
-                    if (event.target.value.length > MAX_MEMO_LENGTH) return;
-                    setOrderMemo(event.target.value);
-                  }}
+                <ShippingForm
+                  savedAddresses={savedAddresses}
+                  selectedAddressId={selectedAddressId}
+                  shippingForm={shippingForm}
+                  formErrors={formErrors}
+                  isAddingAddress={isAddingAddress}
+                  onAddressSelect={setSelectedAddressId}
+                  onInputChange={handleShippingInputChange}
+                  onFieldBlur={handleFieldBlur}
+                  onAddNewAddress={handleAddNewAddress}
                 />
-                <div className="mt-2 text-right text-xs text-[var(--color-text)]/60">
-                  {orderMemo.length}/{MAX_MEMO_LENGTH}자
+              )}
+
+              {/* Pickup Info (if pickup) */}
+              {fulfillmentType === 'pickup' && (
+                <PickupInfo pickupStoreInfos={pickupStoreInfos} />
+              )}
+
+              {/* Order Memo */}
+              <section className="pb-8">
+                <div className="mb-4">
+                  <label className="form-control w-full">
+                    <span className="label-text text-sm text-[var(--color-text)]">배송 요청사항</span>
+                    <input
+                      type="text"
+                      name="orderMemo"
+                      className="input w-full bg-[var(--color-text)]/5 border-[var(--color-gold)]/30 focus:border-[var(--color-gold)] text-[var(--color-text)] placeholder:text-[var(--color-text)]/40"
+                      placeholder="예) 부재 시 경비실에 맡겨주세요."
+                      value={orderMemo}
+                      onChange={(event) => {
+                        if (event.target.value.length > MAX_MEMO_LENGTH) return;
+                        setOrderMemo(event.target.value);
+                      }}
+                      maxLength={MAX_MEMO_LENGTH}
+                    />
+                    <span className="label-text-alt text-[var(--color-text)]/60">
+                      {orderMemo.length}/{MAX_MEMO_LENGTH}자
+                    </span>
+                  </label>
                 </div>
               </section>
             </div>
 
+            {/* Order Summary (Sidebar) */}
             <div className="self-start lg:sticky lg:top-6">
-              <section className="rounded-xl border border-[var(--color-text)]/10 p-6">
-                <h2 className="text-lg font-semibold text-[var(--color-text)]">주문 요약</h2>
-                <div className="mt-4 space-y-3 text-sm text-[var(--color-text)]/70">
-                  <div className="flex items-center justify-between">
-                    <span>상품 합계</span>
-                    <strong className="text-[var(--color-text)]">{formatCurrency(itemsSubtotal)}</strong>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>{fulfillmentType === 'delivery' ? '배송비' : '픽업 수수료'}</span>
-                    <strong className="text-[var(--color-text)]">
-                      {shippingFee === 0 ? '무료' : `+ ${formatCurrency(shippingFee)}`}
-                    </strong>
-                  </div>
-                </div>
-
-                <div className="mt-5 border-t border-base-200 pt-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-[var(--color-text)]/60">총 결제금액</p>
-                      <p className="text-2xl font-bold text-[var(--color-text)]">
-                        {formatCurrency(totalDue)}
-                      </p>
-                    </div>
-                    {isCartFetching && (
-                      <span className="text-xs text-[var(--color-gold)]">금액 새로고침 중...</span>
-                    )}
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  className={`btn w-full mt-6 ${
-                    isCTAEnabled
-                      ? 'bg-[var(--color-gold)] hover:bg-[var(--color-gold)]/80 text-[var(--color-primary)] border-[var(--color-gold)]'
-                      : 'btn-disabled'
-                  }`}
-                  onClick={handleProceedToPayment}
-                  disabled={!isCTAEnabled || isSubmittingOrder}
-                >
-                  {isSubmittingOrder ? (
-                    <>
-                      <span className="loading loading-spinner"></span>
-                      처리 중...
-                    </>
-                  ) : (
-                    '결제하기로 이동'
-                  )}
-                </button>
-                {!isCTAEnabled && (
-                  <p className="mt-3 text-xs text-error">
-                    필수 입력값을 모두 채우고 배송/픽업 정보를 확인해주세요.
-                  </p>
-                )}
-                <p className="mt-4 text-xs text-[var(--color-text)]/60">
-                  주문 제출 시{' '}
-                  <a href="/" className="link text-[var(--color-gold)] hover:text-[var(--color-gold)]/80">
-                    이용약관
-                  </a>
-                  에 동의한 것으로 간주됩니다.
-                </p>
-              </section>
+              <OrderSummary
+                itemsSubtotal={itemsSubtotal}
+                fulfillmentType={fulfillmentType}
+                isCartFetching={isCartFetching}
+                isCTAEnabled={isCTAEnabled}
+                isSubmittingOrder={isSubmittingOrder}
+                onProceedToPayment={handleProceedToPayment}
+              />
             </div>
           </div>
         </div>
       </main>
       <Footer />
 
+      {/* Mobile CTA (Fixed Bottom Bar) */}
       {orderItems.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 border-t border-[var(--color-text)]/10 bg-[var(--color-bg)] px-4 py-4 md:hidden backdrop-blur-sm">
+        <div className="fixed bottom-0 left-0 right-0 border-t border-[var(--color-text)]/10 bg-[var(--color-primary)] px-4 py-4 md:hidden backdrop-blur-sm z-50">
           <div className="mx-auto flex max-w-4xl items-center justify-between">
             <div>
               <p className="text-xs text-[var(--color-text)]/60">총 결제금액</p>
-              <p className="text-xl font-bold text-[var(--color-text)]">{formatCurrency(totalDue)}</p>
+              <p className="text-xl font-bold text-[var(--color-text)]">
+                {formatCurrency(itemsSubtotal + (fulfillmentType === 'delivery' ? DELIVERY_FEE : 0))}
+              </p>
             </div>
             <button
               type="button"

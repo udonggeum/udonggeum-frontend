@@ -45,6 +45,7 @@ export default function SellerProductsPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [deleteConfirmProduct, setDeleteConfirmProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState<ProductFormData>({
     store_id: 0,
     name: '',
@@ -199,9 +200,6 @@ export default function SellerProductsPage() {
         options: formData.options,
       };
 
-      console.log('[Product Update] Product ID:', editingProduct.id);
-      console.log('[Product Update] Data:', updateData);
-
       updateProduct(
         { id: editingProduct.id, data: updateData },
         {
@@ -226,9 +224,6 @@ export default function SellerProductsPage() {
         options: formData.options,
       };
 
-      console.log('[Product Create] Store ID:', formData.store_id, 'Selected Store:', selectedStoreId);
-      console.log('[Product Create] Data:', createData);
-
       createProduct(createData, {
         onSuccess: () => {
           closeModal();
@@ -237,10 +232,22 @@ export default function SellerProductsPage() {
     }
   };
 
-  const handleDelete = (productId: number) => {
-    if (window.confirm('정말로 이 상품을 삭제하시겠습니까?')) {
-      deleteProduct(productId);
+  const handleDeleteClick = (product: Product) => {
+    setDeleteConfirmProduct(product);
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirmProduct) {
+      deleteProduct(deleteConfirmProduct.id, {
+        onSuccess: () => {
+          setDeleteConfirmProduct(null);
+        },
+      });
     }
+  };
+
+  const cancelDelete = () => {
+    setDeleteConfirmProduct(null);
   };
 
   if (isLoadingStores) {
@@ -375,7 +382,7 @@ export default function SellerProductsPage() {
                       <Edit className="w-4 h-4" />
                       수정
                     </Button>
-                    <Button onClick={() => handleDelete(product.id)}
+                    <Button onClick={() => handleDeleteClick(product)}
                       variant="error" size="sm" className="gap-2"
                       disabled={isUpdating || isDeleting}
                     >
@@ -724,6 +731,37 @@ export default function SellerProductsPage() {
             </form>
           </div>
           <div className="modal-backdrop" onClick={closeModal}></div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmProduct && (
+        <div className="modal modal-open">
+          <div className="modal-box bg-[var(--color-secondary)] border border-[var(--color-text)]/10">
+            <h3 className="text-lg font-bold text-[var(--color-text)]">상품 삭제 확인</h3>
+            <p className="py-4 text-sm text-[var(--color-text)]/70">
+              정말로 <span className="font-semibold text-[var(--color-text)]">{deleteConfirmProduct.name}</span> 상품을 삭제하시겠습니까?
+              <br />
+              이 작업은 되돌릴 수 없습니다.
+            </p>
+            <div className="modal-action flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={cancelDelete}
+                disabled={isDeleting}
+              >
+                취소
+              </Button>
+              <Button
+                variant="error"
+                onClick={confirmDelete}
+                loading={isDeleting}
+              >
+                삭제
+              </Button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={cancelDelete}></div>
         </div>
       )}
     </div>
