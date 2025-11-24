@@ -1,0 +1,252 @@
+openapi: 3.0.3
+info:
+  title: Kakao Pay Payment Status API
+  description: |
+    Retrieves current payment status for an order.
+
+    **Usage**:
+    - Check before initiating payment (prevent duplicates)
+    - Display payment details in order history
+    - Verify payment completion after redirect
+
+    **Security**: Requires valid JWT access token
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://api.udonggeum.com
+    description: Production server
+
+paths:
+  /api/v1/payments/kakao/status/{orderID}:
+    get:
+      summary: Get payment status for order
+      description: |
+        Returns current payment status and details for an order.
+
+        **Authorization**: Order must belong to authenticated user
+
+        **Response Fields**:
+        - Minimal data for 'pending' status
+        - Full payment details for 'completed' status
+        - Refund details for 'refunded' status
+      operationId: getPaymentStatus
+      tags:
+        - Payments
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderID
+          in: path
+          required: true
+          description: Order ID to check payment status
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            example: 123
+
+      responses:
+        '200':
+          description: Payment status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentStatusResponse'
+              examples:
+                status_pending:
+                  summary: Pending payment
+                  value:
+                    message: Payment status retrieved successfully
+                    data:
+                      order_id: 123
+                      payment_status: pending
+                      total_amount: 50000
+                status_completed_card:
+                  summary: Completed payment with card
+                  value:
+                    message: Payment status retrieved successfully
+                    data:
+                      order_id: 123
+                      payment_status: completed
+                      payment_provider: kakaopay
+                      payment_tid: T91ca901315e2b03efcd
+                      payment_aid: A91ca930315e2b03efce
+                      payment_method: CARD
+                      payment_approved_at: '2025-01-19T14:30:00Z'
+                      total_amount: 50000
+                status_completed_money:
+                  summary: Completed payment with Kakao Money
+                  value:
+                    message: Payment status retrieved successfully
+                    data:
+                      order_id: 123
+                      payment_status: completed
+                      payment_provider: kakaopay
+                      payment_tid: T91ca901315e2b03efcd
+                      payment_aid: A91ca930315e2b03efce
+                      payment_method: MONEY
+                      payment_approved_at: '2025-01-19T14:30:00Z'
+                      total_amount: 50000
+                status_refunded:
+                  summary: Refunded payment
+                  value:
+                    message: Payment status retrieved successfully
+                    data:
+                      order_id: 123
+                      payment_status: refunded
+                      payment_provider: kakaopay
+                      payment_tid: T91ca901315e2b03efcd
+                      payment_aid: A91ca930315e2b03efce
+                      payment_method: CARD
+                      payment_approved_at: '2025-01-19T14:30:00Z'
+                      total_amount: 50000
+
+        '401':
+          description: Unauthorized (missing or invalid JWT token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_token:
+                  summary: No authorization header
+                  value:
+                    error: Authorization header is required
+                invalid_token:
+                  summary: Invalid or expired token
+                  value:
+                    error: Invalid access token
+
+        '403':
+          description: Forbidden (order does not belong to authenticated user)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                not_owner:
+                  summary: User doesn't own this order
+                  value:
+                    error: You do not have permission to view this order
+
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                order_not_found:
+                  summary: Order does not exist
+                  value:
+                    error: Order not found
+
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                database_error:
+                  summary: Database query error
+                  value:
+                    error: Failed to retrieve payment status
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    PaymentStatusResponse:
+      type: object
+      required:
+        - message
+        - data
+      properties:
+        message:
+          type: string
+          example: Payment status retrieved successfully
+        data:
+          $ref: '#/components/schemas/PaymentStatusData'
+
+    PaymentStatusData:
+      type: object
+      required:
+        - order_id
+        - payment_status
+        - total_amount
+      properties:
+        order_id:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 123
+        payment_status:
+          type: string
+          enum:
+            - pending
+            - completed
+            - failed
+            - refunded
+          description: |
+            Current payment status:
+            - pending: Payment not completed yet (can retry)
+            - completed: Payment successful
+            - failed: Payment attempt failed (can retry)
+            - refunded: Payment was refunded
+          example: completed
+        payment_provider:
+          type: string
+          description: Payment provider name (present when initiated)
+          example: kakaopay
+          nullable: true
+        payment_tid:
+          type: string
+          description: Transaction ID (present when initiated)
+          example: T91ca901315e2b03efcd
+          nullable: true
+        payment_aid:
+          type: string
+          description: Approval ID (present when completed)
+          example: A91ca930315e2b03efce
+          nullable: true
+        payment_method:
+          type: string
+          enum:
+            - CARD
+            - MONEY
+          description: Payment method (present when completed)
+          example: MONEY
+          nullable: true
+        payment_approved_at:
+          type: string
+          format: date-time
+          description: Approval timestamp (present when completed)
+          example: '2025-01-19T14:30:00Z'
+          nullable: true
+        total_amount:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Order total amount in KRW
+          example: 50000
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Human-readable error message in Korean
+          example: 주문을 찾을 수 없습니다
+
+tags:
+  - name: Payments
+    description: Payment operations via Kakao Pay

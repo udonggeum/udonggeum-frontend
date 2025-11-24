@@ -1,0 +1,244 @@
+openapi: 3.0.3
+info:
+  title: Kakao Pay Payment Success Callback API
+  description: |
+    Handles Kakao Pay success callback and approves payment.
+
+    **Flow**:
+    1. User completes payment on Kakao Pay page
+    2. Kakao Pay redirects to this endpoint: `?order_id=X&pg_token=Y`
+    3. Backend receives callback, calls Kakao Pay /approve API with pg_token
+    4. Backend updates order payment status to 'completed'
+    5. Backend redirects to frontend success page with order_id
+
+    **Security**: This endpoint is publicly accessible (no JWT required) because Kakao Pay redirects to it.
+    However, backend validates:
+    - pg_token is valid (single-use, expires in 15 minutes)
+    - order_id exists
+    - payment not already processed
+
+    **Important**: This endpoint is called by Kakao Pay redirect, NOT directly by frontend.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://api.udonggeum.com
+    description: Production server
+
+paths:
+  /api/v1/payments/kakao/success:
+    get:
+      summary: Handle payment success callback
+      description: |
+        Processes Kakao Pay success redirect and approves payment.
+
+        **Called by**: Kakao Pay redirect (after user completes payment)
+
+        **Response**: HTTP 302 redirect to frontend success page with approval data
+
+        **Idempotency**: If payment already approved, returns existing approval data
+      operationId: handlePaymentSuccess
+      tags:
+        - Payment Callbacks
+      parameters:
+        - name: order_id
+          in: query
+          required: true
+          description: Order ID that was paid
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            example: 123
+
+        - name: pg_token
+          in: query
+          required: true
+          description: Single-use payment approval token from Kakao Pay (expires in 15 minutes)
+          schema:
+            type: string
+            minLength: 1
+            example: pg_abc123def456ghi789
+
+      responses:
+        '200':
+          description: Payment approved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentApprovalResponse'
+              examples:
+                success_card:
+                  summary: Payment with credit card
+                  value:
+                    message: Payment completed successfully
+                    data:
+                      order_id: 123
+                      aid: A91ca930315e2b03efce
+                      tid: T91ca901315e2b03efcd
+                      total_amount: 50000
+                      payment_method: CARD
+                      approved_at: '2025-01-19T14:30:00Z'
+                success_money:
+                  summary: Payment with Kakao Money
+                  value:
+                    message: Payment completed successfully
+                    data:
+                      order_id: 123
+                      aid: A91ca930315e2b03efce
+                      tid: T91ca901315e2b03efcd
+                      total_amount: 50000
+                      payment_method: MONEY
+                      approved_at: '2025-01-19T14:30:00Z'
+
+        '302':
+          description: Redirect to frontend success page (alternative to 200 JSON response)
+          headers:
+            Location:
+              description: Frontend success page URL with order_id parameter
+              schema:
+                type: string
+                format: uri
+                example: https://udonggeum.com/payment/success?order_id=123
+
+        '400':
+          description: Bad request (missing parameters, invalid pg_token, or token expired)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_order_id:
+                  summary: Missing order_id parameter
+                  value:
+                    error: order_id is required
+                missing_pg_token:
+                  summary: Missing pg_token parameter
+                  value:
+                    error: pg_token is required
+                invalid_pg_token:
+                  summary: Invalid or expired pg_token
+                  value:
+                    error: Invalid or expired payment token
+                token_expired:
+                  summary: Token expired (>15 minutes)
+                  value:
+                    error: Payment token has expired. Please retry payment.
+
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                order_not_found:
+                  summary: Order does not exist
+                  value:
+                    error: Order not found
+
+        '409':
+          description: Conflict (payment already approved for this order)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                already_approved:
+                  summary: Duplicate approval attempt
+                  value:
+                    error: Payment already processed for this order
+
+        '500':
+          description: Internal server error (Kakao Pay approval failed or database error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                kakaopay_approval_error:
+                  summary: Kakao Pay /approve API error
+                  value:
+                    error: Failed to approve payment with Kakao Pay
+                database_error:
+                  summary: Database transaction error
+                  value:
+                    error: Failed to update order payment status
+
+components:
+  schemas:
+    PaymentApprovalResponse:
+      type: object
+      required:
+        - message
+        - data
+      properties:
+        message:
+          type: string
+          description: Success message
+          example: Payment completed successfully
+        data:
+          $ref: '#/components/schemas/PaymentApprovalData'
+
+    PaymentApprovalData:
+      type: object
+      required:
+        - order_id
+        - aid
+        - tid
+        - total_amount
+        - payment_method
+        - approved_at
+      properties:
+        order_id:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Order ID that was paid
+          example: 123
+        aid:
+          type: string
+          minLength: 1
+          description: Kakao Pay approval ID (proof of payment)
+          example: A91ca930315e2b03efce
+        tid:
+          type: string
+          minLength: 1
+          description: Kakao Pay transaction ID (matches TID from /ready)
+          example: T91ca901315e2b03efcd
+        total_amount:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Total amount paid in KRW (Korean Won)
+          example: 50000
+        payment_method:
+          type: string
+          enum:
+            - CARD
+            - MONEY
+          description: |
+            Payment method used:
+            - CARD: Credit/debit card
+            - MONEY: Kakao Money balance
+          example: MONEY
+        approved_at:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when payment was approved
+          example: '2025-01-19T14:30:00Z'
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Human-readable error message in Korean
+          example: 결제 승인에 실패했습니다
+
+tags:
+  - name: Payment Callbacks
+    description: Webhook endpoints called by Kakao Pay

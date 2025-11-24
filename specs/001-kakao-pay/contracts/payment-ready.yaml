@@ -1,0 +1,235 @@
+openapi: 3.0.3
+info:
+  title: Kakao Pay Payment Ready API
+  description: |
+    Initiates Kakao Pay payment flow for an order.
+
+    **Flow**:
+    1. Frontend calls this endpoint with order_id
+    2. Backend validates order (exists, belongs to user, status is pending)
+    3. Backend calls Kakao Pay /ready API with merchant credentials
+    4. Backend returns TID and redirect URLs to frontend
+    5. Frontend redirects user to appropriate Kakao Pay URL
+
+    **Security**: Requires valid JWT access token in Authorization header
+  version: 1.0.0
+  contact:
+    name: Udonggeum Development Team
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://api.udonggeum.com
+    description: Production server
+
+paths:
+  /api/v1/payments/kakao/ready:
+    post:
+      summary: Initiate Kakao Pay payment
+      description: |
+        Initiates payment flow by calling Kakao Pay /ready API and returning redirect URLs.
+
+        **Idempotency**: If payment already initiated for this order, returns existing TID.
+
+        **Rate Limiting**: Max 10 requests per minute per user.
+      operationId: initiateKakaoPay
+      tags:
+        - Payments
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        description: Order ID to initiate payment for
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentReadyRequest'
+            examples:
+              valid_order:
+                summary: Valid order ID
+                value:
+                  order_id: 123
+              invalid_order:
+                summary: Invalid order ID (negative)
+                value:
+                  order_id: -1
+
+      responses:
+        '200':
+          description: Payment initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentReadyResponse'
+              examples:
+                success:
+                  summary: Successful payment initiation
+                  value:
+                    message: Payment initiated successfully
+                    data:
+                      tid: T91ca88177920788c115
+                      next_redirect_pc_url: https://online-payment.kakaopay.com/mockup/bridge/pc/T91ca88177920788c115/order123
+                      next_redirect_mobile_url: https://online-payment.kakaopay.com/mockup/bridge/mobile-web/T91ca88177920788c115/order123
+                      next_redirect_app_url: https://online-payment.kakaopay.com/mockup/bridge/mobile-app/T91ca88177920788c115/order123
+                      android_app_scheme: kakaotalk://kakaopay/pg?url=https://online-payment.kakaopay.com/T91ca88177920788c115
+                      ios_app_scheme: kakaotalk://kakaopay/pg?url=https://online-payment.kakaopay.com/T91ca88177920788c115
+
+        '400':
+          description: Bad request (invalid order ID or order amount)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_order_id:
+                  summary: Invalid order ID format
+                  value:
+                    error: Order ID must be a positive integer
+                invalid_amount:
+                  summary: Invalid payment amount
+                  value:
+                    error: Payment amount must be greater than 0
+
+        '401':
+          description: Unauthorized (missing or invalid JWT token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_token:
+                  summary: No authorization header
+                  value:
+                    error: Authorization header is required
+                invalid_token:
+                  summary: Invalid or expired token
+                  value:
+                    error: Invalid access token
+
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                order_not_found:
+                  summary: Order does not exist
+                  value:
+                    error: Order not found
+
+        '409':
+          description: Conflict (payment already processed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                already_processed:
+                  summary: Payment already completed
+                  value:
+                    error: Payment already processed for this order
+
+        '500':
+          description: Internal server error (Kakao Pay API error or database error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                kakaopay_error:
+                  summary: Kakao Pay API error
+                  value:
+                    error: Failed to initiate payment with Kakao Pay
+                database_error:
+                  summary: Database connection error
+                  value:
+                    error: Internal server error
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token from /api/v1/auth/login
+
+  schemas:
+    PaymentReadyRequest:
+      type: object
+      required:
+        - order_id
+      properties:
+        order_id:
+          type: integer
+          format: int32
+          minimum: 1
+          description: ID of the order to initiate payment for
+          example: 123
+      additionalProperties: false
+
+    PaymentReadyResponse:
+      type: object
+      required:
+        - message
+        - data
+      properties:
+        message:
+          type: string
+          description: Success message
+          example: Payment initiated successfully
+        data:
+          $ref: '#/components/schemas/PaymentReadyData'
+
+    PaymentReadyData:
+      type: object
+      required:
+        - tid
+        - next_redirect_pc_url
+        - next_redirect_mobile_url
+        - next_redirect_app_url
+        - android_app_scheme
+        - ios_app_scheme
+      properties:
+        tid:
+          type: string
+          minLength: 1
+          description: Kakao Pay transaction ID (used for approval and refunds)
+          example: T91ca88177920788c115
+        next_redirect_pc_url:
+          type: string
+          format: uri
+          description: Redirect URL for desktop/laptop browsers
+          example: https://online-payment.kakaopay.com/mockup/bridge/pc/T91ca88177920788c115/order123
+        next_redirect_mobile_url:
+          type: string
+          format: uri
+          description: Redirect URL for mobile web browsers
+          example: https://online-payment.kakaopay.com/mockup/bridge/mobile-web/T91ca88177920788c115/order123
+        next_redirect_app_url:
+          type: string
+          format: uri
+          description: Redirect URL for in-app browsers (KakaoTalk, etc.)
+          example: https://online-payment.kakaopay.com/mockup/bridge/mobile-app/T91ca88177920788c115/order123
+        android_app_scheme:
+          type: string
+          description: Deep link scheme for native Android apps
+          example: kakaotalk://kakaopay/pg?url=https://online-payment.kakaopay.com/T91ca88177920788c115
+        ios_app_scheme:
+          type: string
+          description: Deep link scheme for native iOS apps
+          example: kakaotalk://kakaopay/pg?url=https://online-payment.kakaopay.com/T91ca88177920788c115
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Human-readable error message in Korean
+          example: 주문을 찾을 수 없습니다
+
+tags:
+  - name: Payments
+    description: Payment operations via Kakao Pay
