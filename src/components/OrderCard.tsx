@@ -33,6 +33,12 @@ interface Order {
   order_items: OrderItem[];
   created_at: string;
   updated_at: string;
+  // Payment fields (from Kakao Pay integration)
+  payment_provider?: string;
+  payment_tid?: string;
+  payment_aid?: string;
+  payment_method?: 'CARD' | 'MONEY';
+  payment_approved_at?: string | null;
 }
 
 interface OrderCardProps {
@@ -60,6 +66,24 @@ export default function OrderCard({ order, onViewDetail }: OrderCardProps) {
 
   // Get first product image for preview
   const firstProduct = order.order_items[0]?.product;
+
+  // Format payment approved timestamp
+  const paymentApprovedDate = order.payment_approved_at
+    ? new Date(order.payment_approved_at).toLocaleString('ko-KR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : null;
+
+  // Get payment method display text
+  const paymentMethodText = order.payment_method
+    ? order.payment_method === 'CARD'
+      ? '카드 결제'
+      : '카카오머니'
+    : null;
 
   return (
     <div className="card bg-base-100 shadow-md hover:shadow-lg transition-shadow">
@@ -117,6 +141,30 @@ export default function OrderCard({ order, onViewDetail }: OrderCardProps) {
               ₩{order.total_amount.toLocaleString('ko-KR')}
             </span>
           </div>
+
+          {/* Payment Details (show if payment completed) */}
+          {order.payment_status === 'completed' && (
+            <>
+              {paymentMethodText && (
+                <div className="flex justify-between">
+                  <span className="text-base-content/70">결제 수단</span>
+                  <span className="font-semibold">{paymentMethodText}</span>
+                </div>
+              )}
+              {paymentApprovedDate && (
+                <div className="flex justify-between">
+                  <span className="text-base-content/70">결제 시각</span>
+                  <span className="text-xs">{paymentApprovedDate}</span>
+                </div>
+              )}
+              {order.payment_tid && (
+                <div className="flex justify-between">
+                  <span className="text-base-content/70">거래번호</span>
+                  <span className="font-mono text-xs">{order.payment_tid}</span>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         {/* Actions */}

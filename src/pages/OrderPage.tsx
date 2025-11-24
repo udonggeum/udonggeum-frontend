@@ -520,12 +520,9 @@ export default function OrderPage() {
       payload,
       {
         onSuccess: (response) => {
-          navigate('/cart', {
+          // Redirect to payment page with order ID
+          navigate(`/payment/${response.order.id}`, {
             replace: true,
-            state: {
-              orderId: response.order.id,
-              totalDue,
-            },
           });
         },
         onError: (error) => {

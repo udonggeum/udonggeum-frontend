@@ -30,6 +30,46 @@ export const OrderSchema = z.object({
   order_items: z.array(OrderItemSchema),
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
+
+  // Payment Fields (Kakao Pay Integration)
+  payment_status: z
+    .enum(['pending', 'completed', 'failed', 'refunded'])
+    .describe('Current payment status - drives UI badges and user actions'),
+
+  payment_provider: z
+    .string()
+    .optional()
+    .describe('Payment provider name - always "kakaopay" when set'),
+
+  payment_tid: z
+    .string()
+    .optional()
+    .describe(
+      'Kakao Pay transaction ID - generated during /ready, used for refunds'
+    ),
+
+  payment_aid: z
+    .string()
+    .optional()
+    .describe(
+      'Kakao Pay approval ID - generated during /approve, proves payment success'
+    ),
+
+  payment_method: z
+    .enum(['CARD', 'MONEY'])
+    .optional()
+    .describe(
+      'Payment method used - CARD (credit/debit) or MONEY (Kakao Money balance)'
+    ),
+
+  payment_approved_at: z
+    .string()
+    .datetime()
+    .nullable()
+    .optional()
+    .describe(
+      'ISO 8601 timestamp of payment approval - null for pending payments'
+    ),
 });
 
 export type Order = z.infer<typeof OrderSchema>;
