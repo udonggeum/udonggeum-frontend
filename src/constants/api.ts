@@ -73,6 +73,17 @@ export const ENDPOINTS = {
     SET_DEFAULT: (id: number) => `/api/v1/addresses/${id}/default`,
   },
 
+  PAYMENTS: {
+    KAKAO: {
+      READY: '/api/v1/payments/kakao/ready',
+      SUCCESS: '/api/v1/payments/kakao/success',
+      FAIL: '/api/v1/payments/kakao/fail',
+      CANCEL: '/api/v1/payments/kakao/cancel',
+      STATUS: (orderId: number) => `/api/v1/payments/kakao/status/${orderId}`,
+      REFUND: (orderId: number) => `/api/v1/payments/kakao/${orderId}/refund`,
+    },
+  },
+
   SELLER: {
     DASHBOARD: '/api/v1/seller/dashboard',
     STORES: {
