@@ -19,6 +19,10 @@ import OrderPage from '@/pages/OrderPage';
 import WishlistPage from '@/pages/WishlistPage';
 import OrderHistoryPage from '@/pages/OrderHistoryPage';
 import AddressManagementPage from '@/pages/AddressManagementPage';
+import PaymentPage from '@/pages/PaymentPage';
+import PaymentSuccessPage from '@/pages/PaymentSuccessPage';
+import PaymentFailPage from '@/pages/PaymentFailPage';
+import PaymentCancelPage from '@/pages/PaymentCancelPage';
 import SellerDashboardPage from '@/pages/SellerDashboardPage';
 import SellerStoresPage from '@/pages/SellerStoresPage';
 import SellerProductsPage from '@/pages/SellerProductsPage';
@@ -98,6 +102,20 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* Payment Routes */}
+        <Route
+          path="/payment/:orderId"
+          element={
+            <ProtectedRoute>
+              <PaymentPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Payment callback routes - public (Kakao Pay redirects here) */}
+        <Route path="/payment/success" element={<PaymentSuccessPage />} />
+        <Route path="/payment/fail" element={<PaymentFailPage />} />
+        <Route path="/payment/cancel" element={<PaymentCancelPage />} />
 
         {/* Seller Routes - Require admin role */}
         <Route
