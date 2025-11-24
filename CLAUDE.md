@@ -631,6 +631,8 @@ When switching from MSW to real backend:
 - localStorage (via Zustand persist middleware) for auth tokens and user data
 - react-hook-form + Zod for form validation
 - Vitest + React Testing Library for testing (112 tests passing)
+- TypeScript 5.9 + React 19 + TanStack Query v5 (server state), Zustand v5 (client state), Zod v3 (validation), Axios (HTTP client), React Router v6 (routing), react-hook-form (forms) (001-kakao-pay)
+- localStorage via Zustand persist middleware (auth tokens), TanStack Query cache (API data) (001-kakao-pay)
 
 ## Recent Changes
 - **2025-01-04**: ✅ Authentication system MVP complete (112 tests passing)
