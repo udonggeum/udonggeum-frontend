@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MOCK_CATEGORIES } from '../constants/mockData';
 import { useStoreLocations } from '@/hooks/queries/useStoresQueries';
+import { useProductFilters } from '@/hooks/queries/useProductsQueries';
 import { getRegionOptions } from '@/utils/regionOptions';
+import { adaptFiltersToCategories } from '@/utils/filterAdapters';
 
 interface MainHeroSectionProps {
   onSearch?: (region?: string, category?: string) => void;
@@ -17,10 +19,16 @@ interface MainHeroSectionProps {
 export default function MainHeroSection({ onSearch }: MainHeroSectionProps) {
   const navigate = useNavigate();
   const { data: locationsData } = useStoreLocations();
+  const { data: filtersData } = useProductFilters();
   const [selectedRegionId, setSelectedRegionId] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
 
   const regionOptions = useMemo(() => getRegionOptions(locationsData), [locationsData]);
+
+  const categories = useMemo(
+    () => (filtersData ? adaptFiltersToCategories(filtersData) : MOCK_CATEGORIES),
+    [filtersData]
+  );
 
   const selectedRegion = regionOptions.find((region) => region.id === selectedRegionId);
 
@@ -113,7 +121,7 @@ export default function MainHeroSection({ onSearch }: MainHeroSectionProps) {
                 카테고리
               </option>
               <option value="all">전체 카테고리</option>
-              {MOCK_CATEGORIES.map((category) => (
+              {categories.map((category) => (
                 <option key={category.id} value={category.id}>
                   {category.name}
                 </option>

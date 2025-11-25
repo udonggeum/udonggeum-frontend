@@ -109,3 +109,15 @@ export const ProductsRequestSchema = z.object({
 });
 
 export type ProductsRequest = z.infer<typeof ProductsRequestSchema>;
+
+/**
+ * Product filters response schema
+ * Response from GET /products/filters endpoint
+ * Returns available categories and materials from backend
+ */
+export const ProductFiltersResponseSchema = z.object({
+  categories: z.array(z.string().min(1)),
+  materials: z.array(z.string().min(1)),
+});
+
+export type ProductFiltersResponse = z.infer<typeof ProductFiltersResponseSchema>;

@@ -36,6 +36,7 @@ export const ENDPOINTS = {
 
   PRODUCTS: {
     LIST: '/api/v1/products',
+    FILTERS: '/api/v1/products/filters',
     POPULAR: '/api/v1/products/popular',
     DETAIL: (id: number) => `/api/v1/products/${id}`,
     CREATE: '/api/v1/products',

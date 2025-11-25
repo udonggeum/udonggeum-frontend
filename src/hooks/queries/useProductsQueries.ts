@@ -15,6 +15,7 @@ export const productsKeys = {
   popular: (params?: ProductsRequest) => [...productsKeys.all, 'popular', params] as const,
   store: (storeId: number, params?: Omit<ProductsRequest, 'store_id'>) =>
     [...productsKeys.lists(), 'store', storeId, params] as const,
+  filters: () => [...productsKeys.all, 'filters'] as const,
 };
 
 /**
@@ -91,5 +92,23 @@ export function useStoreProducts(
     },
     staleTime: 1000 * 60 * 5,
     enabled: (options?.enabled ?? true) && Boolean(storeId),
+  });
+}
+
+/**
+ * useProductFilters query
+ * Fetches available product filters (categories and materials) from backend
+ *
+ * @example
+ * const { data, isLoading } = useProductFilters();
+ * // data.categories: string[] (e.g., ['ring', 'bracelet', 'necklace'])
+ * // data.materials: string[] (e.g., ['gold', 'silver'])
+ */
+export function useProductFilters() {
+  return useQuery({
+    queryKey: productsKeys.filters(),
+    queryFn: () => productsService.getProductFilters(),
+    staleTime: 1000 * 60 * 60, // 1 hour (filters rarely change)
+    gcTime: 1000 * 60 * 60 * 2, // 2 hours cache time
   });
 }

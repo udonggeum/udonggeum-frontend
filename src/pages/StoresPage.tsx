@@ -10,15 +10,15 @@ import {
   CategorySidebar,
 } from '@/components';
 import { useStores, useStoreLocations } from '@/hooks/queries/useStoresQueries';
+import { useProductFilters } from '@/hooks/queries/useProductsQueries';
 import { NAV_ITEMS } from '@/constants/navigation';
 import { MOCK_CATEGORIES } from '@/constants/mockData';
 import { uiCategoryToAPICategory } from '@/utils/apiAdapters';
 import { buildCategoryLabelMap, mapStoreDetailToSummary } from '@/utils/storeAdapters';
+import { adaptFiltersToCategories } from '@/utils/filterAdapters';
 import type { StoreSummary } from '@/types';
 
 const PAGE_SIZE = 12;
-
-const CATEGORY_LABEL_MAP = buildCategoryLabelMap(MOCK_CATEGORIES);
 
 interface RegionOption {
   id: string;
@@ -40,10 +40,22 @@ export default function StoresPage() {
     data: locationsData,
   } = useStoreLocations();
 
+  const { data: filtersData } = useProductFilters();
+
+  const categories = useMemo(
+    () => (filtersData ? adaptFiltersToCategories(filtersData) : MOCK_CATEGORIES),
+    [filtersData]
+  );
+
+  const CATEGORY_LABEL_MAP = useMemo(
+    () => buildCategoryLabelMap(categories),
+    [categories]
+  );
+
   const categoryOptions = useMemo(
     () =>
-      [...MOCK_CATEGORIES].sort((a, b) => a.displayOrder - b.displayOrder),
-    []
+      [...categories].sort((a, b) => a.displayOrder - b.displayOrder),
+    [categories]
   );
 
   const regionOptions: RegionOption[] = useMemo(() => {
