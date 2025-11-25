@@ -208,9 +208,9 @@ export default function PaymentSuccessPage() {
             {/* Payment Information */}
             <div className="space-y-4">
               {/* Total Amount */}
-              <div className="flex items-center justify-between rounded-2xl bg-primary/5 p-4">
-                <span className="text-base-content/70">결제 금액</span>
-                <span className="text-2xl font-bold text-primary">
+              <div className="flex items-center justify-between rounded-2xl bg-base-200 p-4">
+                <span className="font-medium text-base-content">결제 금액</span>
+                <span className="text-2xl font-bold text-base-content">
                   {formatCurrency(data.total_amount)}
                 </span>
               </div>
@@ -278,13 +278,6 @@ export default function PaymentSuccessPage() {
             </Button>
           </div>
 
-          {/* Info Message */}
-          <div className="rounded-2xl bg-info/10 p-4 text-center text-sm text-info">
-            <p className="font-medium">주문 처리가 진행됩니다</p>
-            <p className="mt-1 text-xs">
-              주문 내역에서 배송 상태를 확인하실 수 있습니다
-            </p>
-          </div>
         </div>
       </main>
 
