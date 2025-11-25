@@ -555,12 +555,9 @@ export default function OrderPage() {
       payload,
       {
         onSuccess: (response) => {
-          navigate('/cart', {
+          // Navigate to payment page to initiate Kakao Pay payment
+          navigate(`/payment/${response.order.id}`, {
             replace: true,
-            state: {
-              orderId: response.order.id,
-              totalDue,
-            },
           });
         },
         onError: (error) => {
@@ -576,6 +573,9 @@ export default function OrderPage() {
     shippingForm.postalCode &&
     shippingForm.address1
   );
+
+  // Calculate total due (subtotal + delivery fee if applicable)
+  const totalDue = itemsSubtotal + (fulfillmentType === 'delivery' ? DELIVERY_FEE : 0);
 
   const isCTAEnabled =
     orderItems.length > 0 &&

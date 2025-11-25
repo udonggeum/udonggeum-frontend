@@ -113,8 +113,8 @@ export const PaymentApprovalDataSchema = z.object({
 
   approved_at: z
     .string()
-    .datetime('Must be valid ISO 8601 datetime')
-    .describe('Timestamp when payment was approved'),
+    .min(1, 'Approved timestamp is required')
+    .describe('Timestamp when payment was approved (ISO 8601 format)'),
 });
 
 export const PaymentApprovalResponseSchema = z.object({

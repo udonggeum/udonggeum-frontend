@@ -218,7 +218,7 @@ export const paymentHandlers = [
   http.get('/api/v1/payments/kakao/fail', ({ request }) => {
     const url = new URL(request.url);
     const orderIdStr = url.searchParams.get('order_id');
-    const _errorMsg = url.searchParams.get('error_msg'); // Unused but received from Kakao Pay
+    void url.searchParams.get('error_msg'); // Received from Kakao Pay but not used
 
     if (!orderIdStr) {
       return HttpResponse.json(
@@ -253,7 +253,7 @@ export const paymentHandlers = [
       );
     }
 
-    const _order_id = parseInt(orderIdStr, 10);
+    void parseInt(orderIdStr, 10); // order_id received but not used (payment stays pending)
 
     // Payment remains pending (user can retry)
     // No state change needed

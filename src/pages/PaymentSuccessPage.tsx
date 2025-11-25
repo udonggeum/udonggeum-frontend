@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Navbar,
@@ -8,7 +8,7 @@ import {
   ErrorAlert,
 } from '@/components';
 import { NAV_ITEMS } from '@/constants/navigation';
-import { usePaymentSuccess } from '@/hooks/queries/usePaymentQueries';
+import { usePaymentApproval } from '@/hooks/queries/usePaymentQueries';
 import { PaymentSuccessCallbackSchema } from '@/schemas/payment';
 import { CheckCircle2, Package, CreditCard, Clock } from 'lucide-react';
 
@@ -27,35 +27,32 @@ export default function PaymentSuccessPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const {
-    mutate: handleSuccess,
-    data: approvalData,
-    isPending,
-    error,
-  } = usePaymentSuccess();
-
-  // Parse and validate callback parameters on mount
-  useEffect(() => {
+  // Parse and validate callback parameters
+  const params = useMemo(() => {
     try {
-      // Parse query parameters
       const rawParams = {
         order_id: searchParams.get('order_id'),
         pg_token: searchParams.get('pg_token'),
       };
-
-      // Validate with Zod schema
-      const params = PaymentSuccessCallbackSchema.parse(rawParams);
-
-      // Call success handler (backend will approve payment)
-      handleSuccess({
-        orderId: params.order_id,
-        pgToken: params.pg_token,
-      });
-    } catch (validationError) {
-      // Invalid query parameters
-      console.error('Invalid callback parameters:', validationError);
+      return PaymentSuccessCallbackSchema.parse(rawParams);
+    } catch {
+      console.error('Invalid callback parameters');
+      return null;
     }
-  }, [searchParams, handleSuccess]);
+  }, [searchParams]);
+
+  // Use query hook for payment approval
+  // This works correctly with React Strict Mode (unlike useMutation in useEffect)
+  const {
+    data: approvalData,
+    isLoading,
+    error,
+    isSuccess,
+  } = usePaymentApproval(
+    params?.order_id ?? null,
+    params?.pg_token ?? null,
+    { enabled: !!params }
+  );
 
   // Format currency
   const formatCurrency = (amount: number) => {
@@ -79,8 +76,46 @@ export default function PaymentSuccessPage() {
     return method === 'CARD' ? '카드 결제' : '카카오머니';
   };
 
+  // Invalid params state
+  if (!params) {
+    return (
+      <div className="flex min-h-screen flex-col bg-base-100">
+        <Navbar navigationItems={NAV_ITEMS} />
+        <main className="flex flex-1 items-center justify-center p-4">
+          <div className="w-full max-w-md space-y-4">
+            <div className="text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-error/10">
+                <CheckCircle2 className="h-8 w-8 text-error" />
+              </div>
+              <h1 className="mt-4 text-2xl font-bold text-base-content">
+                잘못된 요청
+              </h1>
+            </div>
+            <ErrorAlert message="결제 콜백 파라미터가 올바르지 않습니다." />
+            <div className="flex gap-2">
+              <Button
+                onClick={() => void navigate('/orders')}
+                className="flex-1"
+              >
+                주문 내역 확인
+              </Button>
+              <Button
+                onClick={() => void navigate('/')}
+                variant="outline"
+                className="flex-1"
+              >
+                홈으로
+              </Button>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   // Loading state (processing approval)
-  if (isPending) {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen flex-col bg-base-100">
         <Navbar navigationItems={NAV_ITEMS} />
@@ -99,7 +134,7 @@ export default function PaymentSuccessPage() {
   }
 
   // Error state
-  if (error || !approvalData) {
+  if (error || !isSuccess || !approvalData) {
     return (
       <div className="flex min-h-screen flex-col bg-base-100">
         <Navbar navigationItems={NAV_ITEMS} />

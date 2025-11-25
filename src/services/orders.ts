@@ -64,8 +64,8 @@ class OrdersService {
   async getOrderDetail(id: number): Promise<Order> {
     const response = await apiClient.get(ENDPOINTS.ORDERS.DETAIL(id));
 
-    // Validate response
-    return OrderSchema.parse(response.data);
+    // Backend returns { order: {...} }, extract and validate the nested order
+    return OrderSchema.parse(response.data.order);
   }
 }
 

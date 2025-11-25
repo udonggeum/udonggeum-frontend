@@ -73,7 +73,7 @@ export function useInitiateKakaoPay() {
   return useMutation({
     mutationFn: (request: PaymentReadyRequest) =>
       paymentService.initiateKakaoPay(request),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       // Invalidate payment status for this order
       void queryClient.invalidateQueries({
         queryKey: paymentKeys.status(variables.order_id),
@@ -88,42 +88,54 @@ export function useInitiateKakaoPay() {
 }
 
 /**
- * usePaymentSuccess mutation
+ * usePaymentApproval query
  * Handles payment success callback from Kakao Pay
- * Backend automatically approves payment using pg_token
+ * Uses useQuery (not useMutation) to work correctly with React Strict Mode
  *
+ * Key design decisions:
+ * - staleTime: Infinity - pg_token is single-use, never refetch
+ * - retry: false - failed approval cannot be retried with same token
+ * - refetchOnMount: false - prevents duplicate calls in Strict Mode
+ *
+ * @param orderId - Order ID from callback URL
+ * @param pgToken - pg_token from callback URL
+ * @param options - Query options (enabled, etc.)
  * @example
- * const { mutate: handleSuccess, isPending } = usePaymentSuccess();
- * // In PaymentSuccessPage component
- * handleSuccess({ orderId: 123, pgToken: 'abc123' });
+ * const { data, isLoading, error } = usePaymentApproval(123, 'abc123');
  */
-export function usePaymentSuccess() {
+export function usePaymentApproval(
+  orderId: number | null,
+  pgToken: string | null,
+  options?: { enabled?: boolean }
+) {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: ({
-      orderId,
-      pgToken,
-    }: {
-      orderId: number;
-      pgToken: string;
-    }) => paymentService.handlePaymentSuccess(orderId, pgToken),
-    onSuccess: (data) => {
-      const orderId = data.data.order_id;
+  return useQuery({
+    queryKey: ['payment', 'approval', orderId, pgToken] as const,
+    queryFn: async () => {
+      if (!orderId || !pgToken) {
+        throw new Error('Missing orderId or pgToken');
+      }
+      const result = await paymentService.handlePaymentSuccess(orderId, pgToken);
 
-      // Invalidate payment status
+      // Invalidate related queries after successful approval
       void queryClient.invalidateQueries({
         queryKey: paymentKeys.status(orderId),
       });
-
-      // Invalidate order detail and list (payment now completed)
       void queryClient.invalidateQueries({
         queryKey: ordersKeys.detail(orderId),
       });
       void queryClient.invalidateQueries({
         queryKey: ordersKeys.list(),
       });
+
+      return result;
     },
+    enabled: (options?.enabled ?? true) && !!orderId && !!pgToken,
+    staleTime: Infinity, // This is a one-time call, never refetch
+    retry: false, // Don't retry - pg_token is single-use
+    refetchOnMount: false, // Prevent refetch on remount (Strict Mode)
+    refetchOnWindowFocus: false, // Prevent refetch on window focus
   });
 }
 

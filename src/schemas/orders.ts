@@ -35,7 +35,6 @@ export const OrderSchema = z.object({
   total_amount: z.number().nonnegative(),
   total_price: z.number().nonnegative().optional(),
   status: z.enum(['pending', 'confirmed', 'shipping', 'delivered', 'cancelled']).optional(),
-  payment_status: z.enum(['pending', 'completed', 'failed', 'refunded']).optional(),
   fulfillment_type: z.enum(['delivery', 'pickup']),
   shipping_address: z.string().optional(),
   pickup_store_id: z.number().int().positive().optional(),
