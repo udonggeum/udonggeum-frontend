@@ -54,7 +54,7 @@ export default function LoadingSpinner({
   const innerContent = (
     <>
       <span className={`loading loading-spinner text-primary ${sizeClasses[size]}`} />
-      {showMessage && <p className="text-base-content/70">{message}</p>}
+      {showMessage && <p className="text-[var(--color-text)]/70">{message}</p>}
     </>
   );
 

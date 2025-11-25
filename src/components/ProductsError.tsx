@@ -128,10 +128,10 @@ export default function ProductsError({ error, onRetry }: ProductsErrorProps) {
       {/* Technical Details (for development only) */}
       {import.meta.env.DEV && error instanceof Error && (
         <details className="mt-6 text-left max-w-2xl">
-          <summary className="cursor-pointer text-sm text-base-content/50 hover:text-base-content/70 font-semibold">
+          <summary className="cursor-pointer text-sm text-[var(--color-text)]/50 hover:text-[var(--color-text)]/70 font-semibold">
             기술 정보 (개발 모드)
           </summary>
-          <pre className="mt-2 p-4 bg-base-200 rounded-lg text-xs overflow-auto">
+          <pre className="mt-2 p-4 bg-[var(--color-secondary)] rounded-lg text-xs overflow-auto">
             {error.stack || error.message}
           </pre>
         </details>

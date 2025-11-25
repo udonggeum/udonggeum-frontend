@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useLogout } from '@/hooks/queries/useAuthQueries';
 import { useWishlist, useOrders } from '@/hooks/queries';
-import { User, LogOut, ShoppingBag, Heart, MapPin } from 'lucide-react';
+import { User, LogOut, ShoppingBag, Heart, MapPin, Mail, Calendar } from 'lucide-react';
+import { Navbar, Footer, Button } from '@/components';
+import { NAV_ITEMS } from '@/constants/navigation';
 
 const MyPage: React.FC = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -33,222 +35,242 @@ const MyPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-base-200 py-8">
-      <div className="container mx-auto px-4">
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <div className="flex items-center gap-4 mb-6">
+    <div className="flex min-h-screen flex-col">
+      <Navbar navigationItems={NAV_ITEMS} />
+
+      <main className="flex-grow py-8">
+        <div className="container mx-auto px-4 max-w-6xl">
+          {/* Page Header */}
+          <div className="mb-8">
+            <div className="flex items-center gap-4">
               <div className="avatar placeholder">
-                <div className="bg-primary text-primary-content rounded-full w-20">
-                  <User className="w-10 h-10" />
+                <div className="bg-[var(--color-gold)] text-[var(--color-primary)] rounded-full w-16 h-16">
+                  <User className="w-8 h-8" />
                 </div>
               </div>
               <div>
-                <h2 className="card-title text-3xl">마이페이지</h2>
-                <p className="text-base-content/70">회원 정보 및 주문 관리</p>
+                <h1 className="text-3xl font-bold text-[var(--color-text)]">마이페이지</h1>
+                <p className="text-sm text-[var(--color-text)]/60 mt-1">회원 정보 및 주문 관리</p>
               </div>
             </div>
+          </div>
 
-            <div className="divider"></div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="stats shadow">
-                <div className="stat">
-                  <div className="stat-title">총 주문</div>
-                  <div className="stat-value text-primary">
-                    {ordersData?.count || 0}
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="card bg-[var(--color-primary)] shadow border border-[var(--color-text)]/10">
+              <div className="card-body p-4">
+                <div className="flex items-center gap-3">
+                  <ShoppingBag className="w-8 h-8 text-[var(--color-gold)]" />
+                  <div>
+                    <p className="text-xs text-[var(--color-text)]/70">총 주문</p>
+                    <p className="text-2xl font-bold text-[var(--color-text)]">{ordersData?.count || 0}건</p>
                   </div>
-                  <div className="stat-desc">지금까지의 주문 횟수</div>
-                </div>
-              </div>
-
-              <div className="stats shadow">
-                <div className="stat">
-                  <div className="stat-title">적립 포인트</div>
-                  <div className="stat-value text-secondary">0P</div>
-                  <div className="stat-desc">사용 가능한 포인트</div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold">회원 정보</h3>
-                <button
-                  type="button"
-                  onClick={() => {
-                    void navigate('/mypage/edit');
-                  }}
-                  className="btn btn-sm btn-primary btn-outline"
-                >
-                  정보 수정
-                </button>
-              </div>
-              <div className="space-y-2">
-                <p><span className="font-semibold">이름:</span> {user?.name || '-'}</p>
-                <p><span className="font-semibold">이메일:</span> {user?.email || '-'}</p>
-                <p><span className="font-semibold">전화번호:</span> {user?.phone || '-'}</p>
-                <p>
-                  <span className="font-semibold">가입일:</span>{' '}
-                  {user?.created_at
-                    ? new Date(user.created_at).toLocaleDateString('ko-KR', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })
-                    : '-'}
-                </p>
+            <div className="card bg-[var(--color-primary)] shadow border border-[var(--color-text)]/10">
+              <div className="card-body p-4">
+                <div className="flex items-center gap-3">
+                  <Heart className="w-8 h-8 text-[var(--color-gold)]" />
+                  <div>
+                    <p className="text-xs text-[var(--color-text)]/70">찜한 상품</p>
+                    <p className="text-2xl font-bold text-[var(--color-text)]">{wishlistData?.count || 0}개</p>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="mt-4">
-              <button
-                type="button"
-                onClick={() => {
-                  void navigate('/mypage/addresses');
-                }}
-                className="btn btn-outline gap-2 w-full md:w-auto"
-              >
-                <MapPin className="w-4 h-4" />
-                배송지 관리
-              </button>
+            <div className="card bg-[var(--color-primary)] shadow border border-[var(--color-text)]/10">
+              <div className="card-body p-4">
+                <div className="flex items-center gap-3">
+                  <MapPin className="w-8 h-8 text-[var(--color-gold)]" />
+                  <div>
+                    <p className="text-xs text-[var(--color-text)]/70">배송지</p>
+                    <p className="text-2xl font-bold text-[var(--color-text)]">0개</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="divider"></div>
+            <div className="card bg-[var(--color-primary)] shadow border border-[var(--color-text)]/10">
+              <div className="card-body p-4">
+                <div className="flex items-center gap-3">
+                  <User className="w-8 h-8 text-[var(--color-gold)]" />
+                  <div>
+                    <p className="text-xs text-[var(--color-text)]/70">포인트</p>
+                    <p className="text-2xl font-bold text-[var(--color-text)]">0P</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-            {/* Orders Section */}
-            <div className="mt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold flex items-center gap-2">
-                  <ShoppingBag className="w-6 h-6" />
-                  주문 내역
-                </h3>
-                {ordersData && ordersData.count > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void navigate('/orders');
-                    }}
-                    className="btn btn-sm btn-primary btn-outline"
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* User Info Card */}
+            <div className="card bg-[var(--color-primary)] shadow border border-[var(--color-text)]/10">
+              <div className="card-body">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="card-title text-[var(--color-text)]">회원 정보</h2>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate('/mypage/edit')}
                   >
-                    전체 보기
-                  </button>
-                )}
+                    수정
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-4 p-4 bg-[var(--color-secondary)] rounded-lg">
+                    <User className="w-5 h-5 text-[var(--color-text)]/50 flex-shrink-0" />
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <span className="text-sm font-medium text-[var(--color-text)]/70 w-20 flex-shrink-0">이름</span>
+                      <span className="text-sm font-semibold text-[var(--color-text)] truncate">{user?.name || '-'}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 p-4 bg-[var(--color-secondary)] rounded-lg">
+                    <Mail className="w-5 h-5 text-[var(--color-text)]/50 flex-shrink-0" />
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <span className="text-sm font-medium text-[var(--color-text)]/70 w-20 flex-shrink-0">이메일</span>
+                      <span className="text-sm font-semibold text-[var(--color-text)] truncate">{user?.email || '-'}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 p-4 bg-[var(--color-secondary)] rounded-lg">
+                    <MapPin className="w-5 h-5 text-[var(--color-text)]/50 flex-shrink-0" />
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <span className="text-sm font-medium text-[var(--color-text)]/70 w-20 flex-shrink-0">전화번호</span>
+                      <span className="text-sm font-semibold text-[var(--color-text)] truncate">{user?.phone || '-'}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 p-4 bg-[var(--color-secondary)] rounded-lg">
+                    <Calendar className="w-5 h-5 text-[var(--color-text)]/50 flex-shrink-0" />
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <span className="text-sm font-medium text-[var(--color-text)]/70 w-20 flex-shrink-0">가입일</span>
+                      <span className="text-sm font-semibold text-[var(--color-text)] truncate">
+                        {user?.created_at
+                          ? new Date(user.created_at).toLocaleDateString('ko-KR', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                            })
+                          : '-'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="card-actions mt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate('/mypage/addresses')}
+                    className="w-full gap-2"
+                  >
+                    <MapPin className="w-4 h-4" />
+                    배송지 관리
+                  </Button>
+                </div>
               </div>
-              {ordersData && ordersData.count > 0 ? (
-                <div className="stats shadow w-full">
-                  <div className="stat">
-                    <div className="stat-title">총 주문</div>
-                    <div className="stat-value text-primary">{ordersData.count}건</div>
-                    <div className="stat-actions">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void navigate('/orders');
-                        }}
-                        className="btn btn-sm btn-primary"
+            </div>
+
+            {/* Quick Actions Card */}
+            <div className="card bg-[var(--color-primary)] shadow border border-[var(--color-text)]/10">
+              <div className="card-body">
+                <h2 className="card-title text-[var(--color-text)] mb-4">빠른 메뉴</h2>
+
+                {/* Orders */}
+                <div className="space-y-4">
+                  <div className="p-4 bg-[var(--color-secondary)] rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <ShoppingBag className="w-5 h-5 text-[var(--color-gold)]" />
+                        <h3 className="font-semibold text-[var(--color-text)]">주문 내역</h3>
+                      </div>
+                      <span className="text-2xl font-bold text-[var(--color-gold)]">{ordersData?.count || 0}</span>
+                    </div>
+                    {ordersData && ordersData.count > 0 ? (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => navigate('/orders')}
+                        className="w-full"
                       >
                         주문 내역 보기
-                      </button>
+                      </Button>
+                    ) : (
+                      <div>
+                        <p className="text-xs text-[var(--color-text)]/70 mb-2">주문 내역이 없습니다</p>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => navigate('/products')}
+                          className="w-full"
+                        >
+                          상품 둘러보기
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Wishlist */}
+                  <div className="p-4 bg-[var(--color-secondary)] rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Heart className="w-5 h-5 text-[var(--color-gold)]" />
+                        <h3 className="font-semibold text-[var(--color-text)]">찜 목록</h3>
+                      </div>
+                      <span className="text-2xl font-bold text-[var(--color-gold)]">{wishlistData?.count || 0}</span>
                     </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="alert">
-                  <div>
-                    <p className="text-base-content/70">주문 내역이 없습니다</p>
-                    <p className="text-sm text-base-content/50">첫 주문을 시작해보세요!</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void navigate('/products');
-                    }}
-                    className="btn btn-sm btn-primary"
-                  >
-                    상품 둘러보기
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="divider"></div>
-
-            {/* Favorites Section */}
-            <div className="mt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold flex items-center gap-2">
-                  <Heart className="w-6 h-6" />
-                  찜 목록
-                </h3>
-                {wishlistData && wishlistData.count > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void navigate('/wishlist');
-                    }}
-                    className="btn btn-sm btn-primary btn-outline"
-                  >
-                    전체 보기
-                  </button>
-                )}
-              </div>
-              {wishlistData && wishlistData.count > 0 ? (
-                <div className="stats shadow w-full">
-                  <div className="stat">
-                    <div className="stat-title">찜한 상품</div>
-                    <div className="stat-value text-secondary">{wishlistData.count}개</div>
-                    <div className="stat-actions">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void navigate('/wishlist');
-                        }}
-                        className="btn btn-sm btn-secondary"
+                    {wishlistData && wishlistData.count > 0 ? (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => navigate('/wishlist')}
+                        className="w-full"
                       >
                         찜 목록 보기
-                      </button>
-                    </div>
+                      </Button>
+                    ) : (
+                      <div>
+                        <p className="text-xs text-[var(--color-text)]/70 mb-2">찜한 상품이 없습니다</p>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => navigate('/products')}
+                          className="w-full"
+                        >
+                          상품 둘러보기
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
-              ) : (
-                <div className="alert">
-                  <div>
-                    <p className="text-base-content/70">찜한 상품이 없습니다</p>
-                    <p className="text-sm text-base-content/50">마음에 드는 상품을 찜해보세요!</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void navigate('/products');
-                    }}
-                    className="btn btn-sm btn-primary"
-                  >
-                    상품 둘러보기
-                  </button>
-                </div>
-              )}
-            </div>
 
-            <div className="divider"></div>
+                <div className="divider my-2"></div>
 
-            <div className="card-actions justify-end">
-              <button
-                onClick={handleLogout}
-                className="btn btn-error btn-outline gap-2"
-                disabled={isLoggingOut}
-              >
-                {isLoggingOut ? (
-                  <span className="loading loading-spinner loading-sm"></span>
-                ) : (
-                  <LogOut className="w-4 h-4" />
-                )}
-                {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
-              </button>
+                <Button
+                  variant="error"
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="w-full gap-2"
+                >
+                  {isLoggingOut ? (
+                    <>
+                      <span className="loading loading-spinner loading-sm"></span>
+                      <span>로그아웃 중...</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogOut className="w-4 h-4" />
+                      <span>로그아웃</span>
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </main>
+
+      <Footer />
     </div>
   );
 };

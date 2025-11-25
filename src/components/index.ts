@@ -10,6 +10,7 @@ export { default as Button } from './Button';
 export { default as ErrorAlert } from './ErrorAlert';
 export { default as LoadingSpinner } from './LoadingSpinner';
 export { default as FallbackImage } from './FallbackImage';
+export { default as QuantitySelector } from './QuantitySelector';
 
 // Product Components
 export { default as ProductCard } from './ProductCard';
@@ -26,6 +27,9 @@ export { default as AddToCartModal } from './AddToCartModal';
 export { default as OrderCard } from './OrderCard';
 export { OrderStatusBadge, PaymentStatusBadge } from './OrderStatusBadge';
 
+// Cart Components
+export { default as CartItem } from './CartItem';
+
 // Store Components
 export { default as StoreCard } from './StoreCard';
 export { default as StoresLoadingSkeleton } from './StoresLoadingSkeleton';
@@ -40,3 +44,6 @@ export { default as ProductCarousel } from './ProductCarousel';
 
 // Address Components
 export { default as AddressFormModal } from './AddressFormModal';
+
+// Image Components
+export { default as ImageUploadWithOptimization } from './ImageUploadWithOptimization';

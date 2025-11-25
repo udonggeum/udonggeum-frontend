@@ -157,13 +157,15 @@ export default function LoginPage() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="card bg-base-100 shadow-xl">
+      <div className="card shadow-xl bg-[var(--color-secondary)]">
         <div className="card-body">
           {/* Header with icon */}
           <div className="flex flex-col items-center mb-6">
-            <LogIn className="w-12 h-12 text-primary mb-3" aria-hidden="true" />
-            <h1 className="text-2xl font-bold">로그인</h1>
-            <p className="text-sm text-base-content/70 mt-1">
+            <LogIn className="w-12 h-12 mb-3 text-[var(--color-gold)]" aria-hidden="true" />
+            <h1 className="text-2xl font-bold text-[var(--color-text)]">
+              로그인
+            </h1>
+            <p className="text-sm mt-1 text-[var(--color-text)] opacity-70">
               우동금 서비스에 로그인하세요
             </p>
           </div>
@@ -180,7 +182,9 @@ export default function LoginPage() {
             {/* Email Input */}
             <div className="form-control w-full mb-4">
               <label htmlFor="email" className="label">
-                <span className="label-text">이메일</span>
+                <span className="label-text text-[var(--color-text)]">
+                  이메일
+                </span>
               </label>
               <input
                 id="email"
@@ -191,13 +195,15 @@ export default function LoginPage() {
                 onBlur={handleBlur}
                 placeholder="example@email.com"
                 required
-                className={`input input-bordered w-full ${
-                  touched.email && formErrors.email ? 'input-error' : ''
+                className={`input input-bordered w-full bg-[var(--color-primary)] text-[var(--color-text)] placeholder:text-[var(--color-text)]/40 focus:border-[var(--color-gold)] focus:outline-none [&:-webkit-autofill]:bg-[var(--color-primary)] [&:-webkit-autofill]:text-[var(--color-text)] [&:-webkit-autofill]:shadow-[0_0_0px_1000px_var(--color-primary)_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:var(--color-text)] ${
+                  touched.email && formErrors.email
+                    ? 'border-red-400'
+                    : 'border-[var(--color-text)]/20'
                 }`}
               />
               {touched.email && formErrors.email && (
                 <label className="label">
-                  <span className="label-text-alt text-error">
+                  <span className="label-text-alt text-red-400">
                     {formErrors.email}
                   </span>
                 </label>
@@ -221,7 +227,7 @@ export default function LoginPage() {
 
             {/* Forgot Password Link */}
             <div className="text-right mb-6">
-              <Link to="/forgot-password" className="link link-primary text-sm">
+              <Link to="/forgot-password" className="link text-sm text-[var(--color-gold)] hover:opacity-80">
                 비밀번호를 잊으셨나요?
               </Link>
             </div>
@@ -230,15 +236,15 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isPending}
-              className="btn btn-primary w-full mb-4"
+              className="btn w-full mb-4 bg-[var(--color-gold)] text-[var(--color-primary)] border-none hover:opacity-80"
             >
               {isPending ? '로그인 중...' : '로그인'}
             </button>
 
             {/* Register Link */}
             <div className="text-center text-sm">
-              <span className="text-base-content/70">계정이 없으신가요? </span>
-              <Link to="/register" className="link link-primary">
+              <span className="text-[var(--color-text)] opacity-70">계정이 없으신가요? </span>
+              <Link to="/register" className="link text-[var(--color-gold)] hover:opacity-80">
                 회원가입
               </Link>
             </div>

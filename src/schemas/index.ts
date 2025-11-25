@@ -23,3 +23,6 @@ export * from './seller';
 
 // Payment schemas
 export * from './payment';
+
+// Image schemas
+export * from './image';

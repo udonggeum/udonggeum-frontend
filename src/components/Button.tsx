@@ -4,10 +4,10 @@ import React from 'react';
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /**
    * Button style variant
-   * Uses daisyUI color system: primary (default), secondary, ghost, outline, accent
+   * Uses daisyUI color system: primary (default), secondary, ghost, outline, accent, circle, link, error, danger
    * @default 'primary'
    */
-  variant?: 'primary' | 'secondary' | 'ghost' | 'outline' | 'accent';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'outline' | 'accent' | 'circle' | 'link' | 'error' | 'danger';
 
   /**
    * Button size
@@ -53,13 +53,17 @@ export default function Button({
   children,
   ...props
 }: ButtonProps) {
-  // Map variant prop to daisyUI classes
+  // Map variant prop to custom gold theme classes
   const variantClasses: Record<string, string> = {
-    primary: 'btn-primary',      // Theme-aware primary color
-    secondary: 'btn-secondary',  // Theme-aware secondary color
-    ghost: 'btn-ghost',          // Transparent with hover effect
-    outline: 'btn-outline',      // Bordered style
-    accent: 'btn-accent',        // Theme-aware accent color
+    primary: 'bg-[var(--color-gold)] hover:bg-[var(--color-gold)]/80 text-[var(--color-primary)] border-[var(--color-gold)]',
+    secondary: 'bg-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/80 text-[var(--color-text)] border-[var(--color-text)]/20',
+    ghost: 'btn-ghost text-[var(--color-text)]',
+    outline: 'border-[var(--color-gold)] text-[var(--color-gold)] hover:bg-[var(--color-gold)] hover:text-[var(--color-primary)]',
+    accent: 'bg-[var(--color-gold)] hover:bg-[var(--color-gold)]/80 text-[var(--color-primary)] border-[var(--color-gold)]',
+    circle: 'btn-ghost btn-circle text-[var(--color-text)]',
+    link: 'btn-link text-[var(--color-text)]/70',
+    error: 'btn-error btn-outline',
+    danger: 'btn-ghost text-[var(--color-gold)]',
   };
 
   // Build className string with daisyUI classes

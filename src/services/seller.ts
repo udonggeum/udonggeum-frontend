@@ -6,6 +6,7 @@
 import { apiClient } from '@/api/client';
 import { ENDPOINTS } from '@/constants/api';
 import { ValidationError } from '@/utils/errors';
+import { ZodError } from 'zod';
 import {
   DashboardStatsSchema,
   CreateStoreRequestSchema,
@@ -36,13 +37,13 @@ class SellerService {
    */
   async getDashboardStats(): Promise<DashboardStats> {
     try {
-      const response = await apiClient.get<DashboardStats>(
+      const response = await apiClient.get<{ dashboard: DashboardStats }>(
         ENDPOINTS.SELLER.DASHBOARD
       );
-      const validatedData = DashboardStatsSchema.parse(response.data);
+      const validatedData = DashboardStatsSchema.parse(response.data.dashboard);
       return validatedData;
     } catch (error) {
-      if (error instanceof Error && error.name === 'ZodError') {
+      if (error instanceof ZodError) {
         throw ValidationError.fromZod(error);
       }
       throw error;
@@ -74,7 +75,7 @@ class SellerService {
 
       return response.data.store;
     } catch (error) {
-      if (error instanceof Error && error.name === 'ZodError') {
+      if (error instanceof ZodError) {
         throw ValidationError.fromZod(error);
       }
       throw error;
@@ -96,7 +97,7 @@ class SellerService {
 
       return response.data.store;
     } catch (error) {
-      if (error instanceof Error && error.name === 'ZodError') {
+      if (error instanceof ZodError) {
         throw ValidationError.fromZod(error);
       }
       throw error;
@@ -115,7 +116,7 @@ class SellerService {
       const validatedData = SellerMessageResponseSchema.parse(response.data);
       return validatedData;
     } catch (error) {
-      if (error instanceof Error && error.name === 'ZodError') {
+      if (error instanceof ZodError) {
         throw ValidationError.fromZod(error);
       }
       throw error;
@@ -147,7 +148,7 @@ class SellerService {
 
       return response.data.product;
     } catch (error) {
-      if (error instanceof Error && error.name === 'ZodError') {
+      if (error instanceof ZodError) {
         throw ValidationError.fromZod(error);
       }
       throw error;
@@ -172,7 +173,7 @@ class SellerService {
 
       return response.data.product;
     } catch (error) {
-      if (error instanceof Error && error.name === 'ZodError') {
+      if (error instanceof ZodError) {
         throw ValidationError.fromZod(error);
       }
       throw error;
@@ -191,7 +192,7 @@ class SellerService {
       const validatedData = SellerMessageResponseSchema.parse(response.data);
       return validatedData;
     } catch (error) {
-      if (error instanceof Error && error.name === 'ZodError') {
+      if (error instanceof ZodError) {
         throw ValidationError.fromZod(error);
       }
       throw error;
@@ -199,11 +200,11 @@ class SellerService {
   }
 
   /**
-   * Get seller's orders
+   * Get store's orders
    */
-  async getOrders(): Promise<Order[]> {
-    const response = await apiClient.get<{ orders: Order[] }>(
-      ENDPOINTS.SELLER.ORDERS.LIST
+  async getStoreOrders(storeId: number): Promise<Order[]> {
+    const response = await apiClient.get<{ orders: Order[]; count: number }>(
+      ENDPOINTS.SELLER.STORES.ORDERS(storeId)
     );
     return response.data.orders;
   }
@@ -219,14 +220,14 @@ class SellerService {
       // Validate input
       const validatedData = UpdateOrderStatusRequestSchema.parse(data);
 
-      const response = await apiClient.patch<{ order: Order; message: string }>(
+      const response = await apiClient.put<{ order: Order; message: string }>(
         ENDPOINTS.SELLER.ORDERS.UPDATE_STATUS(orderId),
         validatedData
       );
 
       return response.data.order;
     } catch (error) {
-      if (error instanceof Error && error.name === 'ZodError') {
+      if (error instanceof ZodError) {
         throw ValidationError.fromZod(error);
       }
       throw error;

@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
  */
 export default function Footer() {
   return (
-    <footer className="bg-base-200 text-base-content">
+    <footer className="bg-[var(--color-secondary)] text-[var(--color-text)]">
       {/* Main Footer Content */}
       <div className="container mx-auto p-10">
         <div className="flex flex-wrap items-center justify-center gap-8">
@@ -108,7 +108,7 @@ export default function Footer() {
       </div>
 
       {/* Copyright Section */}
-      <div className="footer footer-center p-4 bg-base-300 text-base-content border-t border-base-300">
+      <div className="footer footer-center p-4 bg-base-300 text-[var(--color-text)] border-t border-base-300">
         <aside>
           <p className="text-sm">
             Copyright © 2025 우리동네금은방. All rights reserved.

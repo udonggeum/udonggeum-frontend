@@ -14,6 +14,10 @@ export const StoreSchema = z.object({
   district: z.string().optional(),
   address: z.string().optional().nullable(),
   phone_number: z.string().optional().nullable(),
+  image_url: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  open_time: z.string().optional().nullable(),
+  close_time: z.string().optional().nullable(),
 });
 
 export type Store = z.infer<typeof StoreSchema>;
@@ -50,7 +54,7 @@ export const ProductSchema = z.object({
   description: z.string().optional(),
   weight: z.number().nonnegative().optional(),
   purity: z.string().optional(),
-  image_url: z.string().url().optional(),
+  image_url: z.string().regex(/^(https?:\/\/.+|\/uploads\/.+)$/).optional().or(z.literal('')).optional(),
   store_id: z.number().int().positive().optional(),
   store: StoreSchema.optional(),
   options: z.array(ProductOptionSchema).optional(),
@@ -105,3 +109,15 @@ export const ProductsRequestSchema = z.object({
 });
 
 export type ProductsRequest = z.infer<typeof ProductsRequestSchema>;
+
+/**
+ * Product filters response schema
+ * Response from GET /products/filters endpoint
+ * Returns available categories and materials from backend
+ */
+export const ProductFiltersResponseSchema = z.object({
+  categories: z.array(z.string().min(1)),
+  materials: z.array(z.string().min(1)),
+});
+
+export type ProductFiltersResponse = z.infer<typeof ProductFiltersResponseSchema>;

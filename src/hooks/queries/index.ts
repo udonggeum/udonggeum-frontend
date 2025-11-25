@@ -80,7 +80,13 @@ export {
   useCreateProduct,
   useUpdateProduct,
   useDeleteProduct,
-  useSellerOrders,
+  useStoreOrders,
   useUpdateOrderStatus,
   sellerKeys,
 } from './useSellerQueries';
+
+// Image hooks
+export {
+  useUploadImage,
+  useOptimizeImage,
+} from './useImageQueries';

@@ -3,15 +3,20 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Navbar,
   Footer,
+  Button,
   ProductCard,
   ProductsLoadingSkeleton,
   ProductsError,
   CategorySidebar,
   PaginationControls,
-  FallbackImage,
   AddToCartModal,
 } from '@/components';
-import { useProducts, usePopularProducts } from '@/hooks/queries/useProductsQueries';
+import {
+  LoginRequiredModal,
+  CartSuccessModal,
+  PopularProductsCarousel,
+} from '@/components/product';
+import { useProducts, usePopularProducts, useProductFilters } from '@/hooks/queries/useProductsQueries';
 import { useStoreLocations } from '@/hooks/queries/useStoresQueries';
 import { useAddToCart } from '@/hooks/queries/useCartQueries';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -20,6 +25,7 @@ import {
   transformProductsFromAPI,
   uiCategoryToAPICategory,
 } from '@/utils/apiAdapters';
+import { adaptFiltersToCategories, getMaterialLabel } from '@/utils/filterAdapters';
 import { MOCK_CATEGORIES } from '@/constants/mockData';
 import { NAV_ITEMS } from '@/constants/navigation';
 import type { Product } from '@/types';
@@ -47,17 +53,34 @@ export default function ProductsPage() {
 
   const [selectedSort, setSelectedSort] = useState<(typeof SORT_OPTIONS)[number]['value']>('latest');
   const [currentPage, setCurrentPage] = useState(1);
-  const [currentSlide, setCurrentSlide] = useState(0);
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
   const [selectedProductForCart, setSelectedProductForCart] = useState<APIProduct | null>(null);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isCartSuccessModalOpen, setIsCartSuccessModalOpen] = useState(false);
 
   const { data: locationsData } = useStoreLocations();
+  const { data: filtersData } = useProductFilters();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { mutate: addToCart, isPending: isAddingToCart } = useAddToCart();
 
   const regionOptions: RegionOption[] = useMemo(
     () => getRegionOptions(locationsData),
     [locationsData]
+  );
+
+  // Use dynamic categories from backend, fallback to MOCK_CATEGORIES
+  const categories = useMemo(
+    () => (filtersData ? adaptFiltersToCategories(filtersData) : MOCK_CATEGORIES),
+    [filtersData]
+  );
+
+  // Get materials from backend filters
+  const materials = useMemo(
+    () => filtersData?.materials.map((mat: string) => ({
+      id: mat,
+      name: getMaterialLabel(mat),
+    })) || [],
+    [filtersData]
   );
 
   const resolvedRegionIdFromParams = useMemo(
@@ -74,6 +97,7 @@ export default function ProductsPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     resolvedCategoryIdFromParams
   );
+  const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(null);
 
   const lastRegionParamRef = useRef(resolvedRegionIdFromParams);
   const lastCategoryParamRef = useRef(resolvedCategoryIdFromParams);
@@ -104,6 +128,7 @@ export default function ProductsPage() {
     page: currentPage,
     page_size: PAGE_SIZE,
     category: uiCategoryToAPICategory(selectedCategoryId),
+    material: selectedMaterialId || undefined,
     sort: selectedSort,
     region: selectedRegion?.region,
     district: selectedRegion?.district,
@@ -152,14 +177,14 @@ export default function ProductsPage() {
   }, [selectedRegionId, selectedCategoryId, selectedSort]);
 
   const handleWishlist = (productId: string) => {
-    console.log('Wishlist toggle requested for product', productId);
+    // Wishlist feature to be implemented
+    void productId;
   };
 
   const handleAddToCart = (productId: string) => {
     // Check if user is authenticated
     if (!isAuthenticated) {
-      alert('로그인이 필요한 서비스입니다.');
-      void navigate('/login');
+      setIsLoginModalOpen(true);
       return;
     }
 
@@ -168,7 +193,7 @@ export default function ProductsPage() {
     const apiProduct = allApiProducts.find((p) => p.id.toString() === productId);
 
     if (!apiProduct) {
-      console.error('Product not found:', productId);
+      // Product not found - skip silently or show error UI
       return;
     }
 
@@ -192,15 +217,12 @@ export default function ProductsPage() {
         onSuccess: () => {
           setIsCartModalOpen(false);
           setSelectedProductForCart(null);
-          alert('장바구니에 추가되었습니다.');
+          setIsCartSuccessModalOpen(true);
         },
-        onError: (error) => {
-          console.error('Failed to add to cart:', error);
-          alert(
-            error instanceof Error
-              ? error.message
-              : '장바구니 추가에 실패했습니다.'
-          );
+        onError: () => {
+          // Error handled by TanStack Query
+          setIsCartModalOpen(false);
+          setSelectedProductForCart(null);
         },
       }
     );
@@ -208,165 +230,12 @@ export default function ProductsPage() {
 
   const isEmpty = !isLoading && !isFetching && products.length === 0;
 
-  // Auto-slide carousel for popular products
-  useEffect(() => {
-    if (popularProducts.length <= 1) return;
-
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % popularProducts.length);
-    }, 5000); // 5초마다 자동 슬라이드
-
-    return () => clearInterval(interval);
-  }, [popularProducts.length]);
-
-  // Handle manual slide change (indicator click)
-  const handleSlideClick = (index: number) => {
-    setCurrentSlide(index);
-  };
-
-  // Handle previous/next slide
-  const handlePrevSlide = () => {
-    setCurrentSlide((prev) =>
-      prev === 0 ? popularProducts.length - 1 : prev - 1
-    );
-  };
-
-  const handleNextSlide = () => {
-    setCurrentSlide((prev) =>
-      (prev + 1) % popularProducts.length
-    );
-  };
-
   return (
-    <div className="flex min-h-screen flex-col bg-base-100">
+    <div className="flex min-h-screen flex-col">
       <Navbar navigationItems={NAV_ITEMS} />
       <main className="flex-grow">
-        {/* Popular Products Section - Banner Style */}
-        {popularProducts.length > 0 && (
-          <section className="bg-gradient-to-b from-base-200 to-base-100 py-8">
-            {isLoadingPopular ? (
-              <div className="container mx-auto px-4">
-                <div className="skeleton h-96 w-full rounded-3xl"></div>
-              </div>
-            ) : (
-              <div className="container mx-auto px-4">
-                <div className="group relative h-96 w-full overflow-hidden rounded-3xl bg-base-100 shadow-2xl">
-                  <div
-                    className="flex h-full transition-transform duration-500 ease-in-out"
-                    style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-                  >
-                    {popularProducts.map((product) => (
-                      <div
-                        key={product.id}
-                        className="h-full w-full flex-shrink-0"
-                      >
-                        <div className="card card-side h-96 w-full bg-base-100">
-                          <figure className="w-1/2">
-                            <FallbackImage
-                              src={product.imageUrl}
-                              alt={product.name}
-                              className="h-full w-full object-cover"
-                            />
-                          </figure>
-                          <div className="card-body w-1/2 justify-center p-10">
-                            <div className="space-y-4">
-                              <div className="badge badge-primary">인기</div>
-                              <h3 className="text-3xl font-bold line-clamp-2">{product.name}</h3>
-                              <p className="text-base text-base-content/70">
-                                {product.storeName && `${product.storeName} · `}
-                                {MOCK_CATEGORIES.find((c) => c.id === product.categoryId)?.name}
-                              </p>
-                              <p className="text-4xl font-bold text-primary">
-                                {product.price.toLocaleString()}원
-                              </p>
-                              <div className="flex gap-3 pt-4">
-                                <button
-                                  type="button"
-                                  className="btn btn-outline flex-1"
-                                  onClick={() => handleWishlist(product.id)}
-                                >
-                                  찜하기
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn btn-primary flex-1"
-                                  onClick={() => handleAddToCart(product.id)}
-                                >
-                                  장바구니
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Navigation Arrows - Subtle appearance */}
-                  {popularProducts.length > 1 && (
-                    <>
-                      {/* Previous Button */}
-                      <button
-                        type="button"
-                        onClick={handlePrevSlide}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-base-100/60 p-2 opacity-0 shadow-lg backdrop-blur-sm transition-opacity hover:bg-base-100/80 group-hover:opacity-100"
-                        aria-label="이전 상품"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={2.5}
-                          stroke="currentColor"
-                          className="h-5 w-5"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                        </svg>
-                      </button>
-
-                      {/* Next Button */}
-                      <button
-                        type="button"
-                        onClick={handleNextSlide}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-base-100/60 p-2 opacity-0 shadow-lg backdrop-blur-sm transition-opacity hover:bg-base-100/80 group-hover:opacity-100"
-                        aria-label="다음 상품"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={2.5}
-                          stroke="currentColor"
-                          className="h-5 w-5"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                        </svg>
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-            {/* Carousel Indicators */}
-            {popularProducts.length > 1 && (
-              <div className="container mx-auto px-4">
-                <div className="flex justify-center gap-2 py-6">
-                  {popularProducts.map((product, index) => (
-                    <button
-                      key={product.id}
-                      type="button"
-                      onClick={() => handleSlideClick(index)}
-                      className={`h-2 rounded-full transition-all ${
-                        currentSlide === index ? 'w-8 bg-primary' : 'w-2 bg-base-content/30'
-                      }`}
-                      aria-label={`슬라이드 ${index + 1}로 이동`}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </section>
-        )}
+        {/* Popular Products Section */}
+        <PopularProductsCarousel products={popularProducts} isLoading={isLoadingPopular} />
 
         <section className="container mx-auto px-4 py-8">
 
@@ -376,7 +245,7 @@ export default function ProductsPage() {
             <div className="w-full lg:w-56">
               <CategorySidebar
                 regions={regionOptions}
-                categories={MOCK_CATEGORIES}
+                categories={categories}
                 selectedRegionId={selectedRegionId}
                 selectedCategoryId={selectedCategoryId}
                 onRegionChange={(regionId) => setSelectedRegionId(regionId)}
@@ -390,17 +259,17 @@ export default function ProductsPage() {
               {/* Header with sorting */}
               <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="text-xl font-bold">
+                  <h2 className="text-xl font-bold text-[var(--color-text)]">
                     {selectedCategoryId
-                      ? MOCK_CATEGORIES.find((category) => category.id === selectedCategoryId)?.name ?? '전체 상품'
+                      ? categories.find((category) => category.id === selectedCategoryId)?.name ?? '전체 상품'
                       : '전체 상품'}
                   </h2>
-                  <p className="text-sm text-base-content/70">
+                  <p className="text-sm text-[var(--color-text)]/70">
                     총 {products.length}개의 상품
                   </p>
                 </div>
                 <div className="dropdown dropdown-end">
-                  <label tabIndex={0} className="btn btn-sm btn-outline gap-1">
+                  <label tabIndex={0} className="btn btn-sm bg-[var(--color-secondary)] border-[var(--color-text)]/30 text-[var(--color-text)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold)] gap-1">
                     {SORT_OPTIONS.find((opt) => opt.value === selectedSort)?.label ?? '정렬'}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -415,13 +284,13 @@ export default function ProductsPage() {
                   </label>
                   <ul
                     tabIndex={0}
-                    className="menu dropdown-content z-[1] mt-2 w-40 rounded-box bg-base-100 p-2 shadow-lg"
+                    className="menu dropdown-content z-[1] mt-2 w-40 rounded-box bg-[var(--color-primary)] p-2 shadow-lg"
                   >
                     {SORT_OPTIONS.map((option) => (
                       <li key={option.id}>
                         <button
                           type="button"
-                          className={selectedSort === option.value ? 'active' : ''}
+                          className={selectedSort === option.value ? 'bg-[var(--color-gold)] text-[var(--color-primary)]' : 'text-[var(--color-text)]'}
                           onClick={() => setSelectedSort(option.value)}
                         >
                           {option.label}
@@ -431,6 +300,28 @@ export default function ProductsPage() {
                   </ul>
                 </div>
               </div>
+
+              {/* Material Filter Chips - Show only when category is selected */}
+              {selectedCategoryId && materials.length > 0 && (
+                <div className="mb-4 flex flex-wrap gap-2">
+                  <span className="text-sm font-medium text-[var(--color-text)]/70">재질:</span>
+                  <button
+                    onClick={() => setSelectedMaterialId(null)}
+                    className={`btn btn-xs ${!selectedMaterialId ? 'btn-primary bg-[var(--color-gold)] border-[var(--color-gold)] text-[var(--color-primary)]' : 'bg-[var(--color-secondary)] border-[var(--color-text)]/30 text-[var(--color-text)]'}`}
+                  >
+                    전체
+                  </button>
+                  {materials.map((material) => (
+                    <button
+                      key={material.id}
+                      onClick={() => setSelectedMaterialId(material.id)}
+                      className={`btn btn-xs ${selectedMaterialId === material.id ? 'btn-primary bg-[var(--color-gold)] border-[var(--color-gold)] text-[var(--color-primary)]' : 'bg-[var(--color-secondary)] border-[var(--color-text)]/30 text-[var(--color-text)]'}`}
+                    >
+                      {material.name}
+                    </button>
+                  ))}
+                </div>
+              )}
 
           {isLoading ? (
             <ProductsLoadingSkeleton count={PAGE_SIZE} />
@@ -442,14 +333,13 @@ export default function ProductsPage() {
               }}
             />
           ) : isEmpty ? (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-xl bg-base-200 py-20 text-center">
-              <h2 className="text-xl font-semibold">조건에 맞는 상품이 없습니다</h2>
-              <p className="text-base-content/70">
+            <div className="flex flex-col items-center justify-center gap-4 rounded-xl bg-[var(--color-secondary)] py-20 text-center">
+              <h2 className="text-xl font-semibold text-[var(--color-text)]">조건에 맞는 상품이 없습니다</h2>
+              <p className="text-[var(--color-text)]/70">
                 다른 지역이나 카테고리를 선택하여 다시 검색해보세요.
               </p>
-              <button
-                type="button"
-                className="btn btn-primary"
+              <Button
+                variant="primary"
                 onClick={() => {
                   setSelectedRegionId(null);
                   setSelectedCategoryId(null);
@@ -457,7 +347,7 @@ export default function ProductsPage() {
                 }}
               >
                 필터 초기화
-              </button>
+              </Button>
             </div>
           ) : (
             <>
@@ -496,6 +386,26 @@ export default function ProductsPage() {
         product={selectedProductForCart}
         onConfirm={handleCartConfirm}
         isPending={isAddingToCart}
+      />
+
+      {/* Login Required Modal */}
+      <LoginRequiredModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onLogin={() => {
+          setIsLoginModalOpen(false);
+          void navigate('/login');
+        }}
+      />
+
+      {/* Cart Success Modal */}
+      <CartSuccessModal
+        isOpen={isCartSuccessModalOpen}
+        onClose={() => setIsCartSuccessModalOpen(false)}
+        onGoToCart={() => {
+          setIsCartSuccessModalOpen(false);
+          void navigate('/cart');
+        }}
       />
     </div>
   );

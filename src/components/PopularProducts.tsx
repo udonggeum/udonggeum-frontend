@@ -7,8 +7,6 @@ import type { ProductCategory } from '../types';
 
 interface PopularProductsProps {
   categories: ProductCategory[];
-  onWishlist?: (productId: string) => void;
-  onAddToCart?: (productId: string) => void;
 }
 
 /**
@@ -19,8 +17,6 @@ interface PopularProductsProps {
  */
 export default function PopularProducts({
   categories,
-  onWishlist,
-  onAddToCart,
 }: PopularProductsProps) {
   // Filter to show only the 3 main categories for tabs: 반지, 목걸이, 팔찌
   const featuredCategoryIds = ['rings', 'necklaces', 'bracelets'];
@@ -51,12 +47,12 @@ export default function PopularProducts({
     .slice(0, 4);
 
   return (
-    <section className="bg-base-200 py-12" aria-label="인기 상품">
+    <section className="bg-[var(--color-secondary)] py-12" aria-label="인기 상품">
       <div className="container mx-auto px-4">
         {/* Section Title */}
         <div className="text-center mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold mb-2">인기 상품</h2>
-          <p className="text-base-content/70">
+          <h2 className="text-3xl md:text-4xl font-bold mb-2 text-[var(--color-gold)]">인기 상품</h2>
+          <p className="text-[var(--color-text)]/70">
             카테고리별 인기 상품을 만나보세요
           </p>
         </div>
@@ -65,7 +61,7 @@ export default function PopularProducts({
         <div className="flex justify-center mb-8">
           <div
             role="tablist"
-            className="tabs tabs-boxed bg-base-100 p-1"
+            className="tabs tabs-boxed bg-[var(--color-primary)] p-1"
           >
             {featuredCategories.map((category) => (
               <button
@@ -74,7 +70,9 @@ export default function PopularProducts({
                 type="button"
                 onClick={() => setActiveCategory(category.id)}
                 className={`tab tab-lg ${
-                  activeCategory === category.id ? 'tab-active' : ''
+                  activeCategory === category.id
+                    ? 'bg-[var(--color-gold)] text-[var(--color-primary)] font-semibold'
+                    : 'text-[var(--color-text)] hover:text-[var(--color-gold)]'
                 }`}
                 aria-selected={activeCategory === category.id}
                 aria-controls={`panel-${category.id}`}
@@ -91,7 +89,7 @@ export default function PopularProducts({
         ) : error ? (
           <div className="text-center py-12">
             <p className="text-error mb-2">인기 상품을 불러올 수 없습니다.</p>
-            <p className="text-base-content/50 text-sm">
+            <p className="text-[var(--color-text)]/50 text-sm">
               {error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'}
             </p>
           </div>
@@ -105,14 +103,13 @@ export default function PopularProducts({
               <ProductCard
                 key={product.id}
                 product={product}
-                onWishlist={onWishlist}
-                onAddToCart={onAddToCart}
+                hideActions={true}
               />
             ))}
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-base-content/50">
+            <p className="text-[var(--color-text)]/50">
               이 카테고리에 인기 상품이 없습니다.
             </p>
           </div>
@@ -123,7 +120,7 @@ export default function PopularProducts({
           <div className="text-center mt-8">
             <a
               href={`/products?category=${activeCategory}`}
-              className="btn btn-outline btn-primary"
+              className="btn border-[var(--color-gold)] text-[var(--color-gold)] hover:bg-[var(--color-gold)] hover:text-[var(--color-primary)]"
             >
               {featuredCategories.find((c) => c.id === activeCategory)?.name} 전체
               보기

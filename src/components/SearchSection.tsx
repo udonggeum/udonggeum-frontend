@@ -32,12 +32,12 @@ export default function SearchSection({
   const selectedCategory = categories.find((c) => c.id === selectedCategoryId);
 
   return (
-    <section className="bg-base-200 py-8" aria-label="상품 검색 필터">
+    <section className="bg-[var(--color-secondary)] py-8" aria-label="상품 검색 필터">
       <div className="container mx-auto px-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-center">
           {/* Region Dropdown */}
           <div className="dropdown">
-            <div tabIndex={0} role="button" className="btn btn-outline w-full md:w-48">
+            <div tabIndex={0} role="button" className="btn border-[var(--color-text)]/30 text-[var(--color-text)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold)] w-full md:w-48">
               {selectedRegion ? selectedRegion.name : '지역 선택'}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -56,13 +56,13 @@ export default function SearchSection({
             </div>
             <ul
               tabIndex={0}
-              className="dropdown-content menu bg-base-100 rounded-box z-[1] w-full md:w-48 p-2 shadow"
+              className="dropdown-content menu bg-[var(--color-primary)] rounded-box z-[1] w-full md:w-48 p-2 shadow"
             >
               <li>
                 <button
                   type="button"
                   onClick={() => setSelectedRegionId(null)}
-                  className={selectedRegionId === null ? 'active' : ''}
+                  className={selectedRegionId === null ? 'bg-[var(--color-gold)] text-[var(--color-primary)]' : 'text-[var(--color-text)]'}
                 >
                   전체 지역
                 </button>
@@ -74,7 +74,7 @@ export default function SearchSection({
                     <button
                       type="button"
                       onClick={() => setSelectedRegionId(region.id)}
-                      className={selectedRegionId === region.id ? 'active' : ''}
+                      className={selectedRegionId === region.id ? 'bg-[var(--color-gold)] text-[var(--color-primary)]' : 'text-[var(--color-text)]'}
                     >
                       {region.name}
                     </button>
@@ -85,7 +85,7 @@ export default function SearchSection({
 
           {/* Category Dropdown */}
           <div className="dropdown">
-            <div tabIndex={0} role="button" className="btn btn-outline w-full md:w-48">
+            <div tabIndex={0} role="button" className="btn border-[var(--color-text)]/30 text-[var(--color-text)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold)] w-full md:w-48">
               {selectedCategory ? selectedCategory.name : '상품 카테고리'}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -104,13 +104,13 @@ export default function SearchSection({
             </div>
             <ul
               tabIndex={0}
-              className="dropdown-content menu bg-base-100 rounded-box z-[1] w-full md:w-48 p-2 shadow"
+              className="dropdown-content menu bg-[var(--color-primary)] rounded-box z-[1] w-full md:w-48 p-2 shadow"
             >
               <li>
                 <button
                   type="button"
                   onClick={() => setSelectedCategoryId(null)}
-                  className={selectedCategoryId === null ? 'active' : ''}
+                  className={selectedCategoryId === null ? 'bg-[var(--color-gold)] text-[var(--color-primary)]' : 'text-[var(--color-text)]'}
                 >
                   전체 상품
                 </button>
@@ -122,7 +122,7 @@ export default function SearchSection({
                     <button
                       type="button"
                       onClick={() => setSelectedCategoryId(category.id)}
-                      className={selectedCategoryId === category.id ? 'active' : ''}
+                      className={selectedCategoryId === category.id ? 'bg-[var(--color-gold)] text-[var(--color-primary)]' : 'text-[var(--color-text)]'}
                     >
                       {category.name}
                     </button>
@@ -135,7 +135,7 @@ export default function SearchSection({
           <button
             type="button"
             onClick={handleSearch}
-            className="btn btn-primary w-full md:w-32"
+            className="btn bg-[var(--color-gold)] hover:bg-[var(--color-gold)]/80 text-[var(--color-primary)] border-[var(--color-gold)] w-full md:w-32"
             aria-label="검색"
           >
             검색

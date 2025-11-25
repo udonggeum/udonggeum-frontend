@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Product, ProductOption } from '@/schemas/products';
-import { FallbackImage } from '@/components';
+import { FallbackImage, Button, QuantitySelector } from '@/components';
 
 interface AddToCartModalProps {
   isOpen: boolean;
@@ -70,18 +70,18 @@ export default function AddToCartModal({
         className={`modal ${isOpen ? 'modal-open' : ''}`}
         onClose={onClose}
       >
-        <div className="modal-box max-w-md">
+        <div className="modal-box max-w-md bg-[var(--color-primary)] border border-[var(--color-text)]/10">
           {/* Header */}
           <div className="mb-4 flex items-start justify-between">
             <div>
               <h3 className="text-lg font-bold">{product.name}</h3>
-              <p className="text-sm text-base-content/70">
+              <p className="text-sm text-[var(--color-text)]/70">
                 {product.price.toLocaleString()}원
               </p>
             </div>
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm btn-circle"
+            <Button
+              variant="circle"
+              size="sm"
               onClick={onClose}
               aria-label="닫기"
             >
@@ -99,7 +99,7 @@ export default function AddToCartModal({
                   d="M6 18L18 6M6 6l12 12"
                 />
               </svg>
-            </button>
+            </Button>
           </div>
 
           {/* Product Image */}
@@ -120,7 +120,7 @@ export default function AddToCartModal({
                   <span className="label-text-alt text-error">*필수</span>
                 </label>
                 <select
-                  className="select select-bordered w-full"
+                  className="select select-bordered w-full bg-[var(--color-primary)] border-[var(--color-text)]/20"
                   value={selectedOption ?? ''}
                   onChange={(e) =>
                     setSelectedOption(
@@ -148,77 +148,28 @@ export default function AddToCartModal({
               <label className="label">
                 <span className="label-text font-semibold">수량</span>
               </label>
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  className="btn btn-outline btn-sm"
-                  onClick={() => handleQuantityChange(-1)}
-                  disabled={quantity <= 1}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="h-4 w-4"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M19.5 12h-15"
-                    />
-                  </svg>
-                </button>
-                <input
-                  type="number"
-                  className="input input-bordered w-20 text-center"
-                  value={quantity}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value, 10);
-                    if (!isNaN(value) && value >= 1) {
-                      setQuantity(value);
-                    }
-                  }}
-                  min={1}
-                />
-                <button
-                  type="button"
-                  className="btn btn-outline btn-sm"
-                  onClick={() => handleQuantityChange(1)}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="h-4 w-4"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 4.5v15m7.5-7.5h-15"
-                    />
-                  </svg>
-                </button>
-              </div>
+              <QuantitySelector
+                quantity={quantity}
+                onDecrease={() => handleQuantityChange(-1)}
+                onIncrease={() => handleQuantityChange(1)}
+                onChange={setQuantity}
+              />
             </div>
 
             {/* Total Price */}
-            <div className="rounded-lg bg-base-200 p-4">
+            <div className="rounded-lg bg-[var(--color-secondary)] p-4 border border-[var(--color-text)]/10">
               <div className="flex items-center justify-between">
                 <span className="font-semibold">총 금액</span>
-                <span className="text-xl font-bold text-primary">
+                <span className="text-xl font-bold text-[var(--color-gold)]">
                   {totalPrice.toLocaleString()}원
                 </span>
               </div>
               {selectedOptionData?.additional_price ? (
-                <p className="mt-1 text-xs text-base-content/60">
+                <p className="mt-1 text-xs text-[var(--color-text)]/60">
                   (상품 {product.price.toLocaleString()}원 + 옵션 {selectedOptionData.additional_price.toLocaleString()}원) × {quantity}개
                 </p>
               ) : (
-                <p className="mt-1 text-xs text-base-content/60">
+                <p className="mt-1 text-xs text-[var(--color-text)]/60">
                   {product.price.toLocaleString()}원 × {quantity}개
                 </p>
               )}
@@ -227,17 +178,15 @@ export default function AddToCartModal({
 
           {/* Actions */}
           <div className="modal-action">
-            <button
-              type="button"
-              className="btn btn-ghost"
+            <Button
+              variant="ghost"
               onClick={onClose}
               disabled={isPending}
             >
               취소
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary"
+            </Button>
+            <Button
+              variant="primary"
               onClick={handleConfirm}
               disabled={
                 isPending ||
@@ -253,7 +202,7 @@ export default function AddToCartModal({
               ) : (
                 '장바구니에 추가'
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </dialog>

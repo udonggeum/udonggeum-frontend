@@ -1,0 +1,72 @@
+# Dependencies
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Testing
+coverage
+.nyc_output
+tests
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# Build outputs
+dist
+build
+.vite
+
+# Environment files
+.env.local
+.env.development
+.env.test
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation
+README.md
+CLAUDE.md
+REMAINING_TASKS.md
+docs
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.circleci
+
+# Misc
+.editorconfig
+.prettierrc
+.prettierignore
+.eslintrc*
+eslint.config.js
+.eslintignore
+
+# Playwright
+playwright.config.ts
+playwright-report
+test-results
+
+# Specs
+specs
+.specify
+.claude
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose*.yml

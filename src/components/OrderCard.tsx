@@ -24,9 +24,9 @@ interface Order {
   id: number;
   user_id: number;
   total_amount: number;
-  total_price: number;
-  status: 'pending' | 'confirmed' | 'shipping' | 'delivered' | 'cancelled';
-  payment_status: 'pending' | 'completed' | 'failed' | 'refunded';
+  total_price?: number;
+  status?: 'pending' | 'confirmed' | 'shipping' | 'delivered' | 'cancelled';
+  payment_status?: 'pending' | 'completed' | 'failed' | 'refunded';
   fulfillment_type: 'delivery' | 'pickup';
   shipping_address?: string;
   pickup_store_id?: number;
@@ -86,17 +86,17 @@ export default function OrderCard({ order, onViewDetail }: OrderCardProps) {
     : null;
 
   return (
-    <div className="card bg-base-100 shadow-md hover:shadow-lg transition-shadow">
+    <div className="card bg-[var(--color-primary)] shadow-md hover:shadow-lg transition-shadow">
       <div className="card-body">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div>
             <h3 className="font-bold text-lg">주문번호 #{order.id}</h3>
-            <p className="text-sm text-base-content/60">{orderDate}</p>
+            <p className="text-sm text-[var(--color-text)]/60">{orderDate}</p>
           </div>
           <div className="flex flex-col gap-1 items-end">
-            <OrderStatusBadge status={order.status} />
-            <PaymentStatusBadge status={order.payment_status} />
+            <OrderStatusBadge status={order.status || 'pending'} />
+            <PaymentStatusBadge status={order.payment_status || 'pending'} />
           </div>
         </div>
 
@@ -113,7 +113,7 @@ export default function OrderCard({ order, onViewDetail }: OrderCardProps) {
             <div className="flex-1 min-w-0">
               <p className="font-medium truncate">{firstProduct.name}</p>
               {order.order_items.length > 1 && (
-                <p className="text-sm text-base-content/60">
+                <p className="text-sm text-[var(--color-text)]/60">
                   외 {order.order_items.length - 1}개 상품
                 </p>
               )}
@@ -126,17 +126,17 @@ export default function OrderCard({ order, onViewDetail }: OrderCardProps) {
         {/* Order Info */}
         <div className="space-y-1 text-sm">
           <div className="flex justify-between">
-            <span className="text-base-content/70">총 상품 수</span>
+            <span className="text-[var(--color-text)]/70">총 상품 수</span>
             <span className="font-semibold">{totalItems}개</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-base-content/70">배송 방법</span>
+            <span className="text-[var(--color-text)]/70">배송 방법</span>
             <span className="font-semibold">
               {order.fulfillment_type === 'delivery' ? '배송' : '픽업'}
             </span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-base-content/70">총 결제 금액</span>
+            <span className="text-[var(--color-text)]/70">총 결제 금액</span>
             <span className="font-bold text-lg text-primary">
               ₩{order.total_amount.toLocaleString('ko-KR')}
             </span>
@@ -172,7 +172,7 @@ export default function OrderCard({ order, onViewDetail }: OrderCardProps) {
           <button
             type="button"
             onClick={() => onViewDetail?.(order.id)}
-            className="btn btn-sm btn-primary btn-outline"
+            className="btn btn-sm bg-[var(--color-gold)] hover:bg-[var(--color-gold)]/80 text-[var(--color-primary)] border-[var(--color-gold)] font-semibold"
           >
             상세 보기
           </button>

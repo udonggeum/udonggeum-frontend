@@ -25,6 +25,7 @@ import {
   LoadingSpinner,
   ErrorAlert,
   AddressFormModal,
+  Button,
 } from '@/components';
 import { NAV_ITEMS } from '@/constants/navigation';
 import type { Address } from '@/schemas/address';
@@ -101,7 +102,7 @@ export default function AddressManagementPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-base-100">
+    <div className="flex min-h-screen flex-col">
       <Navbar navigationItems={NAV_ITEMS} />
 
       <main className="flex-grow">
@@ -110,18 +111,16 @@ export default function AddressManagementPage() {
           <div className="mb-8 flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold">배송지 관리</h1>
-              <p className="mt-2 text-base-content/70">
+              <p className="mt-2 text-[var(--color-text)]/70">
                 배송지를 추가하고 관리하세요
               </p>
             </div>
-            <button
-              type="button"
-              onClick={handleAddAddress}
-              className="btn btn-primary gap-2"
+            <Button onClick={handleAddAddress}
+              variant="primary" className="gap-2"
             >
               <Plus size={20} />
               배송지 추가
-            </button>
+            </Button>
           </div>
 
           {/* Loading State */}
@@ -140,34 +139,31 @@ export default function AddressManagementPage() {
                     : '알 수 없는 오류가 발생했습니다.'
                 }
               />
-              <button
-                type="button"
-                onClick={() => {
+              <Button onClick={() => {
                   void refetch();
                 }}
-                className="btn btn-primary mt-6"
+                variant="primary"
+                className="mt-6"
               >
                 다시 시도
-              </button>
+              </Button>
             </div>
           ) : addresses.length === 0 ? (
             /* Empty State */
-            <div className="flex flex-col items-center justify-center rounded-xl bg-base-200 py-20 text-center">
-              <MapPin size={64} className="text-base-content/30 mb-6" />
+            <div className="flex flex-col items-center justify-center rounded-xl bg-[var(--color-secondary)] py-20 text-center">
+              <MapPin size={64} className="text-[var(--color-text)]/30 mb-6" />
               <h2 className="text-xl font-semibold mb-2">
                 등록된 배송지가 없습니다
               </h2>
-              <p className="text-base-content/70 mb-6">
+              <p className="text-[var(--color-text)]/70 mb-6">
                 새로운 배송지를 추가해보세요
               </p>
-              <button
-                type="button"
-                onClick={handleAddAddress}
-                className="btn btn-primary gap-2"
+              <Button onClick={handleAddAddress}
+                variant="primary" className="gap-2"
               >
                 <Plus size={20} />
                 배송지 추가
-              </button>
+              </Button>
             </div>
           ) : (
             /* Address List */
@@ -185,7 +181,7 @@ export default function AddressManagementPage() {
                   )}
 
                   <div
-                    className={`card bg-base-200 shadow-sm ${
+                    className={`card bg-[var(--color-secondary)] shadow-sm ${
                       address.is_default ? 'ring-2 ring-primary' : ''
                     }`}
                   >
@@ -194,7 +190,7 @@ export default function AddressManagementPage() {
                       <h3 className="card-title text-lg">{address.name}</h3>
 
                     {/* Address Details */}
-                    <div className="space-y-1 text-sm text-base-content/70">
+                    <div className="space-y-1 text-sm text-[var(--color-text)]/70">
                       <p>{address.recipient}</p>
                       <p>{address.phone}</p>
                       <div className="mt-2">
@@ -207,31 +203,31 @@ export default function AddressManagementPage() {
                     {/* Actions */}
                     <div className="card-actions justify-end mt-4">
                       {!address.is_default && (
-                        <button
-                          type="button"
-                          onClick={() => handleSetDefaultAddress(address.id)}
-                          className="btn btn-ghost btn-sm gap-1"
+                        <Button onClick={() => handleSetDefaultAddress(address.id)}
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1"
                         >
                           <Star size={16} />
                           기본 배송지로 설정
-                        </button>
+                        </Button>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => handleEditAddress(address)}
-                        className="btn btn-ghost btn-sm gap-1"
+                      <Button onClick={() => handleEditAddress(address)}
+                        variant="ghost"
+                        size="sm"
+                        className="gap-1"
                       >
                         <Edit size={16} />
                         수정
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteAddress(address.id)}
-                        className="btn btn-ghost btn-sm gap-1 text-error hover:bg-error/10"
+                      </Button>
+                      <Button onClick={() => handleDeleteAddress(address.id)}
+                        variant="ghost"
+                        size="sm"
+                        className="gap-1 text-error hover:bg-error/10"
                       >
                         <Trash2 size={16} />
                         삭제
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>

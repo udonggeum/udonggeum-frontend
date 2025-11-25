@@ -36,6 +36,7 @@ export const ENDPOINTS = {
 
   PRODUCTS: {
     LIST: '/api/v1/products',
+    FILTERS: '/api/v1/products/filters',
     POPULAR: '/api/v1/products/popular',
     DETAIL: (id: number) => `/api/v1/products/${id}`,
     CREATE: '/api/v1/products',
@@ -88,20 +89,25 @@ export const ENDPOINTS = {
     DASHBOARD: '/api/v1/seller/dashboard',
     STORES: {
       LIST: '/api/v1/seller/stores',
-      CREATE: '/api/v1/seller/stores',
-      UPDATE: (id: number) => `/api/v1/seller/stores/${id}`,
-      DELETE: (id: number) => `/api/v1/seller/stores/${id}`,
+      CREATE: '/api/v1/stores',
+      UPDATE: (id: number) => `/api/v1/stores/${id}`,
+      DELETE: (id: number) => `/api/v1/stores/${id}`,
+      ORDERS: (storeId: number) => `/api/v1/seller/stores/${storeId}/orders`,
     },
     PRODUCTS: {
-      LIST: (storeId: number) => `/api/v1/seller/stores/${storeId}/products`,
-      CREATE: '/api/v1/seller/products',
-      UPDATE: (id: number) => `/api/v1/seller/products/${id}`,
-      DELETE: (id: number) => `/api/v1/seller/products/${id}`,
+      LIST: (storeId: number) => `/api/v1/products?store_id=${storeId}`,
+      CREATE: '/api/v1/products',
+      UPDATE: (id: number) => `/api/v1/products/${id}`,
+      DELETE: (id: number) => `/api/v1/products/${id}`,
     },
     ORDERS: {
-      LIST: '/api/v1/seller/orders',
       UPDATE_STATUS: (id: number) => `/api/v1/seller/orders/${id}/status`,
     },
+  },
+
+  IMAGES: {
+    PRESIGNED_URL: '/api/v1/upload/presigned-url',
+    OPTIMIZE: '/api/v1/images/optimize',
   },
 } as const;
 

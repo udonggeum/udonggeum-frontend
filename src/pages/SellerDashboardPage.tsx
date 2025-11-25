@@ -10,7 +10,6 @@ import {
   ShoppingBag,
   DollarSign,
   Store,
-  Star,
 } from 'lucide-react';
 import { useDashboardStats } from '@/hooks/queries';
 import { LoadingSpinner, ErrorAlert } from '@/components';
@@ -28,17 +27,21 @@ export default function SellerDashboardPage() {
 
   if (isError) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <ErrorAlert error={error} />
+      <div className="min-h-screen bg-[var(--color-primary)]">
+        <div className="container mx-auto px-4 py-8">
+          <ErrorAlert error={error} message="통계 정보를 불러오는 중 오류가 발생했습니다" />
+        </div>
       </div>
     );
   }
 
   if (!stats) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="alert alert-warning">
-          <span>통계 데이터를 불러올 수 없습니다.</span>
+      <div className="min-h-screen bg-[var(--color-primary)]">
+        <div className="container mx-auto px-4 py-8">
+          <div className="alert alert-warning">
+            <span>통계 데이터를 불러올 수 없습니다.</span>
+          </div>
         </div>
       </div>
     );
@@ -75,39 +78,57 @@ export default function SellerDashboardPage() {
     },
   ];
 
-  // Optional stats
-  const optionalStats = [];
-  if (stats.total_stores !== undefined) {
-    optionalStats.push({
-      title: '가게 수',
-      value: stats.total_stores,
-      icon: Store,
+  // Additional stats from backend
+  const additionalStats = [
+    {
+      title: '확정된 주문',
+      value: stats.confirmed_orders,
+      icon: ShoppingBag,
       color: 'text-indigo-600',
       bgColor: 'bg-indigo-100',
-    });
-  }
-  if (stats.average_rating !== undefined) {
-    optionalStats.push({
-      title: '평균 평점',
-      value: stats.average_rating.toFixed(1),
-      icon: Star,
+    },
+    {
+      title: '배송 중',
+      value: stats.shipping_orders,
+      icon: Package,
       color: 'text-orange-600',
       bgColor: 'bg-orange-100',
-    });
-  }
+    },
+    {
+      title: '배송 완료',
+      value: stats.delivered_orders,
+      icon: ShoppingBag,
+      color: 'text-teal-600',
+      bgColor: 'bg-teal-100',
+    },
+    {
+      title: '취소된 주문',
+      value: stats.cancelled_orders,
+      icon: ShoppingBag,
+      color: 'text-red-600',
+      bgColor: 'bg-red-100',
+    },
+    {
+      title: '재고 부족 상품',
+      value: stats.low_stock_products,
+      icon: Package,
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-100',
+    },
+  ];
 
-  const allStats = [...statCards, ...optionalStats];
+  const allStats = [...statCards, ...additionalStats];
 
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-[var(--color-text)] flex items-center gap-3">
             <BarChart3 className="w-8 h-8" aria-hidden="true" />
             판매자 대시보드
           </h1>
-          <p className="text-base-content/70 mt-2">
+          <p className="text-[var(--color-text)]/70 mt-2">
             판매 현황과 통계를 한눈에 확인하세요
           </p>
         </div>
@@ -118,11 +139,11 @@ export default function SellerDashboardPage() {
         {allStats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <div key={stat.title} className="card bg-base-100 shadow-md">
+            <div key={stat.title} className="card bg-[var(--color-primary)] shadow-md">
               <div className="card-body">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-base-content/70 mb-1">
+                    <p className="text-sm text-[var(--color-text)]/70 mb-1">
                       {stat.title}
                     </p>
                     <p className="text-3xl font-bold">{stat.value}</p>
@@ -138,9 +159,9 @@ export default function SellerDashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="card bg-base-100 shadow-md">
+      <div className="card bg-[var(--color-primary)] shadow-md">
         <div className="card-body">
-          <h2 className="card-title mb-4">빠른 작업</h2>
+          <h2 className="card-title text-[var(--color-text)] mb-4">빠른 작업</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link
               to="/seller/stores"

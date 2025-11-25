@@ -227,13 +227,13 @@ export default function RegisterPage() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="card bg-base-100 shadow-xl">
+      <div className="card bg-[var(--color-primary)] shadow-xl">
         <div className="card-body">
           {/* Header */}
           <div className="flex flex-col items-center mb-6">
             <UserPlus className="w-12 h-12 text-primary mb-3" aria-hidden="true" />
             <h1 className="text-2xl font-bold">회원가입</h1>
-            <p className="text-sm text-base-content/70 mt-1">
+            <p className="text-sm text-[var(--color-text)]/70 mt-1">
               우동금 서비스에 가입하세요
             </p>
           </div>
@@ -275,8 +275,8 @@ export default function RegisterPage() {
                 onBlur={() => handleBlur('email')}
                 placeholder="your@email.com"
                 required
-                className={`input input-bordered w-full ${
-                  touched.email && formErrors.email ? 'input-error' : ''
+                className={`input input-bordered w-full bg-[var(--color-primary)] text-[var(--color-text)] placeholder:text-[var(--color-text)]/40 focus:border-[var(--color-gold)] focus:outline-none [&:-webkit-autofill]:bg-[var(--color-primary)] [&:-webkit-autofill]:text-[var(--color-text)] [&:-webkit-autofill]:shadow-[0_0_0px_1000px_var(--color-primary)_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:var(--color-text)] ${
+                  touched.email && formErrors.email ? 'input-error border-red-400' : 'border-[var(--color-text)]/20'
                 }`}
               />
               {touched.email && formErrors.email && (
@@ -332,8 +332,8 @@ export default function RegisterPage() {
                 onBlur={() => handleBlur('name')}
                 placeholder="홍길동"
                 required
-                className={`input input-bordered w-full ${
-                  touched.name && formErrors.name ? 'input-error' : ''
+                className={`input input-bordered w-full bg-[var(--color-primary)] text-[var(--color-text)] placeholder:text-[var(--color-text)]/40 focus:border-[var(--color-gold)] focus:outline-none [&:-webkit-autofill]:bg-[var(--color-primary)] [&:-webkit-autofill]:text-[var(--color-text)] [&:-webkit-autofill]:shadow-[0_0_0px_1000px_var(--color-primary)_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:var(--color-text)] ${
+                  touched.name && formErrors.name ? 'input-error border-red-400' : 'border-[var(--color-text)]/20'
                 }`}
               />
               {touched.name && formErrors.name && (
@@ -357,8 +357,8 @@ export default function RegisterPage() {
                 onBlur={() => handleBlur('phone')}
                 placeholder="010-1234-5678"
                 required
-                className={`input input-bordered w-full ${
-                  touched.phone && formErrors.phone ? 'input-error' : ''
+                className={`input input-bordered w-full bg-[var(--color-primary)] text-[var(--color-text)] placeholder:text-[var(--color-text)]/40 focus:border-[var(--color-gold)] focus:outline-none [&:-webkit-autofill]:bg-[var(--color-primary)] [&:-webkit-autofill]:text-[var(--color-text)] [&:-webkit-autofill]:shadow-[0_0_0px_1000px_var(--color-primary)_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:var(--color-text)] ${
+                  touched.phone && formErrors.phone ? 'input-error border-red-400' : 'border-[var(--color-text)]/20'
                 }`}
               />
               {touched.phone && formErrors.phone && (
@@ -388,7 +388,7 @@ export default function RegisterPage() {
 
             {/* Login Link */}
             <div className="text-center text-sm">
-              <span className="text-base-content/70">이미 계정이 있으신가요? </span>
+              <span className="text-[var(--color-text)]/70">이미 계정이 있으신가요? </span>
               <Link to="/login" className="link link-primary">
                 로그인
               </Link>
