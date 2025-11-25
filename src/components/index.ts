@@ -7,6 +7,8 @@
 
 // Core UI Components
 export { default as Button } from './Button';
+export { default as Card, CardBody, CardTitle, CardActions } from './Card';
+export { default as Select } from './Select';
 export { default as ErrorAlert } from './ErrorAlert';
 export { default as LoadingSpinner } from './LoadingSpinner';
 export { default as FallbackImage } from './FallbackImage';
