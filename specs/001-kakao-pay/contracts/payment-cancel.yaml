@@ -1,0 +1,120 @@
+openapi: 3.0.3
+info:
+  title: Kakao Pay Payment Cancellation Callback API
+  description: |
+    Handles Kakao Pay cancellation callback when user cancels payment.
+
+    **Flow**:
+    1. User clicks cancel/back button on Kakao Pay page
+    2. Kakao Pay redirects to this endpoint: `?order_id=X`
+    3. Backend logs cancellation
+    4. Backend redirects to frontend cancellation page
+    5. Order remains in 'pending' status (user can retry)
+
+    **Security**: Publicly accessible endpoint (no JWT required)
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://api.udonggeum.com
+    description: Production server
+
+paths:
+  /api/v1/payments/kakao/cancel:
+    get:
+      summary: Handle payment cancellation callback
+      description: |
+        Processes Kakao Pay cancellation redirect and logs user action.
+
+        **Called by**: Kakao Pay redirect (when user cancels)
+
+        **Response**: HTTP 302 redirect to frontend cancellation page
+
+        **Note**: No order state change (remains 'pending' for retry)
+      operationId: handlePaymentCancel
+      tags:
+        - Payment Callbacks
+      parameters:
+        - name: order_id
+          in: query
+          required: true
+          description: Order ID for cancelled payment attempt
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            example: 123
+
+      responses:
+        '200':
+          description: Cancellation callback processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentCancelResponse'
+              examples:
+                success:
+                  summary: Cancellation logged successfully
+                  value:
+                    message: Payment cancelled by user
+
+        '302':
+          description: Redirect to frontend cancellation page
+          headers:
+            Location:
+              description: Frontend cancellation page URL
+              schema:
+                type: string
+                format: uri
+                example: https://udonggeum.com/payment/cancel?order_id=123
+
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                order_not_found:
+                  summary: Order does not exist
+                  value:
+                    error: Order not found
+
+        '500':
+          description: Internal server error (database error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                database_error:
+                  summary: Failed to log cancellation
+                  value:
+                    error: Failed to process payment cancellation
+
+components:
+  schemas:
+    PaymentCancelResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: Cancellation message
+          example: Payment cancelled by user
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Human-readable error message in Korean
+          example: 주문을 찾을 수 없습니다
+
+tags:
+  - name: Payment Callbacks
+    description: Webhook endpoints called by Kakao Pay

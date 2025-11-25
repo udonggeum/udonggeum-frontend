@@ -537,42 +537,45 @@ export default function OrderPage() {
     const payload =
       fulfillmentType === 'delivery'
         ? {
-            items,
-            fulfillment_type: 'delivery' as const,
-            shipping_address: `${shippingForm.recipient} | ${shippingForm.phone} | ${buildShippingAddress(
-              shippingForm.postalCode,
-              shippingForm.address1,
-              shippingForm.address2
-            )}`,
-          }
+          items,
+          fulfillment_type: 'delivery' as const,
+          shipping_address: `${shippingForm.recipient} | ${shippingForm.phone} | ${buildShippingAddress(
+            shippingForm.postalCode,
+            shippingForm.address1,
+            shippingForm.address2
+          )}`,
+        }
         : {
-            items,
-            fulfillment_type: 'pickup' as const,
-            pickup_store_id: inferredPickupStoreId,
-          };
+          items,
+          fulfillment_type: 'pickup' as const,
+          pickup_store_id: inferredPickupStoreId,
+        };
 
-    createOrder(payload, {
-      onSuccess: (response) => {
-        navigate('/cart', {
-          replace: true,
-          state: {
-            orderId: response.order.id,
-            totalDue: itemsSubtotal + (fulfillmentType === 'delivery' ? DELIVERY_FEE : 0),
-          },
-        });
-      },
-      onError: (error) => {
-        setSubmitError(error.message);
-      },
-    });
+    createOrder(
+      payload,
+      {
+        onSuccess: (response) => {
+          // Navigate to payment page to initiate Kakao Pay payment
+          navigate(`/payment/${response.order.id}`, {
+            replace: true,
+          });
+        },
+        onError: (error) => {
+          setSubmitError(error.message);
+        },
+      }
+    );
   };
 
   const hasDeliveryAddress = Boolean(
     shippingForm.recipient &&
-      shippingForm.phone &&
-      shippingForm.postalCode &&
-      shippingForm.address1
+    shippingForm.phone &&
+    shippingForm.postalCode &&
+    shippingForm.address1
   );
+
+  // Calculate total due (subtotal + delivery fee if applicable)
+  const totalDue = itemsSubtotal + (fulfillmentType === 'delivery' ? DELIVERY_FEE : 0);
 
   const isCTAEnabled =
     orderItems.length > 0 &&
@@ -840,11 +843,10 @@ export default function OrderPage() {
             </div>
             <button
               type="button"
-              className={`btn btn-sm min-w-[140px] ${
-                isCTAEnabled
+              className={`btn btn-sm min-w-[140px] ${isCTAEnabled
                   ? 'bg-[var(--color-gold)] hover:bg-[var(--color-gold)]/80 text-[var(--color-primary)] border-[var(--color-gold)]'
                   : 'btn-disabled'
-              }`}
+                }`}
               onClick={handleProceedToPayment}
               disabled={!isCTAEnabled || isSubmittingOrder}
             >

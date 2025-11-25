@@ -1,0 +1,136 @@
+openapi: 3.0.3
+info:
+  title: Kakao Pay Payment Failure Callback API
+  description: |
+    Handles Kakao Pay failure callback when payment fails.
+
+    **Flow**:
+    1. Payment fails on Kakao Pay page (insufficient funds, card declined, etc.)
+    2. Kakao Pay redirects to this endpoint: `?order_id=X&error_msg=Y`
+    3. Backend logs failure details
+    4. Backend redirects to frontend failure page
+    5. Order remains in 'pending' status (user can retry)
+
+    **Security**: Publicly accessible endpoint (no JWT required)
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://api.udonggeum.com
+    description: Production server
+
+paths:
+  /api/v1/payments/kakao/fail:
+    get:
+      summary: Handle payment failure callback
+      description: |
+        Processes Kakao Pay failure redirect and logs error details.
+
+        **Called by**: Kakao Pay redirect (when payment fails)
+
+        **Response**: HTTP 302 redirect to frontend failure page
+      operationId: handlePaymentFail
+      tags:
+        - Payment Callbacks
+      parameters:
+        - name: order_id
+          in: query
+          required: true
+          description: Order ID for failed payment attempt
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            example: 123
+
+        - name: error_msg
+          in: query
+          required: false
+          description: Error message from Kakao Pay (if provided)
+          schema:
+            type: string
+            example: 잔액이 부족합니다
+
+      responses:
+        '200':
+          description: Failure callback processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentFailResponse'
+              examples:
+                with_error_msg:
+                  summary: With error message from Kakao Pay
+                  value:
+                    message: Payment failed
+                    error: 잔액이 부족합니다
+                without_error_msg:
+                  summary: Without specific error message
+                  value:
+                    message: Payment failed
+                    error: 결제에 실패했습니다
+
+        '302':
+          description: Redirect to frontend failure page
+          headers:
+            Location:
+              description: Frontend failure page URL with parameters
+              schema:
+                type: string
+                format: uri
+                example: https://udonggeum.com/payment/fail?order_id=123&error_msg=잔액이%20부족합니다
+
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                order_not_found:
+                  summary: Order does not exist
+                  value:
+                    error: Order not found
+
+        '500':
+          description: Internal server error (database error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                database_error:
+                  summary: Failed to log failure
+                  value:
+                    error: Failed to process payment failure
+
+components:
+  schemas:
+    PaymentFailResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: Failure message
+          example: Payment failed
+        error:
+          type: string
+          description: Detailed error message (from Kakao Pay or generic)
+          example: 잔액이 부족합니다
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Human-readable error message in Korean
+          example: 주문을 찾을 수 없습니다
+
+tags:
+  - name: Payment Callbacks
+    description: Webhook endpoints called by Kakao Pay

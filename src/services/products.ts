@@ -33,17 +33,13 @@ class ProductsService {
    * @returns Popular products response
    */
   async getPopularProducts(params?: ProductsRequest): Promise<ProductsResponse> {
-    // Map page_size to limit for popular endpoint
-    const requestParams = params
-      ? {
-          category: params.category,
-          region: params.region,
-          district: params.district,
-          limit: params.page_size,
-        }
-      : undefined;
+    // Use regular products endpoint with popularity sort
+    const requestParams = {
+      ...params,
+      sort: 'popularity' as const,
+    };
 
-    const response = await apiClient.get(ENDPOINTS.PRODUCTS.POPULAR, {
+    const response = await apiClient.get(ENDPOINTS.PRODUCTS.LIST, {
       params: requestParams,
     });
 
