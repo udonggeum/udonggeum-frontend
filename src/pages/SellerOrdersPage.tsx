@@ -3,17 +3,62 @@
  * Manages seller's orders and allows status updates
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ShoppingBag, Package } from 'lucide-react';
-import { useSellerStores, useStoreOrders, useUpdateOrderStatus } from '@/hooks/queries';
-import { LoadingSpinner, ErrorAlert, OrderStatusBadge, PaymentStatusBadge, Button } from '@/components';
+import { useQueries } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
+import { useSellerStores, useUpdateOrderStatus, sellerKeys } from '@/hooks/queries';
+import { sellerService } from '@/services/seller';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { LoadingSpinner, ErrorAlert, OrderStatusBadge, PaymentStatusBadge, Button, Card, CardBody, Select } from '@/components';
 import type { Order } from '@/schemas';
 import type { UpdateOrderStatusRequest } from '@/schemas/seller';
 
 export default function SellerOrdersPage() {
-  const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>();
+  const [searchParams] = useSearchParams();
+  const statusParam = searchParams.get('status') || 'all';
+
+  const [selectedStoreId, setSelectedStoreId] = useState<number | 'all'>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>(statusParam);
+
+  // Update status when URL parameter changes
+  useEffect(() => {
+    setSelectedStatus(statusParam);
+  }, [statusParam]);
   const { data: stores, isLoading: isLoadingStores } = useSellerStores();
-  const { data: orders, isLoading, isError, error } = useStoreOrders(selectedStoreId);
+  const user = useAuthStore((state) => state.user);
+  const isAdmin = user?.role === 'admin';
+
+  // Fetch orders for all stores to enable "all" filter using useQueries
+  const storeIds = stores?.map((store) => store.id) || [];
+  const orderQueries = useQueries({
+    queries: storeIds.map((storeId) => ({
+      queryKey: [...sellerKeys.orders(), storeId] as const,
+      queryFn: () => sellerService.getStoreOrders(storeId),
+      enabled: isAdmin,
+      staleTime: 1000 * 60, // 1 minute
+    })),
+  });
+
+  // Get orders from selected store or all stores
+  const allOrders = orderQueries.flatMap((query) => query.data || []);
+  const filteredByStore =
+    selectedStoreId === 'all'
+      ? allOrders
+      : allOrders.filter((o) =>
+          o.order_items?.some((item) => item.store_id === selectedStoreId)
+        );
+
+  // Apply status filter
+  const orders =
+    selectedStatus === 'all'
+      ? filteredByStore
+      : filteredByStore.filter((o) => o.status === selectedStatus);
+
+  const isLoading = orderQueries.some((q) => q.isLoading);
+  const isError = orderQueries.some((q) => q.isError);
+  const error = orderQueries.find((q) => q.error)?.error;
+
   const { mutate: updateOrderStatus, isPending: isUpdating } = useUpdateOrderStatus();
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -65,61 +110,98 @@ export default function SellerOrdersPage() {
         <p className="text-[var(--color-text)]/70 mt-2">
           들어온 주문을 확인하고 상태를 업데이트하세요
         </p>
+        {selectedStatus !== 'all' && (
+          <div className="mt-4">
+            <span className={`badge badge-lg ${
+              selectedStatus === 'pending' ? 'bg-amber-100 text-amber-700 border-amber-200' :
+              selectedStatus === 'confirmed' ? 'bg-cyan-100 text-cyan-700 border-cyan-200' :
+              selectedStatus === 'shipping' ? 'bg-indigo-100 text-indigo-700 border-indigo-200' :
+              selectedStatus === 'delivered' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
+              selectedStatus === 'cancelled' ? 'bg-rose-100 text-rose-700 border-rose-200' :
+              'badge-primary'
+            }`}>
+              필터: {
+                selectedStatus === 'pending' ? '대기 중' :
+                selectedStatus === 'confirmed' ? '확인됨' :
+                selectedStatus === 'shipping' ? '배송 중' :
+                selectedStatus === 'delivered' ? '배송 완료' :
+                selectedStatus === 'cancelled' ? '취소됨' : selectedStatus
+              }
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Store Selection */}
+      {/* Filters */}
       {!stores || stores.length === 0 ? (
         <div className="alert alert-warning mb-8">
           <span>먼저 가게를 추가해주세요. 가게가 있어야 주문을 확인할 수 있습니다.</span>
         </div>
       ) : (
-        <div className="mb-8">
-          <label htmlFor="store-select-orders" className="label">
-            <span className="label-text font-semibold">가게 선택</span>
-          </label>
-          <select
+        <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Store Filter */}
+          <Select
             id="store-select-orders"
-            value={selectedStoreId || ''}
-            onChange={(e) => setSelectedStoreId(Number(e.target.value) || undefined)}
-            className="select select-bordered bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 w-full max-w-xs"
+            label="가게 필터"
+            value={selectedStoreId}
+            onChange={(e) =>
+              setSelectedStoreId(
+                e.target.value === 'all' ? 'all' : Number(e.target.value)
+              )
+            }
           >
-            <option value="">가게를 선택하세요</option>
+            <option value="all">전체</option>
             {stores.map((store) => (
               <option key={store.id} value={store.id}>
                 {store.name}
               </option>
             ))}
-          </select>
+          </Select>
+
+          {/* Status Filter */}
+          <Select
+            id="status-select"
+            label="주문 상태 필터"
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+          >
+            <option value="all">전체</option>
+            <option value="pending">대기 중</option>
+            <option value="confirmed">확인됨</option>
+            <option value="shipping">배송 중</option>
+            <option value="delivered">배송 완료</option>
+            <option value="cancelled">취소됨</option>
+          </Select>
         </div>
       )}
 
       {/* Loading/Error States */}
-      {isLoading && selectedStoreId && (
+      {isLoading && (
         <div className="flex justify-center items-center min-h-[200px]">
           <LoadingSpinner />
         </div>
       )}
 
-      {isError && selectedStoreId && (
-        <ErrorAlert error={error} message="주문 목록을 불러오는 중 오류가 발생했습니다" />
+      {isError && (
+        <ErrorAlert error={error ?? undefined} message="주문 목록을 불러오는 중 오류가 발생했습니다" />
       )}
 
       {/* Orders List */}
-      {selectedStoreId && !isLoading && !isError && (!orders || orders.length === 0) ? (
-        <div className="card bg-[var(--color-primary)] shadow-md">
-          <div className="card-body text-center">
+      {!isLoading && !isError && (!orders || orders.length === 0) ? (
+        <Card>
+          <CardBody className="text-center">
             <ShoppingBag className="w-16 h-16 mx-auto text-[var(--color-text)]/30 mb-4" />
             <p className="text-lg font-semibold">주문이 없습니다</p>
             <p className="text-[var(--color-text)]/70">
               새로운 주문이 들어오면 여기에 표시됩니다
             </p>
-          </div>
-        </div>
-      ) : selectedStoreId && orders && orders.length > 0 ? (
+          </CardBody>
+        </Card>
+      ) : orders && orders.length > 0 ? (
         <div className="space-y-4">
           {orders.map((order) => (
-            <div key={order.id} className="card bg-[var(--color-primary)] shadow-md">
-              <div className="card-body">
+            <Card key={order.id}>
+              <CardBody>
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   {/* Order Info */}
                   <div className="flex-1">
@@ -189,8 +271,8 @@ export default function SellerOrdersPage() {
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
+              </CardBody>
+            </Card>
           ))}
         </div>
       ) : null}
@@ -198,27 +280,24 @@ export default function SellerOrdersPage() {
       {/* Status Update Modal */}
       {selectedOrder && (
         <div className="modal modal-open">
-          <div className="modal-box">
+          <div className="modal-box bg-[var(--color-secondary)] border border-[var(--color-text)]/10">
             <h3 className="font-bold text-lg mb-4">
               주문 상태 변경 (주문 #{selectedOrder.id})
             </h3>
 
-            <div className="form-control w-full mb-6">
-              <label htmlFor="status" className="label">
-                <span className="label-text">새로운 상태</span>
-              </label>
-              <select
+            <div className="mb-6">
+              <Select
                 id="status"
+                label="새로운 상태"
                 value={newStatus}
                 onChange={(e) => setNewStatus(e.target.value)}
-                className="select select-bordered bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 w-full"
               >
                 <option value="pending">대기 중</option>
                 <option value="confirmed">확인됨</option>
                 <option value="shipping">배송 중</option>
                 <option value="delivered">배송 완료</option>
                 <option value="cancelled">취소됨</option>
-              </select>
+              </Select>
             </div>
 
             <div className="modal-action">

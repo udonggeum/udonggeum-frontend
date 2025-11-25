@@ -3,18 +3,18 @@
  * Main dashboard for sellers showing key statistics and quick actions
  */
 
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   BarChart3,
   Package,
   ShoppingBag,
   DollarSign,
-  Store,
 } from 'lucide-react';
 import { useDashboardStats } from '@/hooks/queries';
-import { LoadingSpinner, ErrorAlert } from '@/components';
+import { LoadingSpinner, ErrorAlert, Card, CardBody } from '@/components';
 
 export default function SellerDashboardPage() {
+  const navigate = useNavigate();
   const { data: stats, isLoading, isError, error } = useDashboardStats();
 
   if (isLoading) {
@@ -47,20 +47,67 @@ export default function SellerDashboardPage() {
     );
   }
 
-  const statCards = [
+  // Order-related stats
+  const orderStats = [
     {
       title: '전체 주문',
       value: stats.total_orders,
       icon: ShoppingBag,
       color: 'text-blue-600',
       bgColor: 'bg-blue-100',
+      path: '/seller/orders',
+      query: 'status=all',
+      clickable: true,
     },
     {
       title: '대기 중인 주문',
       value: stats.pending_orders,
       icon: Package,
-      color: 'text-yellow-600',
-      bgColor: 'bg-yellow-100',
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-100',
+      path: '/seller/orders',
+      query: 'status=pending',
+      clickable: true,
+    },
+    {
+      title: '확정된 주문',
+      value: stats.confirmed_orders,
+      icon: ShoppingBag,
+      color: 'text-cyan-600',
+      bgColor: 'bg-cyan-100',
+      path: '/seller/orders',
+      query: 'status=confirmed',
+      clickable: true,
+    },
+    {
+      title: '배송 중',
+      value: stats.shipping_orders,
+      icon: Package,
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-100',
+      path: '/seller/orders',
+      query: 'status=shipping',
+      clickable: true,
+    },
+    {
+      title: '배송 완료',
+      value: stats.delivered_orders,
+      icon: ShoppingBag,
+      color: 'text-emerald-600',
+      bgColor: 'bg-emerald-100',
+      path: '/seller/orders',
+      query: 'status=delivered',
+      clickable: true,
+    },
+    {
+      title: '취소된 주문',
+      value: stats.cancelled_orders,
+      icon: ShoppingBag,
+      color: 'text-rose-600',
+      bgColor: 'bg-rose-100',
+      path: '/seller/orders',
+      query: 'status=cancelled',
+      clickable: true,
     },
     {
       title: '총 수익',
@@ -68,56 +115,32 @@ export default function SellerDashboardPage() {
       icon: DollarSign,
       color: 'text-green-600',
       bgColor: 'bg-green-100',
+      clickable: false,
     },
+  ];
+
+  // Product-related stats
+  const productStats = [
     {
       title: '전체 상품',
       value: stats.total_products,
       icon: Package,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100',
-    },
-  ];
-
-  // Additional stats from backend
-  const additionalStats = [
-    {
-      title: '확정된 주문',
-      value: stats.confirmed_orders,
-      icon: ShoppingBag,
-      color: 'text-indigo-600',
-      bgColor: 'bg-indigo-100',
-    },
-    {
-      title: '배송 중',
-      value: stats.shipping_orders,
-      icon: Package,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-100',
-    },
-    {
-      title: '배송 완료',
-      value: stats.delivered_orders,
-      icon: ShoppingBag,
-      color: 'text-teal-600',
-      bgColor: 'bg-teal-100',
-    },
-    {
-      title: '취소된 주문',
-      value: stats.cancelled_orders,
-      icon: ShoppingBag,
-      color: 'text-red-600',
-      bgColor: 'bg-red-100',
+      color: 'text-violet-600',
+      bgColor: 'bg-violet-100',
+      path: '/seller/products',
+      clickable: true,
     },
     {
       title: '재고 부족 상품',
       value: stats.low_stock_products,
       icon: Package,
-      color: 'text-amber-600',
-      bgColor: 'bg-amber-100',
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-100',
+      path: '/seller/products',
+      query: 'stock=low',
+      clickable: true,
     },
   ];
-
-  const allStats = [...statCards, ...additionalStats];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -134,57 +157,87 @@ export default function SellerDashboardPage() {
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {allStats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <div key={stat.title} className="card bg-[var(--color-primary)] shadow-md">
-              <div className="card-body">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-[var(--color-text)]/70 mb-1">
-                      {stat.title}
-                    </p>
-                    <p className="text-3xl font-bold">{stat.value}</p>
+      {/* Order Stats Section */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold text-[var(--color-text)] mb-4 flex items-center gap-2">
+          <ShoppingBag className="w-6 h-6" aria-hidden="true" />
+          주문 관리
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {orderStats.map((stat) => {
+            const Icon = stat.icon;
+            const handleClick = () => {
+              if (stat.clickable && stat.path) {
+                const url = stat.query ? `${stat.path}?${stat.query}` : stat.path;
+                navigate(url);
+              }
+            };
+
+            return (
+              <Card
+                key={stat.title}
+                onClick={stat.clickable ? handleClick : undefined}
+                hover={stat.clickable}
+                className={!stat.clickable ? 'opacity-90' : ''}
+              >
+                <CardBody>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-[var(--color-text)]/70 mb-1">
+                        {stat.title}
+                      </p>
+                      <p className="text-3xl font-bold">{stat.value}</p>
+                    </div>
+                    <div className={`${stat.bgColor} p-3 rounded-lg`}>
+                      <Icon className={`w-8 h-8 ${stat.color}`} aria-hidden="true" />
+                    </div>
                   </div>
-                  <div className={`${stat.bgColor} p-3 rounded-lg`}>
-                    <Icon className={`w-8 h-8 ${stat.color}`} aria-hidden="true" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+                </CardBody>
+              </Card>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="card bg-[var(--color-primary)] shadow-md">
-        <div className="card-body">
-          <h2 className="card-title text-[var(--color-text)] mb-4">빠른 작업</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link
-              to="/seller/stores"
-              className="btn btn-outline btn-primary gap-2"
-            >
-              <Store className="w-5 h-5" />
-              가게 관리
-            </Link>
-            <Link
-              to="/seller/products"
-              className="btn btn-outline btn-secondary gap-2"
-            >
-              <Package className="w-5 h-5" />
-              상품 관리
-            </Link>
-            <Link
-              to="/seller/orders"
-              className="btn btn-outline btn-accent gap-2"
-            >
-              <ShoppingBag className="w-5 h-5" />
-              주문 관리
-            </Link>
-          </div>
+      {/* Product Stats Section */}
+      <div>
+        <h2 className="text-xl font-semibold text-[var(--color-text)] mb-4 flex items-center gap-2">
+          <Package className="w-6 h-6" aria-hidden="true" />
+          상품 관리
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {productStats.map((stat) => {
+            const Icon = stat.icon;
+            const handleClick = () => {
+              if (stat.clickable && stat.path) {
+                const url = stat.query ? `${stat.path}?${stat.query}` : stat.path;
+                navigate(url);
+              }
+            };
+
+            return (
+              <Card
+                key={stat.title}
+                onClick={stat.clickable ? handleClick : undefined}
+                hover={stat.clickable}
+                className={!stat.clickable ? 'opacity-90' : ''}
+              >
+                <CardBody>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-[var(--color-text)]/70 mb-1">
+                        {stat.title}
+                      </p>
+                      <p className="text-3xl font-bold">{stat.value}</p>
+                    </div>
+                    <div className={`${stat.bgColor} p-3 rounded-lg`}>
+                      <Icon className={`w-8 h-8 ${stat.color}`} aria-hidden="true" />
+                    </div>
+                  </div>
+                </CardBody>
+              </Card>
+            );
+          })}
         </div>
       </div>
     </div>

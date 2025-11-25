@@ -3,16 +3,20 @@
  * Manages seller's products for their stores
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Package, Plus, Edit, Trash2, DollarSign, Tag } from 'lucide-react';
+import { useQueries } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import {
   useSellerStores,
-  useSellerStoreProducts,
   useCreateProduct,
   useUpdateProduct,
   useDeleteProduct,
+  sellerKeys,
 } from '@/hooks/queries';
-import { LoadingSpinner, ErrorAlert, ImageUploadWithOptimization, Button } from '@/components';
+import { sellerService } from '@/services/seller';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { LoadingSpinner, ErrorAlert, ImageUploadWithOptimization, Button, Card, CardBody, Select } from '@/components';
 import type { CreateProductRequest, UpdateProductRequest, ProductOptionInput } from '@/schemas/seller';
 import type { Product } from '@/schemas';
 
@@ -30,15 +34,63 @@ interface ProductFormData {
   options: ProductOptionInput[];
 }
 
+// Category color mapping
+const CATEGORY_COLORS: Record<string, string> = {
+  '반지': 'bg-pink-100 text-pink-700 border-pink-200',
+  '팔찌': 'bg-purple-100 text-purple-700 border-purple-200',
+  '목걸이': 'bg-sky-100 text-sky-700 border-sky-200',
+  '귀걸이': 'bg-teal-100 text-teal-700 border-teal-200',
+  '기타': 'bg-slate-100 text-slate-700 border-slate-200',
+};
+
 export default function SellerProductsPage() {
-  const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>();
+  const [searchParams] = useSearchParams();
+  const stockParam = searchParams.get('stock'); // 'low' or null
+
+  const [selectedStoreId, setSelectedStoreId] = useState<number | 'all'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [showLowStockOnly, setShowLowStockOnly] = useState<boolean>(stockParam === 'low');
+
+  // Update filter when URL parameter changes
+  useEffect(() => {
+    setShowLowStockOnly(stockParam === 'low');
+  }, [stockParam]);
+
   const { data: stores, isLoading: isLoadingStores } = useSellerStores();
-  const {
-    data: products,
-    isLoading: isLoadingProducts,
-    isError,
-    error,
-  } = useSellerStoreProducts(selectedStoreId);
+  const user = useAuthStore((state) => state.user);
+  const isAdmin = user?.role === 'admin';
+
+  // Fetch products for all stores to enable "all" filter using useQueries
+  const storeIds = stores?.map((store) => store.id) || [];
+  const productQueries = useQueries({
+    queries: storeIds.map((storeId) => ({
+      queryKey: sellerKeys.products(storeId),
+      queryFn: () => sellerService.getStoreProducts(storeId),
+      enabled: isAdmin,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    })),
+  });
+
+  // Get products from selected store or all stores
+  const allProducts = productQueries.flatMap((query) => query.data || []);
+  const filteredByStore = selectedStoreId === 'all'
+    ? allProducts
+    : allProducts.filter((p) => p.store_id === selectedStoreId);
+
+  // Apply category filter
+  const filteredByCategory = selectedCategory === 'all'
+    ? filteredByStore
+    : filteredByStore.filter((p) => p.category === selectedCategory);
+
+  // Apply low stock filter (stock_quantity <= 5)
+  const products = showLowStockOnly
+    ? filteredByCategory.filter((p) => (p.stock_quantity ?? 0) <= 5)
+    : filteredByCategory;
+
+  const isLoadingProducts = productQueries.some((q) => q.isLoading);
+  const isError = productQueries.some((q) => q.isError);
+  const error = productQueries.find((q) => q.error)?.error;
+
   const { mutate: createProduct, isPending: isCreating } = useCreateProduct();
   const { mutate: updateProduct, isPending: isUpdating } = useUpdateProduct();
   const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
@@ -63,7 +115,7 @@ export default function SellerProductsPage() {
 
   const resetForm = () => {
     setFormData({
-      store_id: selectedStoreId || 0,
+      store_id: selectedStoreId === 'all' ? 0 : selectedStoreId || 0,
       name: '',
       description: '',
       price: 0,
@@ -80,7 +132,7 @@ export default function SellerProductsPage() {
   };
 
   const openCreateModal = () => {
-    if (!selectedStoreId) return;
+    // When "all" is selected, user must select a store in the form
     resetForm();
     setIsModalOpen(true);
   };
@@ -269,54 +321,67 @@ export default function SellerProductsPage() {
           <p className="text-[var(--color-text)]/70 mt-2">
             판매할 상품을 관리하세요
           </p>
+          {showLowStockOnly && (
+            <div className="alert bg-orange-100 text-orange-700 border-orange-200 mt-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              <span>재고 부족 상품만 표시 중입니다 (재고 5개 이하)</span>
+            </div>
+          )}
         </div>
 
-      {/* Store Selection */}
+      {/* Filters */}
       {!stores || stores.length === 0 ? (
         <div className="alert alert-warning mb-8">
           <span>먼저 가게를 추가해주세요. 가게가 있어야 상품을 등록할 수 있습니다.</span>
         </div>
       ) : (
-        <div className="mb-8">
-          <label htmlFor="store-select" className="label">
-            <span className="label-text font-semibold">가게 선택</span>
-          </label>
-          <select
+        <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Store Filter */}
+          <Select
             id="store-select"
-            value={selectedStoreId || ''}
-            onChange={(e) => setSelectedStoreId(Number(e.target.value) || undefined)}
-            className="select select-bordered w-full max-w-xs bg-[var(--color-secondary)] text-[var(--color-text)] border-[var(--color-text)]/20"
+            label="가게 필터"
+            value={selectedStoreId}
+            onChange={(e) =>
+              setSelectedStoreId(
+                e.target.value === 'all' ? 'all' : Number(e.target.value)
+              )
+            }
           >
-            <option value="">가게를 선택하세요</option>
+            <option value="all">전체</option>
             {stores.map((store) => (
               <option key={store.id} value={store.id}>
                 {store.name}
               </option>
             ))}
-          </select>
+          </Select>
+
+          {/* Category Filter */}
+          <Select
+            id="category-select"
+            label="카테고리 필터"
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+          >
+            <option value="all">전체</option>
+            <option value="반지">반지</option>
+            <option value="팔찌">팔찌</option>
+            <option value="목걸이">목걸이</option>
+            <option value="귀걸이">귀걸이</option>
+            <option value="기타">기타</option>
+          </Select>
         </div>
       )}
 
       {/* Products List */}
-      {!selectedStoreId ? (
-        <div className="card bg-[var(--color-secondary)] shadow-md border border-[var(--color-text)]/10">
-          <div className="card-body text-center">
-            <Package className="w-16 h-16 mx-auto text-[var(--color-text)]/30 mb-4" />
-            <p className="text-lg font-semibold text-[var(--color-text)]">가게를 선택하세요</p>
-            <p className="text-[var(--color-text)]/70">
-              상품을 관리할 가게를 선택해주세요
-            </p>
-          </div>
-        </div>
-      ) : isLoadingProducts ? (
+      {isLoadingProducts ? (
         <div className="flex justify-center items-center min-h-[300px]">
           <LoadingSpinner />
         </div>
       ) : isError ? (
-        <ErrorAlert error={error} message={error?.message || '상품 목록을 불러오는데 실패했습니다'} />
+        <ErrorAlert error={error ?? undefined} message={error?.message || '상품 목록을 불러오는데 실패했습니다'} />
       ) : !products || products.length === 0 ? (
-        <div className="card bg-[var(--color-secondary)] shadow-md border border-[var(--color-text)]/10">
-          <div className="card-body text-center">
+        <Card>
+          <CardBody className="text-center">
             <Package className="w-16 h-16 mx-auto text-[var(--color-text)]/30 mb-4" />
             <p className="text-lg font-semibold text-[var(--color-text)]">등록된 상품이 없습니다</p>
             <p className="text-[var(--color-text)]/70 mb-4">
@@ -330,8 +395,8 @@ export default function SellerProductsPage() {
               <Plus className="w-5 h-5" />
               상품 추가
             </Button>
-          </div>
-        </div>
+          </CardBody>
+        </Card>
       ) : (
         <>
           <div className="flex justify-end mb-4">
@@ -345,7 +410,7 @@ export default function SellerProductsPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {products.map((product) => (
-              <div key={product.id} className="card bg-[var(--color-secondary)] shadow-md border border-[var(--color-text)]/10 hover:border-[var(--color-gold)]/50 transition-all">
+              <Card key={product.id} hover className="hover:border-[var(--color-gold)]/50">
                 {product.image_url && (
                   <figure>
                     <img
@@ -355,22 +420,24 @@ export default function SellerProductsPage() {
                     />
                   </figure>
                 )}
-                <div className="card-body">
+                <CardBody>
                   <h2 className="card-title text-[var(--color-text)]">{product.name}</h2>
                   <p className="text-[var(--color-text)]/70 text-sm mb-2">
                     {product.description}
                   </p>
 
-                  <div className="space-y-1 text-sm">
+                  <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2 text-[var(--color-text)]">
                       <DollarSign className="w-4 h-4 flex-shrink-0 text-[var(--color-gold)]" />
                       <span className="font-semibold">
                         ₩{product.price.toLocaleString()}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 text-[var(--color-text)]">
-                      <Tag className="w-4 h-4 flex-shrink-0" />
-                      <span>{product.category}</span>
+                    <div className="flex items-center gap-2">
+                      <Tag className="w-4 h-4 flex-shrink-0 text-[var(--color-text)]/50" />
+                      <span className={`badge badge-sm ${CATEGORY_COLORS[product.category] || CATEGORY_COLORS['기타']}`}>
+                        {product.category}
+                      </span>
                     </div>
                   </div>
 
@@ -390,8 +457,8 @@ export default function SellerProductsPage() {
                       삭제
                     </Button>
                   </div>
-                </div>
-              </div>
+                </CardBody>
+              </Card>
             ))}
           </div>
         </>

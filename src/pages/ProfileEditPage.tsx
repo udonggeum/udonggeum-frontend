@@ -23,6 +23,9 @@ export default function ProfileEditPage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { mutate: updateProfile, isPending, isError, error, isSuccess } = useUpdateProfile();
 
+  const isAdmin = user?.role === 'admin';
+  const backPath = isAdmin ? '/seller/dashboard' : '/mypage';
+
   const [formData, setFormData] = useState<UpdateProfileRequest>({
     name: user?.name || '',
     phone: user?.phone || '',
@@ -38,15 +41,15 @@ export default function ProfileEditPage() {
     }
   }, [isAuthenticated, navigate]);
 
-  // Navigate back to MyPage on success
+  // Navigate back on success
   useEffect(() => {
     if (isSuccess) {
       const timer = setTimeout(() => {
-        navigate('/mypage');
+        navigate(backPath);
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [isSuccess, navigate]);
+  }, [isSuccess, navigate, backPath]);
 
   /**
    * Validate a single field
@@ -156,13 +159,13 @@ export default function ProfileEditPage() {
         <section className="container mx-auto px-4 max-w-3xl">
           {/* Page Header */}
           <div className="mb-8">
-            <Button onClick={() => navigate('/mypage')}
+            <Button onClick={() => navigate(backPath)}
               variant="outline"
               size="sm"
               className="gap-2 mb-4"
             >
               <ArrowLeft className="w-4 h-4" />
-              마이페이지로 돌아가기
+              {isAdmin ? '대시보드로 돌아가기' : '마이페이지로 돌아가기'}
             </Button>
             <h1 className="text-3xl font-bold text-[var(--color-text)]">프로필 수정</h1>
             <p className="mt-2 text-[var(--color-text)]/60">
@@ -346,7 +349,7 @@ export default function ProfileEditPage() {
 
                 {/* Submit Button */}
                 <div className="flex justify-end gap-3 pt-2">
-                  <Button onClick={() => navigate('/mypage')}
+                  <Button onClick={() => navigate(backPath)}
                     variant="outline"
                     disabled={isPending}
                   >

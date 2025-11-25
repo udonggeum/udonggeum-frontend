@@ -20,11 +20,11 @@ const ORDER_STATUS_CONFIG: Record<
   OrderStatus,
   { label: string; className: string }
 > = {
-  pending: { label: '대기중', className: 'badge-warning' },
-  confirmed: { label: '확인됨', className: 'badge-info' },
-  shipping: { label: '배송중', className: 'badge-primary' },
-  delivered: { label: '배송완료', className: 'badge-success' },
-  cancelled: { label: '취소됨', className: 'badge-error' },
+  pending: { label: '대기중', className: 'bg-amber-100 text-amber-700 border-amber-200' },
+  confirmed: { label: '확인됨', className: 'bg-cyan-100 text-cyan-700 border-cyan-200' },
+  shipping: { label: '배송중', className: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
+  delivered: { label: '배송완료', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+  cancelled: { label: '취소됨', className: 'bg-rose-100 text-rose-700 border-rose-200' },
 };
 
 const PAYMENT_STATUS_CONFIG: Record<

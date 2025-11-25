@@ -28,9 +28,13 @@ const MyPage: React.FC = () => {
     if (!isAuthenticated) {
       void navigate('/login');
     }
-  }, [isAuthenticated, navigate]);
+    // Redirect admin users to their dashboard
+    if (isAuthenticated && user?.role === 'admin') {
+      void navigate('/seller/dashboard');
+    }
+  }, [isAuthenticated, user?.role, navigate]);
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || user?.role === 'admin') {
     return null;
   }
 

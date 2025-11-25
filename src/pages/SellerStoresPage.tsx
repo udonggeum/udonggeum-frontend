@@ -11,7 +11,7 @@ import {
   useUpdateStore,
   useDeleteStore,
 } from '@/hooks/queries';
-import { LoadingSpinner, ErrorAlert, Button, ImageUploadWithOptimization } from '@/components';
+import { LoadingSpinner, ErrorAlert, Button, ImageUploadWithOptimization, Card, CardBody } from '@/components';
 import type { CreateStoreRequest, UpdateStoreRequest } from '@/schemas/seller';
 import type { Store as StoreType } from '@/schemas';
 
@@ -244,8 +244,8 @@ export default function SellerStoresPage() {
 
       {/* Stores List */}
       {!stores || stores.length === 0 ? (
-        <div className="card bg-[var(--color-secondary)] border border-[var(--color-text)]/10 shadow-md">
-          <div className="card-body text-center">
+        <Card>
+          <CardBody className="text-center">
             <Store className="w-16 h-16 mx-auto text-[var(--color-text)]/30 mb-4" />
             <p className="text-lg font-semibold">등록된 가게가 없습니다</p>
             <p className="text-[var(--color-text)]/70 mb-4">
@@ -259,13 +259,13 @@ export default function SellerStoresPage() {
               <Plus className="w-5 h-5" />
               가게 추가
             </Button>
-          </div>
-        </div>
+          </CardBody>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {stores.map((store) => (
-            <div key={store.id} className="card bg-[var(--color-secondary)] border border-[var(--color-text)]/10 shadow-md">
-              <div className="card-body">
+            <Card key={store.id}>
+              <CardBody>
                 <h2 className="card-title">{store.name}</h2>
                 {store.description && (
                   <p className="text-[var(--color-text)]/70 text-sm mb-4">
@@ -324,8 +324,8 @@ export default function SellerStoresPage() {
                     삭제
                   </Button>
                 </div>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
           ))}
         </div>
       )}

@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { LogIn, User, Moon, Sun, Settings, LogOut, LayoutDashboard } from 'lucide-react';
+import { LogIn, User, Moon, Sun, Settings, LogOut, LayoutDashboard, Home } from 'lucide-react';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useThemeStore } from '../stores/useThemeStore';
 import { useCart, useLogout } from '@/hooks/queries';
@@ -131,9 +131,11 @@ export default function Navbar({ navigationItems }: NavbarProps) {
         {/* Logo */}
         <Link
           to={user?.role === 'admin' ? '/seller/dashboard' : '/'}
-          className="btn btn-ghost text-xl font-bold normal-case hover:bg-transparent"
+          className="btn btn-ghost text-xl font-bold normal-case hover:bg-transparent flex items-center gap-2"
+          aria-label="홈으로 이동"
         >
-          <span className="text-primary">우동금</span>
+          <Home className="w-6 h-6 text-[var(--color-gold)]" />
+          <span className="text-[var(--color-gold)]">우동금</span>
         </Link>
       </div>
 
@@ -152,34 +154,36 @@ export default function Navbar({ navigationItems }: NavbarProps) {
 
       {/* Right Side Actions */}
       <div className="navbar-end gap-2">
-        {/* Cart Badge (optional - for future enhancement) */}
-        <Link
-          to="/cart"
-          className="btn btn-ghost btn-circle text-[var(--color-text)]"
-          aria-label="장바구니로 이동"
-        >
-          <div className="indicator">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-              />
-            </svg>
-            {cartItemCount > 0 && (
-              <span className="badge badge-sm bg-[var(--color-gold)] text-[var(--color-primary)] border-[var(--color-gold)] indicator-item">
-                {cartItemCount}
-              </span>
-            )}
-          </div>
-        </Link>
+        {/* Cart Badge - Hidden for admin users */}
+        {user?.role !== 'admin' && (
+          <Link
+            to="/cart"
+            className="btn btn-ghost btn-circle text-[var(--color-text)]"
+            aria-label="장바구니로 이동"
+          >
+            <div className="indicator">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                />
+              </svg>
+              {cartItemCount > 0 && (
+                <span className="badge badge-sm bg-[var(--color-gold)] text-[var(--color-primary)] border-[var(--color-gold)] indicator-item">
+                  {cartItemCount}
+                </span>
+              )}
+            </div>
+          </Link>
+        )}
 
         {/* Theme Toggle Button */}
         <button
