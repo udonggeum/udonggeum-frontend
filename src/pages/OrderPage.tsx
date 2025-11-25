@@ -838,7 +838,7 @@ export default function OrderPage() {
             <div>
               <p className="text-xs text-[var(--color-text)]/60">총 결제금액</p>
               <p className="text-xl font-bold text-[var(--color-text)]">
-                {formatCurrency(itemsSubtotal + (fulfillmentType === 'delivery' ? DELIVERY_FEE : 0))}
+                {formatCurrency(totalDue)}
               </p>
             </div>
             <button
