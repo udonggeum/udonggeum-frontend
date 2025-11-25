@@ -1,17 +1,17 @@
 import { apiClient } from '@/api/client';
 import { ENDPOINTS } from '@/constants/api';
 import {
-  PaymentReadyRequest,
+  type PaymentReadyRequest,
   PaymentReadyRequestSchema,
-  PaymentReadyResponse,
+  type PaymentReadyResponse,
   PaymentReadyResponseSchema,
-  PaymentApprovalResponse,
+  type PaymentApprovalResponse,
   PaymentApprovalResponseSchema,
-  PaymentStatusResponse,
+  type PaymentStatusResponse,
   PaymentStatusResponseSchema,
-  PaymentRefundRequest,
+  type PaymentRefundRequest,
   PaymentRefundRequestSchema,
-  PaymentRefundResponse,
+  type PaymentRefundResponse,
   PaymentRefundResponseSchema,
 } from '@/schemas/payment';
 
