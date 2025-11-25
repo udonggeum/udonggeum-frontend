@@ -31,13 +31,13 @@ export default function WishlistPage() {
   } = useWishlist();
 
   const handleWishlist = (productId: string) => {
-    console.log('Wishlist toggle for product:', productId);
     // ProductCard handles the actual API call
+    void productId;
   };
 
   const handleAddToCart = (productId: string) => {
-    console.log('Add to cart:', productId);
     // TODO: Implement cart functionality
+    void productId;
   };
 
   // Transform API products to UI format

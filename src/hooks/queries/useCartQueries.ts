@@ -55,7 +55,7 @@ export function useAddToCart() {
 
 /**
  * useUpdateCartItem mutation
- * Updates cart item quantity with Optimistic Update
+ * Updates cart item quantity/option with Optimistic Update
  *
  * @example
  * const { mutate: updateCartItem, isPending } = useUpdateCartItem();
@@ -86,9 +86,12 @@ export function useUpdateCartItem() {
               ? {
                   ...item,
                   quantity: payload.quantity ?? item.quantity,
-                  product_option_id: payload.product_option_id !== undefined
-                    ? payload.product_option_id
-                    : item.product_option_id,
+                  product_option: payload.product_option_id !== undefined
+                    ? old.cart_items
+                        .find((i: any) => i.id === id)
+                        ?.product.options?.find((opt: any) => opt.id === payload.product_option_id) ||
+                      null
+                    : item.product_option,
                 }
               : item
           ),
@@ -104,9 +107,9 @@ export function useUpdateCartItem() {
         queryClient.setQueryData(cartKeys.detail(), context.previousCart);
       }
     },
-    // 성공 시 최신 데이터로 동기화
-    onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: cartKeys.detail() });
+    // 성공 시 서버 응답으로 캐시 업데이트 (refetch 없이)
+    onSuccess: (data) => {
+      queryClient.setQueryData(cartKeys.detail(), data);
     },
   });
 }

@@ -80,7 +80,7 @@ export default function StoreDetailPage() {
     try {
       return transformProductsFromAPI(storeProductsData.products);
     } catch (transformError) {
-      console.error('Failed to transform store products', transformError);
+      // Transform error - return empty array to prevent app crash
       return [];
     }
   }, [storeProductsData?.products]);
