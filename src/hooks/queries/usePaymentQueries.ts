@@ -1,7 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { paymentService } from '@/services/payment';
+import { cartService } from '@/services/cart';
+import { ordersService } from '@/services/orders';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { ordersKeys } from './useOrdersQueries';
+import { cartKeys } from './useCartQueries';
 import type {
   PaymentReadyRequest,
   PaymentRefundRequest,
@@ -127,6 +130,39 @@ export function usePaymentApproval(
       });
       void queryClient.invalidateQueries({
         queryKey: ordersKeys.list(),
+      });
+
+      // Remove only the paid items from cart (not clearing entire cart)
+      try {
+        // 1. Fetch order details to get the ordered items
+        const order = await ordersService.getOrderDetail(orderId);
+
+        // 2. Fetch current cart
+        const cart = await cartService.getCart();
+
+        // 3. Find cart items that match the ordered items
+        const cartItemsToRemove = cart.cart_items.filter((cartItem) =>
+          order.order_items.some(
+            (orderItem) =>
+              orderItem.product_id === cartItem.product.id &&
+              orderItem.product_option_id === cartItem.product_option?.id
+          )
+        );
+
+        // 4. Remove each matching cart item
+        await Promise.all(
+          cartItemsToRemove.map((cartItem) =>
+            cartService.removeCartItem(cartItem.id)
+          )
+        );
+      } catch {
+        // Ignore cart removal errors - payment was still successful
+        console.warn('Failed to remove paid items from cart, but payment was successful');
+      }
+
+      // Invalidate cart cache to reflect changes
+      void queryClient.invalidateQueries({
+        queryKey: cartKeys.detail(),
       });
 
       return result;
