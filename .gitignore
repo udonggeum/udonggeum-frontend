@@ -34,4 +34,5 @@ dist-ssr
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
-.playwright-mcp/
+.playwright-mcp/.git-credentials
+.git-credentials
