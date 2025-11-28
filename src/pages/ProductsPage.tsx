@@ -57,6 +57,7 @@ export default function ProductsPage() {
   const [selectedProductForCart, setSelectedProductForCart] = useState<APIProduct | null>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isCartSuccessModalOpen, setIsCartSuccessModalOpen] = useState(false);
+  const sortDropdownRef = useRef<HTMLLabelElement>(null);
 
   const { data: locationsData } = useStoreLocations();
   const { data: filtersData } = useProductFilters();
@@ -269,7 +270,7 @@ export default function ProductsPage() {
                   </p>
                 </div>
                 <div className="dropdown dropdown-end">
-                  <label tabIndex={0} className="btn btn-sm bg-[var(--color-secondary)] border-[var(--color-text)]/30 text-[var(--color-text)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold)] gap-1">
+                  <label ref={sortDropdownRef} tabIndex={0} className="btn btn-sm bg-[var(--color-secondary)] border-[var(--color-text)]/30 text-[var(--color-text)] hover:border-[var(--color-gold)] hover:text-[var(--color-gold)] gap-1">
                     {SORT_OPTIONS.find((opt) => opt.value === selectedSort)?.label ?? '정렬'}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -291,7 +292,10 @@ export default function ProductsPage() {
                         <button
                           type="button"
                           className={selectedSort === option.value ? 'bg-[var(--color-gold)] text-[var(--color-primary)]' : 'text-[var(--color-text)]'}
-                          onClick={() => setSelectedSort(option.value)}
+                          onClick={() => {
+                            setSelectedSort(option.value);
+                            sortDropdownRef.current?.blur();
+                          }}
                         >
                           {option.label}
                         </button>
