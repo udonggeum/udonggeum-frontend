@@ -45,30 +45,30 @@ export default function PaymentCancelPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-base-100">
+    <div className="flex min-h-screen flex-col bg-[var(--color-primary)]">
       <Navbar navigationItems={NAV_ITEMS} />
 
       <main className="flex flex-1 items-center justify-center p-4 py-12">
-        <div className="w-full max-w-md space-y-6">
+        <div className="w-full max-w-md space-y-6 animate-fade-in">
           {/* Cancellation Icon & Message */}
-          <div className="text-center">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-warning/10">
-              <XCircle className="h-10 w-10 text-warning" />
+          <div className="text-center space-y-3">
+            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-warning/10 border-2 border-warning/30">
+              <XCircle className="h-12 w-12 text-warning" />
             </div>
-            <h1 className="mt-4 text-3xl font-bold text-base-content">
+            <h1 className="text-4xl font-bold text-[var(--color-text)]">
               결제 취소
             </h1>
-            <p className="mt-2 text-base-content/60">
+            <p className="text-lg text-[var(--color-text)]/70">
               사용자가 결제를 취소하셨습니다
             </p>
           </div>
 
           {/* Order Info Card */}
           {orderId && (
-            <div className="rounded-3xl border border-base-200 bg-base-50 p-6 shadow-lg">
+            <div className="rounded-3xl border-2 border-warning/20 bg-gradient-to-br from-warning/5 to-transparent p-6 shadow-lg">
               <div className="text-center">
-                <p className="text-sm text-base-content/60">주문번호</p>
-                <p className="text-2xl font-bold text-base-content">
+                <p className="text-sm text-[var(--color-text)]/60 mb-1">주문번호</p>
+                <p className="text-3xl font-bold text-[var(--color-text)]">
                   #{orderId}
                 </p>
               </div>
@@ -77,9 +77,9 @@ export default function PaymentCancelPage() {
 
           {/* Error Display */}
           {parseError && (
-            <div className="alert alert-error">
-              <XCircle className="h-5 w-5" />
-              <span>{parseError}</span>
+            <div className="alert bg-error/10 border-2 border-error/30 animate-shake">
+              <XCircle className="h-5 w-5 text-error" />
+              <span className="text-[var(--color-text)]">{parseError}</span>
             </div>
           )}
 
@@ -88,7 +88,7 @@ export default function PaymentCancelPage() {
             {orderId && (
               <Button
                 onClick={handleRetry}
-                className="btn-primary w-full"
+                className="btn-lg w-full bg-[var(--color-gold)] hover:bg-[var(--color-gold)]/80 text-[var(--color-primary)] border-[var(--color-gold)]"
               >
                 <RotateCcw className="h-5 w-5" />
                 다시 결제하기
@@ -97,14 +97,14 @@ export default function PaymentCancelPage() {
             <Button
               onClick={() => void navigate('/orders')}
               variant="outline"
-              className="w-full"
+              className="btn-lg w-full border-[var(--color-text)]/20 hover:bg-[var(--color-secondary)]"
             >
               주문 내역 확인
             </Button>
             <Button
               onClick={() => void navigate('/')}
               variant="ghost"
-              className="w-full"
+              className="btn-lg w-full hover:bg-[var(--color-secondary)]"
             >
               <Home className="h-5 w-5" />
               홈으로 가기
@@ -112,9 +112,9 @@ export default function PaymentCancelPage() {
           </div>
 
           {/* Info Message */}
-          <div className="rounded-2xl bg-base-200 p-4 text-center text-sm text-base-content/70">
-            <p>결제를 취소하셔도 주문은 유지됩니다.</p>
-            <p className="mt-1">언제든지 다시 결제를 진행하실 수 있습니다.</p>
+          <div className="rounded-3xl bg-[var(--color-secondary)] border border-[var(--color-text)]/10 p-5 text-center">
+            <p className="text-base text-[var(--color-text)]/80">결제를 취소하셔도 주문은 유지됩니다.</p>
+            <p className="mt-2 text-sm text-[var(--color-text)]/60">언제든지 다시 결제를 진행하실 수 있습니다.</p>
           </div>
         </div>
       </main>

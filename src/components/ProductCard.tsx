@@ -58,7 +58,11 @@ export default function ProductCard({
   const isSoldOut = product.stockQuantity === 0;
 
   return (
-    <div className="card bg-[var(--color-secondary)] shadow-xl hover:shadow-2xl transition-shadow border border-[var(--color-text)]/10">
+    <div
+      className="card bg-[var(--color-secondary)] shadow-xl border border-[var(--color-text)]/10 hover-lift"
+      role="article"
+      aria-label={`${product.name} 상품 카드`}
+    >
       <figure className="aspect-square overflow-hidden bg-[var(--color-primary)] relative group">
         <Link to={`/products/${product.id}`} aria-label={`${product.name} 상세보기`} className="block h-full w-full">
           <FallbackImage
@@ -135,22 +139,29 @@ export default function ProductCard({
           </div>
         )}
       </figure>
-      <div className="card-body">
-        <h3 className="card-title text-lg text-[var(--color-text)]">
-          <Link to={`/products/${product.id}`} className="link-hover">
+      <div className="card-body space-y-2">
+        {/* Primary: 가격 (가장 중요) */}
+        <p className="text-2xl font-bold text-[var(--color-gold)]">₩{formattedPrice}~</p>
+
+        {/* Secondary: 상품명 */}
+        <h3 className="text-lg font-semibold text-[var(--color-text)] line-clamp-1">
+          <Link to={`/products/${product.id}`} className="hover:text-[var(--color-gold)] transition-colors">
             {product.name}
           </Link>
         </h3>
-        <p className="text-2xl font-bold text-[var(--color-gold)]">₩{formattedPrice}~</p>
+
+        {/* Tertiary: 매장명 */}
         {product.storeName && (
-          <p className="text-sm font-semibold text-[var(--color-text)] flex items-center gap-1">
-            <Store className="w-4 h-4" />
+          <p className="text-sm font-medium text-[var(--color-text)]/80 flex items-center gap-1">
+            <Store className="w-4 h-4 text-[var(--color-gold)]" />
             {product.storeName}
           </p>
         )}
+
+        {/* Quaternary: 주소 */}
         {product.storeLocation && (
-          <p className="text-sm text-[var(--color-text)]/70 flex items-center gap-1">
-            <MapPin className="w-4 h-4" />
+          <p className="text-xs text-[var(--color-text)]/60 flex items-center gap-1 line-clamp-1">
+            <MapPin className="w-3 h-3" />
             {product.storeLocation}
           </p>
         )}

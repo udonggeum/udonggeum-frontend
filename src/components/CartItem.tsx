@@ -41,7 +41,15 @@ const CartItem = React.memo(({
   const canChangeOption = optionList.length > 0;
 
   return (
-    <article className="flex flex-col gap-4 rounded-3xl border border-[var(--color-text)]/10 bg-[var(--color-secondary)] p-5 shadow-sm transition hover:shadow-md">
+    <article
+      className={`flex flex-col gap-4 rounded-3xl border p-5 shadow-sm transition-all hover-lift ${
+        isSelected
+          ? 'border-[var(--color-gold)] bg-gradient-to-br from-[var(--color-gold)]/5 to-transparent'
+          : 'border-[var(--color-text)]/10 bg-[var(--color-secondary)]'
+      }`}
+      role="article"
+      aria-label={`${item.product.name} 장바구니 상품`}
+    >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
         <div className="flex items-start gap-3">
           <input
@@ -49,15 +57,17 @@ const CartItem = React.memo(({
             className="checkbox border-[var(--color-gold)] checked:bg-[var(--color-gold)] checked:border-[var(--color-gold)] mt-2"
             checked={isSelected}
             onChange={() => onToggleSelection(item.id)}
+            aria-label={`${item.product.name} 선택`}
           />
           <Link
             to={`/products/${item.product.id}`}
-            className="block h-24 w-24 shrink-0 overflow-hidden rounded-2xl border border-[var(--color-text)]/10"
+            className="group block h-28 w-28 shrink-0 overflow-hidden rounded-2xl border border-[var(--color-text)]/10"
+            aria-label={`${item.product.name} 상품 상세보기`}
           >
             <FallbackImage
               src={item.product.image_url}
               alt={item.product.name}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           </Link>
         </div>
@@ -66,24 +76,27 @@ const CartItem = React.memo(({
             <div className="space-y-1">
               <Link
                 to={`/products/${item.product.id}`}
-                className="text-lg font-semibold text-[var(--color-text)] hover:text-[var(--color-gold)]"
+                className="text-lg font-semibold text-[var(--color-text)] hover:text-[var(--color-gold)] transition-colors"
               >
                 {item.product.name}
               </Link>
               {item.product_option ? (
                 <p className="text-sm text-[var(--color-text)]/70">
-                  {item.product_option.name} · {item.product_option.value}
+                  옵션: {item.product_option.name} · {item.product_option.value}
                 </p>
               ) : (
-                <p className="text-sm text-[var(--color-text)]/50">옵션 없음</p>
+                <p className="text-sm text-[var(--color-text)]/50">단일 상품 (옵션 없음)</p>
               )}
             </div>
-            <div className="text-right">
-              <p className="text-lg font-semibold text-[var(--color-gold)]">
+            <div className="text-right space-y-1">
+              <p className="text-xl font-bold text-[var(--color-gold)]">
                 {formatCurrency(unitPrice)}
               </p>
               <p className="text-xs text-[var(--color-text)]/60">
-                수량 {item.quantity}개 · 합계 {formatCurrency(itemTotalPrice)}
+                수량 {item.quantity}개
+              </p>
+              <p className="text-sm font-semibold text-[var(--color-text)]/80">
+                소계: {formatCurrency(itemTotalPrice)}
               </p>
             </div>
           </div>
@@ -109,6 +122,7 @@ const CartItem = React.memo(({
                 size="sm"
                 onClick={() => onRemove(item.id)}
                 disabled={isRemoving}
+                aria-label={`${item.product.name} 삭제`}
               >
                 <Trash2 className="h-4 w-4" />
                 삭제

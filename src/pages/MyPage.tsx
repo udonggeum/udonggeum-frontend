@@ -45,65 +45,76 @@ const MyPage: React.FC = () => {
       <main className="flex-grow py-8">
         <div className="container mx-auto px-4 max-w-6xl">
           {/* Page Header */}
-          <div className="mb-8">
-            <div className="flex items-center gap-4">
+          <div className="mb-8 pb-6 border-b-2 border-[var(--color-gold)]/20">
+            <div className="flex items-center gap-5">
               <div className="avatar placeholder">
-                <div className="bg-[var(--color-gold)] text-[var(--color-primary)] rounded-full w-16 h-16">
-                  <User className="w-8 h-8" />
+                <div className="bg-gradient-to-br from-[var(--color-gold)] to-[var(--color-gold)]/70 text-[var(--color-primary)] rounded-full w-20 h-20 border-4 border-[var(--color-gold)]/20">
+                  <User className="w-10 h-10" />
                 </div>
               </div>
-              <div>
-                <h1 className="text-3xl font-bold text-[var(--color-text)]">마이페이지</h1>
-                <p className="text-sm text-[var(--color-text)]/60 mt-1">회원 정보 및 주문 관리</p>
+              <div className="space-y-1">
+                <span className="badge badge-lg border-2 border-[var(--color-gold)] text-[var(--color-gold)] bg-[var(--color-gold)]/10 font-semibold mb-2">
+                  My Page
+                </span>
+                <h1 className="text-4xl font-bold text-[var(--color-text)]">마이페이지</h1>
+                <p className="text-base text-[var(--color-text)]/60">회원 정보 및 주문 관리</p>
               </div>
             </div>
           </div>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div className="card bg-[var(--color-primary)] shadow border border-[var(--color-text)]/10">
-              <div className="card-body p-4">
-                <div className="flex items-center gap-3">
-                  <ShoppingBag className="w-8 h-8 text-[var(--color-gold)]" />
+            <div className="card bg-gradient-to-br from-[var(--color-gold)]/5 to-transparent shadow-md border-2 border-[var(--color-gold)]/20 hover-lift">
+              <div className="card-body p-5">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-gold)]/10">
+                    <ShoppingBag className="w-6 h-6 text-[var(--color-gold)]" />
+                  </div>
                   <div>
-                    <p className="text-xs text-[var(--color-text)]/70">총 주문</p>
-                    <p className="text-2xl font-bold text-[var(--color-text)]">{ordersData?.count || 0}건</p>
+                    <p className="text-xs text-[var(--color-text)]/70 mb-1">총 주문</p>
+                    <p className="text-2xl font-bold text-[var(--color-gold)]">{ordersData?.count || 0}건</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="card bg-[var(--color-primary)] shadow border border-[var(--color-text)]/10">
-              <div className="card-body p-4">
-                <div className="flex items-center gap-3">
-                  <Heart className="w-8 h-8 text-[var(--color-gold)]" />
+            <div className="card bg-gradient-to-br from-[var(--color-gold)]/5 to-transparent shadow-md border-2 border-[var(--color-gold)]/20 hover-lift">
+              <div className="card-body p-5">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-gold)]/10">
+                    <Heart className="w-6 h-6 text-[var(--color-gold)]" />
+                  </div>
                   <div>
-                    <p className="text-xs text-[var(--color-text)]/70">찜한 상품</p>
-                    <p className="text-2xl font-bold text-[var(--color-text)]">{wishlistData?.count || 0}개</p>
+                    <p className="text-xs text-[var(--color-text)]/70 mb-1">찜한 상품</p>
+                    <p className="text-2xl font-bold text-[var(--color-gold)]">{wishlistData?.count || 0}개</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="card bg-[var(--color-primary)] shadow border border-[var(--color-text)]/10">
-              <div className="card-body p-4">
-                <div className="flex items-center gap-3">
-                  <MapPin className="w-8 h-8 text-[var(--color-gold)]" />
+            <div className="card bg-gradient-to-br from-[var(--color-gold)]/5 to-transparent shadow-md border-2 border-[var(--color-gold)]/20 hover-lift">
+              <div className="card-body p-5">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-gold)]/10">
+                    <MapPin className="w-6 h-6 text-[var(--color-gold)]" />
+                  </div>
                   <div>
-                    <p className="text-xs text-[var(--color-text)]/70">배송지</p>
-                    <p className="text-2xl font-bold text-[var(--color-text)]">0개</p>
+                    <p className="text-xs text-[var(--color-text)]/70 mb-1">배송지</p>
+                    <p className="text-2xl font-bold text-[var(--color-gold)]">0개</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="card bg-[var(--color-primary)] shadow border border-[var(--color-text)]/10">
-              <div className="card-body p-4">
-                <div className="flex items-center gap-3">
-                  <User className="w-8 h-8 text-[var(--color-gold)]" />
+            <div className="card bg-gradient-to-br from-[var(--color-gold)]/5 to-transparent shadow-md border-2 border-[var(--color-gold)]/20 hover-lift">
+              <div className="card-body p-5">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-gold)]/10">
+                    <User className="w-6 h-6 text-[var(--color-gold)]" />
+                  </div>
                   <div>
-                    <p className="text-xs text-[var(--color-text)]/70">포인트</p>
-                    <p className="text-2xl font-bold text-[var(--color-text)]">0P</p>
+                    <p className="text-xs text-[var(--color-text)]/70 mb-1">포인트</p>
+                    <p className="text-2xl font-bold text-[var(--color-gold)]">0P</p>
                   </div>
                 </div>
               </div>
@@ -112,14 +123,15 @@ const MyPage: React.FC = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* User Info Card */}
-            <div className="card bg-[var(--color-primary)] shadow border border-[var(--color-text)]/10">
+            <div className="card bg-[var(--color-primary)] shadow-md border-2 border-[var(--color-gold)]/20">
               <div className="card-body">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="card-title text-[var(--color-text)]">회원 정보</h2>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-[var(--color-text)]">회원 정보</h2>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => navigate('/mypage/edit')}
+                    className="border-[var(--color-gold)] text-[var(--color-gold)] hover:bg-[var(--color-gold)] hover:text-[var(--color-primary)]"
                   >
                     수정
                   </Button>
@@ -176,9 +188,9 @@ const MyPage: React.FC = () => {
             </div>
 
             {/* Quick Actions Card */}
-            <div className="card bg-[var(--color-primary)] shadow border border-[var(--color-text)]/10">
+            <div className="card bg-[var(--color-primary)] shadow-md border-2 border-[var(--color-gold)]/20">
               <div className="card-body">
-                <h2 className="card-title text-[var(--color-text)] mb-4">빠른 메뉴</h2>
+                <h2 className="text-xl font-bold text-[var(--color-text)] mb-6">빠른 메뉴</h2>
 
                 {/* Orders */}
                 <div className="space-y-4">

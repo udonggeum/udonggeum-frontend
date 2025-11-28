@@ -277,47 +277,62 @@ export default function CartPage() {
           </header>
 
           {isCartEmpty ? (
-            <section className="flex flex-col items-center justify-center gap-6 rounded-3xl border border-dashed border-[var(--color-text)]/20 bg-[var(--color-secondary)] py-20 text-center">
-              <ShoppingBag className="h-16 w-16 text-[var(--color-text)]/40" />
-              <div>
-                <h2 className="text-xl font-semibold text-[var(--color-text)]">장바구니가 비어있어요</h2>
-                <p className="mt-2 text-sm text-[var(--color-text)]/70">
-                  마음에 드는 제품을 장바구니에 담아보세요. 다양한 제품이 기다리고 있어요!
+            <section className="flex flex-col items-center justify-center gap-8 rounded-3xl border-2 border-dashed border-[var(--color-gold)]/30 bg-gradient-to-br from-[var(--color-gold)]/5 to-transparent py-24 text-center animate-fade-in">
+              <ShoppingBag className="h-20 w-20 text-[var(--color-gold)]/60" />
+              <div className="space-y-3">
+                <h2 className="text-2xl font-bold text-[var(--color-text)]">장바구니가 비어있어요</h2>
+                <p className="text-base text-[var(--color-text)]/70 max-w-md">
+                  마음에 드는 제품을 장바구니에 담아보세요.<br />
+                  우동금의 다양한 금·은 제품이 기다리고 있어요!
                 </p>
               </div>
-              <Button
-                size="lg"
-                onClick={() => {
-                  void navigate('/products');
-                }}
-              >
-                상품 보러가기
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  size="lg"
+                  onClick={() => {
+                    void navigate('/products');
+                  }}
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                  상품 둘러보기
+                </Button>
+                <Button
+                  size="lg"
+                  variant="ghost"
+                  onClick={() => {
+                    void navigate('/stores');
+                  }}
+                >
+                  매장 찾아보기
+                </Button>
+              </div>
             </section>
           ) : (
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
               <section className="flex flex-col gap-5">
-                <div className="flex items-center justify-between rounded-2xl border border-[var(--color-text)]/10 bg-[var(--color-secondary)] p-4 shadow-sm">
-                  <label className="flex items-center gap-3 text-sm font-medium text-[var(--color-text)]">
+                <div className="flex items-center justify-between rounded-3xl border-2 border-[var(--color-gold)]/20 bg-gradient-to-r from-[var(--color-gold)]/5 to-transparent p-5 shadow-sm">
+                  <label className="flex items-center gap-3 text-base font-semibold text-[var(--color-text)] cursor-pointer">
                     <input
                       type="checkbox"
-                      className="checkbox border-[var(--color-gold)] checked:bg-[var(--color-gold)] checked:border-[var(--color-gold)]"
+                      className="checkbox checkbox-lg border-[var(--color-gold)] checked:bg-[var(--color-gold)] checked:border-[var(--color-gold)]"
                       checked={allSelected}
                       onChange={toggleSelectAll}
+                      aria-label="전체 상품 선택"
                     />
-                    전체 선택 ({selectedSummary.count}/{cartItems.length})
+                    전체 선택
+                    <span className="text-sm font-medium text-[var(--color-text)]/70">
+                      ({selectedSummary.count}/{cartItems.length})
+                    </span>
                   </label>
-                  <div className="flex items-center gap-3 text-sm text-[var(--color-text)]/70">
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      onClick={handleRemoveSelected}
-                      disabled={selectedSummary.count === 0 || isRemoving}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      선택 삭제
-                    </Button>
-                  </div>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={handleRemoveSelected}
+                    disabled={selectedSummary.count === 0 || isRemoving}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    선택 삭제 ({selectedSummary.count})
+                  </Button>
                 </div>
 
                 <div className="space-y-4">

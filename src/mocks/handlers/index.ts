@@ -5,9 +5,11 @@
 
 import { paymentHandlers } from './payment';
 import { productsHandlers } from './products';
+import { storesHandlers } from './stores';
 
 // Combine all handlers
 export const handlers = [
   ...paymentHandlers,
   ...productsHandlers,
+  ...storesHandlers,
 ];

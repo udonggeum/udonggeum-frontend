@@ -145,22 +145,27 @@ export default function SellerDashboardPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-[var(--color-text)] flex items-center gap-3">
-            <BarChart3 className="w-8 h-8" aria-hidden="true" />
+      <div className="mb-8 pb-6 border-b-2 border-[var(--color-gold)]/20">
+        <div className="space-y-2">
+          <span className="badge badge-lg border-2 border-[var(--color-gold)] text-[var(--color-gold)] bg-[var(--color-gold)]/10 font-semibold">
+            Seller Dashboard
+          </span>
+          <h1 className="text-4xl font-bold text-[var(--color-text)] flex items-center gap-3">
+            <BarChart3 className="w-10 h-10 text-[var(--color-gold)]" aria-hidden="true" />
             판매자 대시보드
           </h1>
-          <p className="text-[var(--color-text)]/70 mt-2">
+          <p className="text-base text-[var(--color-text)]/70">
             판매 현황과 통계를 한눈에 확인하세요
           </p>
         </div>
       </div>
 
       {/* Order Stats Section */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold text-[var(--color-text)] mb-4 flex items-center gap-2">
-          <ShoppingBag className="w-6 h-6" aria-hidden="true" />
+      <div className="mb-10">
+        <h2 className="text-2xl font-bold text-[var(--color-text)] mb-6 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-gold)]/10">
+            <ShoppingBag className="w-6 h-6 text-[var(--color-gold)]" aria-hidden="true" />
+          </div>
           주문 관리
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -178,17 +183,17 @@ export default function SellerDashboardPage() {
                 key={stat.title}
                 onClick={stat.clickable ? handleClick : undefined}
                 hover={stat.clickable}
-                className={!stat.clickable ? 'opacity-90' : ''}
+                className={`border-2 border-[var(--color-gold)]/20 bg-gradient-to-br from-[var(--color-gold)]/5 to-transparent ${!stat.clickable ? 'opacity-90' : 'hover-lift cursor-pointer'}`}
               >
                 <CardBody>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-[var(--color-text)]/70 mb-1">
+                      <p className="text-sm text-[var(--color-text)]/70 mb-2 font-medium">
                         {stat.title}
                       </p>
-                      <p className="text-3xl font-bold">{stat.value}</p>
+                      <p className="text-3xl font-bold text-[var(--color-gold)]">{stat.value}</p>
                     </div>
-                    <div className={`${stat.bgColor} p-3 rounded-lg`}>
+                    <div className={`${stat.bgColor} p-4 rounded-2xl shadow-sm`}>
                       <Icon className={`w-8 h-8 ${stat.color}`} aria-hidden="true" />
                     </div>
                   </div>
@@ -201,8 +206,10 @@ export default function SellerDashboardPage() {
 
       {/* Product Stats Section */}
       <div>
-        <h2 className="text-xl font-semibold text-[var(--color-text)] mb-4 flex items-center gap-2">
-          <Package className="w-6 h-6" aria-hidden="true" />
+        <h2 className="text-2xl font-bold text-[var(--color-text)] mb-6 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-gold)]/10">
+            <Package className="w-6 h-6 text-[var(--color-gold)]" aria-hidden="true" />
+          </div>
           상품 관리
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -220,17 +227,17 @@ export default function SellerDashboardPage() {
                 key={stat.title}
                 onClick={stat.clickable ? handleClick : undefined}
                 hover={stat.clickable}
-                className={!stat.clickable ? 'opacity-90' : ''}
+                className={`border-2 border-[var(--color-gold)]/20 bg-gradient-to-br from-[var(--color-gold)]/5 to-transparent ${!stat.clickable ? 'opacity-90' : 'hover-lift cursor-pointer'}`}
               >
                 <CardBody>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-[var(--color-text)]/70 mb-1">
+                      <p className="text-sm text-[var(--color-text)]/70 mb-2 font-medium">
                         {stat.title}
                       </p>
-                      <p className="text-3xl font-bold">{stat.value}</p>
+                      <p className="text-3xl font-bold text-[var(--color-gold)]">{stat.value}</p>
                     </div>
-                    <div className={`${stat.bgColor} p-3 rounded-lg`}>
+                    <div className={`${stat.bgColor} p-4 rounded-2xl shadow-sm`}>
                       <Icon className={`w-8 h-8 ${stat.color}`} aria-hidden="true" />
                     </div>
                   </div>

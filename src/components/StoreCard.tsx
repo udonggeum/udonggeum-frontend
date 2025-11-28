@@ -34,10 +34,6 @@ export default function StoreCard({ store }: StoreCardProps) {
       : '상품 정보 준비 중';
 
   const sanitizedPhone = store.phone?.replace(/[^0-9+]/g, '');
-  const displayedCategoryCounts = store.categoryCounts?.slice(0, 4) ?? [];
-  const hiddenCategoryCount =
-    (store.categoryCounts?.length ?? 0) - displayedCategoryCounts.length;
-
   const bgColor = mode === 'light' ? '#FAFAFA' : theme.secondary;
 
   const handleCardClick = () => {
@@ -47,11 +43,20 @@ export default function StoreCard({ store }: StoreCardProps) {
   return (
     <div
       onClick={handleCardClick}
-      className="card card-side border border-[var(--color-text)]/10 transition-shadow hover:shadow-lg flex group cursor-pointer"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleCardClick();
+        }
+      }}
+      className="card card-side border border-[var(--color-text)]/10 flex group cursor-pointer hover-lift"
       style={{
         backgroundColor: bgColor,
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06)'
       }}
+      role="button"
+      tabIndex={0}
+      aria-label={`${store.name} 매장 상세보기`}
     >
       {/* 왼쪽: 이미지 (축소) */}
       <div className="w-40 flex-shrink-0">
@@ -103,42 +108,19 @@ export default function StoreCard({ store }: StoreCardProps) {
 
       {/* 오른쪽: 상품 정보 & 전화하기 버튼 */}
       <div className="p-4 flex flex-col justify-between items-end min-w-[180px]">
-        {/* 상단: 상품 개수 & 카테고리 */}
+        {/* 상단: 전체 상품 개수만 표시 (단순화) */}
         <div className="flex flex-col items-end gap-2">
-          {/* 전체 상품 개수 */}
-          <span className="badge border-[var(--color-gold)] text-[var(--color-gold)] gap-1.5 px-2.5 py-1.5 bg-transparent text-xs">
-            <PackageSearch className="h-3.5 w-3.5" aria-hidden="true" />
+          <span className="badge border-[var(--color-gold)] text-[var(--color-gold)] gap-1.5 px-3 py-2 bg-transparent text-sm font-medium">
+            <PackageSearch className="h-4 w-4" aria-hidden="true" />
             {productCountLabel}
           </span>
-
-          {/* 카테고리별 상품 수 */}
-          {displayedCategoryCounts.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 text-xs justify-end max-w-[160px]">
-              {displayedCategoryCounts.map((category) => (
-                <span
-                  key={`${store.id}-${category.id}`}
-                  className="badge badge-outline badge-sm gap-1 px-2 py-1 border-[var(--color-text)]/30 text-[var(--color-text)]"
-                >
-                  {category.name}{' '}
-                  <span className="font-semibold">
-                    {category.count.toLocaleString('ko-KR')}
-                  </span>
-                </span>
-              ))}
-              {hiddenCategoryCount > 0 && (
-                <span className="badge badge-outline badge-sm px-2 py-1 border-[var(--color-text)]/30 text-[var(--color-text)]">
-                  +{hiddenCategoryCount}
-                </span>
-              )}
-            </div>
-          )}
         </div>
 
-        {/* 하단: 전화하기 버튼 */}
+        {/* 하단: 전화하기 버튼 (모바일에서만 표시) */}
         {store.phone && sanitizedPhone && (
           <a
             href={`tel:${sanitizedPhone}`}
-            className="btn btn-sm bg-[var(--color-gold)] hover:bg-[var(--color-gold)]/80 text-[var(--color-primary)] border-[var(--color-gold)] mt-2"
+            className="btn btn-sm bg-[var(--color-gold)] hover:bg-[var(--color-gold)]/80 text-[var(--color-primary)] border-[var(--color-gold)] mt-2 md:hidden"
             aria-label={`${store.name}에 전화하기`}
             onClick={(e) => e.stopPropagation()}
           >

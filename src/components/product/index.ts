@@ -6,3 +6,6 @@
 export { LoginRequiredModal } from './LoginRequiredModal';
 export { CartSuccessModal } from './CartSuccessModal';
 export { PopularProductsCarousel } from './PopularProductsCarousel';
+export { default as OptionSelector } from './OptionSelector';
+export { default as StoreInfoCard } from './StoreInfoCard';
+export { default as PriceDisplay } from './PriceDisplay';

@@ -1,25 +1,27 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft,
-  ChevronDown,
-  ChevronUp,
+  AlertTriangle,
   CircleDollarSign,
   CreditCard,
   Heart,
-  MapPin,
-  Phone,
   ShoppingCart,
   Store as StoreIcon,
 } from 'lucide-react';
 import { Navbar, Footer, Button, ProductsError, QuantitySelector } from '@/components';
-import { LoginRequiredModal, CartSuccessModal } from '@/components/product';
+import {
+  LoginRequiredModal,
+  CartSuccessModal,
+  OptionSelector,
+  StoreInfoCard,
+  PriceDisplay,
+} from '@/components/product';
 import { useProductDetail } from '@/hooks/queries/useProductsQueries';
 import { transformProductFromAPI } from '@/utils/apiAdapters';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useAddToCart } from '@/hooks/queries/useCartQueries';
 import { useWishlist, useAddToWishlist, useRemoveFromWishlist } from '@/hooks/queries/useWishlistQueries';
-import { formatCurrency } from '@/utils/formatting';
 import { NAV_ITEMS } from '@/constants/navigation';
 import FallbackImage from '@/components/FallbackImage';
 
@@ -78,8 +80,7 @@ export default function ProductDetailPage() {
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isCartResultModalOpen, setIsCartResultModalOpen] = useState(false);
-  const [isStoreInfoOpen, setIsStoreInfoOpen] = useState(false);
-  const [isDescriptionOpen, setIsDescriptionOpen] = useState(false);
+  const [shouldShake, setShouldShake] = useState(false);
 
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
@@ -154,6 +155,9 @@ export default function ProductDetailPage() {
 
     if (productDetail.options?.length && !selectedOptionId) {
       setOptionError('옵션을 선택해 주세요.');
+      // Shake 애니메이션 트리거
+      setShouldShake(true);
+      setTimeout(() => setShouldShake(false), 500);
       return;
     }
 
@@ -193,6 +197,9 @@ export default function ProductDetailPage() {
 
     if (productDetail.options?.length && !selectedOptionId) {
       setOptionError('옵션을 선택해 주세요.');
+      // Shake 애니메이션 트리거
+      setShouldShake(true);
+      setTimeout(() => setShouldShake(false), 500);
       return;
     }
 
@@ -219,136 +226,6 @@ export default function ProductDetailPage() {
 
   const closeLoginModal = () => setIsLoginModalOpen(false);
   const closeCartModal = () => setIsCartResultModalOpen(false);
-
-  const renderOptions = () => {
-    if (!productDetail?.options?.length) {
-      return (
-        <p className="rounded-2xl border border-dashed border-[var(--color-text)]/20 bg-[var(--color-primary)] px-4 py-5 text-sm text-[var(--color-text)]/70">
-          옵션이 없는 단일 상품입니다.
-        </p>
-      );
-    }
-
-    const options = productDetail.options;
-    const hasManyOptions = options.length > 6;
-    const currentOption =
-      options.find((option) => option.id === selectedOptionId) ?? null;
-
-    if (hasManyOptions) {
-      return (
-        <div className="space-y-4">
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-[var(--color-text)]">옵션 선택</label>
-            <select
-              className="select select-bordered w-full bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-gold)]"
-              value={selectedOptionId ?? ''}
-              onChange={(event) => {
-                const value = event.target.value;
-                setSelectedOptionId(value ? Number(value) : null);
-              }}
-            >
-              <option value="">옵션을 선택해 주세요</option>
-              {options.map((option) => {
-                const priceSuffix =
-                  option.additional_price && option.additional_price > 0
-                    ? ` (+₩${option.additional_price.toLocaleString('ko-KR')})`
-                    : '';
-                return (
-                  <option key={option.id} value={option.id}>
-                    {option.name} {option.value} {priceSuffix}
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-
-          {currentOption ? (
-            <div className="rounded-2xl border border-[var(--color-gold)]/30 bg-[var(--color-gold)]/5 p-4 text-sm text-[var(--color-text)]/80">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="font-semibold text-[var(--color-text)]">
-                  {currentOption.name} {currentOption.value}
-                </p>
-                <span className="rounded-full bg-[var(--color-gold)]/10 px-3 py-1 text-xs font-medium text-[var(--color-gold)]">
-                  추가 금액{' '}
-                  {currentOption.additional_price && currentOption.additional_price > 0
-                    ? `+₩${currentOption.additional_price.toLocaleString('ko-KR')}`
-                    : '없음'}
-                </span>
-              </div>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <p className="rounded-xl bg-[var(--color-primary)] px-3 py-2 text-xs text-[var(--color-text)]/70 border border-[var(--color-text)]/10">
-                  재고{' '}
-                  {currentOption.stock_quantity !== undefined
-                    ? `${currentOption.stock_quantity}개`
-                    : '정보 없음'}
-                </p>
-                <p className="rounded-xl bg-[var(--color-primary)] px-3 py-2 text-xs text-[var(--color-text)]/70 border border-[var(--color-text)]/10">
-                  기본 옵션 여부 {currentOption.is_default ? '예' : '아니요'}
-                </p>
-              </div>
-            </div>
-          ) : (
-            <p className="text-xs text-[var(--color-text)]/60">
-              사용할 옵션을 선택해 주세요. 옵션별 추가 금액과 재고를 확인할 수 있습니다.
-            </p>
-          )}
-        </div>
-      );
-    }
-
-    return (
-      <div className="grid gap-3 sm:grid-cols-2">
-        {options.map((option) => {
-          const hasAdditionalPrice =
-            option.additional_price && option.additional_price > 0;
-
-          const additionalText = hasAdditionalPrice
-            ? `+₩${option.additional_price.toLocaleString('ko-KR')}`
-            : '추가 금액 없음';
-
-          const stockText =
-            option.stock_quantity !== undefined
-              ? `재고 ${option.stock_quantity}개`
-              : '재고 정보 없음';
-
-          const isSelected = selectedOptionId === option.id;
-
-          return (
-            <label
-              key={option.id}
-              className={`group flex cursor-pointer flex-col gap-3 rounded-2xl border p-4 transition-all ${
-                isSelected
-                  ? 'border-[var(--color-gold)] bg-[var(--color-gold)]/10 shadow-sm'
-                  : 'border-[var(--color-text)]/20 hover:border-[var(--color-gold)]/60 hover:bg-[var(--color-secondary)]/40'
-              }`}
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-[var(--color-text)]">
-                    {option.name} {option.value}
-                  </p>
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--color-text)]/60">
-                    <span className="rounded-full px-3 py-1 font-medium bg-[var(--color-gold)]/10 text-[var(--color-gold)]">
-                      {additionalText}
-                    </span>
-                    <span>{stockText}</span>
-                  </div>
-                </div>
-                <input
-                  type="radio"
-                  name="product-option"
-                  className="radio border-[var(--color-gold)] checked:bg-[var(--color-gold)]"
-                  checked={isSelected}
-                  onChange={() => setSelectedOptionId(option.id)}
-                />
-              </div>
-            </label>
-          );
-        })}
-      </div>
-    );
-  };
-
 
   const handleQuantityChange = (value: number) => {
     if (Number.isNaN(value) || value < 1) return;
@@ -457,8 +334,8 @@ export default function ProductDetailPage() {
                           {productDetail.name}
                         </h1>
                       </div>
-                      <div className="shrink-0 rounded-full bg-[var(--color-gold)]/10 px-4 py-2 text-xl font-semibold text-[var(--color-gold)]">
-                        {formatCurrency(productDetail.price)}
+                      <div className="shrink-0 rounded-full bg-[var(--color-gold)]/10 px-4 py-2">
+                        <PriceDisplay price={productDetail.price} size="xl" />
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--color-text)]/70">
@@ -483,24 +360,42 @@ export default function ProductDetailPage() {
                   </div>
                 </section>
 
-                <section className="rounded-3xl border border-[var(--color-text)]/10 bg-[var(--color-secondary)] p-6 shadow-sm">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h2 className="text-lg font-semibold text-[var(--color-text)]">
+                {/* 옵션 선택 섹션 - 강조 스타일 */}
+                <section className={`rounded-3xl border-2 border-[var(--color-gold)] bg-gradient-to-br from-[var(--color-gold)]/10 to-transparent p-6 shadow-md ${shouldShake ? 'animate-shake' : ''}`}>
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <h2 className="text-xl font-bold text-[var(--color-text)] flex items-center gap-2">
                       구매 옵션
+                      {productDetail.options && productDetail.options.length > 0 && (
+                        <span className="text-error text-2xl">*</span>
+                      )}
                     </h2>
-                    <span className="badge badge-sm badge-outline border-[var(--color-gold)] text-[var(--color-gold)] text-xs">
-                      {productDetail.options?.length ? '옵션 선택 필수' : '단일 상품'}
-                    </span>
+                    {productDetail.options && productDetail.options.length > 0 && (
+                      <span className="badge badge-lg badge-error gap-1.5 font-semibold">
+                        <AlertTriangle className="w-4 h-4" />
+                        필수 선택
+                      </span>
+                    )}
                   </div>
-                  <div className="mt-4">{renderOptions()}</div>
+                  <OptionSelector
+                    options={productDetail.options}
+                    selectedOptionId={selectedOptionId}
+                    onOptionChange={setSelectedOptionId}
+                  />
                   {optionError && (
-                    <p className="mt-3 text-sm text-error">{optionError}</p>
+                    <div role="alert" className="alert alert-error mt-4 shadow-lg">
+                      <AlertTriangle className="w-5 h-5" />
+                      <div>
+                        <h3 className="font-bold">옵션을 선택해주세요</h3>
+                        <div className="text-sm">{optionError}</div>
+                      </div>
+                    </div>
                   )}
                 </section>
 
-                <section className="rounded-3xl border border-[var(--color-text)]/10 bg-[var(--color-secondary)] p-6 shadow-sm">
-                  <div className="flex flex-col gap-6">
-                    <div className="flex flex-wrap items-center justify-between gap-4">
+                {/* 수량 선택 및 CTA 버튼 - 모바일에서 Sticky */}
+                <section className="rounded-3xl border border-[var(--color-text)]/10 bg-[var(--color-secondary)] shadow-sm lg:p-6 lg:static lg:border-[var(--color-text)]/10">
+                  <div className="flex flex-col gap-6 lg:block">
+                    <div className="flex flex-wrap items-center justify-between gap-4 p-6 lg:p-0 lg:mb-6">
                       <h2 className="text-lg font-semibold text-[var(--color-text)]">구매 수량</h2>
                       <QuantitySelector
                         quantity={quantity}
@@ -511,188 +406,108 @@ export default function ProductDetailPage() {
                     </div>
 
                     {feedbackMessage && (
-                      <div className="rounded-2xl border border-error/40 bg-error/10 px-4 py-3 text-sm text-error">
+                      <div className="rounded-2xl border border-error/40 bg-error/10 px-4 py-3 text-sm text-error mx-6 lg:mx-0 lg:mb-6">
                         {feedbackMessage}
                       </div>
                     )}
 
                     {productDetail.stock_quantity === 0 && (
-                      <div className="rounded-2xl border border-error/40 bg-error/10 px-4 py-3 text-sm text-error font-semibold text-center">
+                      <div className="rounded-2xl border border-error/40 bg-error/10 px-4 py-3 text-sm text-error font-semibold text-center mx-6 lg:mx-0 lg:mb-6">
                         죄송합니다. 이 상품은 현재 품절되었습니다.
                       </div>
                     )}
 
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <Button
-                        block
-                        size="lg"
-                        className="gap-2 sm:gap-3"
-                        loading={isAddingToCart}
-                        onClick={handleAddToCart}
-                        disabled={productDetail.stock_quantity === 0}
-                      >
-                        <ShoppingCart className="h-5 w-5" />
-                        {productDetail.stock_quantity === 0 ? '품절' : '장바구니 담기'}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="lg"
-                        block
-                        onClick={handleBuyNow}
-                        disabled={productDetail.stock_quantity === 0}
-                      >
-                        <CreditCard className="h-5 w-5" />
-                        {productDetail.stock_quantity === 0 ? '품절' : '바로 구매'}
-                      </Button>
-                    </div>
-                  </div>
-                </section>
-
-                <section className="rounded-3xl border border-[var(--color-text)]/10 bg-[var(--color-secondary)] p-6 shadow-sm">
-                  <div className="flex items-center justify-between gap-3">
-                    <h2 className="flex items-center gap-2 text-lg font-semibold text-[var(--color-text)]">
-                      <StoreIcon className="h-5 w-5 text-[var(--color-gold)]" />
-                      매장 정보
-                    </h2>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsStoreInfoOpen((prev) => !prev)}
-                      aria-expanded={isStoreInfoOpen}
-                      aria-controls="product-store-info"
-                    >
-                      {isStoreInfoOpen ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                  {isStoreInfoOpen && (
-                    <div
-                      id="product-store-info"
-                      className="mt-4 space-y-4"
-                    >
+                    {/* CTA 버튼 - 모바일에서 sticky bottom */}
+                    <div className="sticky bottom-0 bg-[var(--color-secondary)] p-4 border-t border-[var(--color-text)]/10 lg:static lg:border-none lg:p-0 shadow-[0_-4px_12px_rgba(0,0,0,0.1)] lg:shadow-none">
                       <div className="grid gap-3 sm:grid-cols-2">
-                        <div className="flex items-start gap-3 rounded-2xl bg-[var(--color-primary)] px-4 py-3">
-                          <div className="rounded-full bg-[var(--color-gold)]/10 p-2 text-[var(--color-gold)]">
-                            <StoreIcon className="h-4 w-4" />
-                          </div>
-                          <div className="text-sm">
-                            <p className="font-semibold text-[var(--color-text)]">매장명</p>
-                            {productDetail.store?.id ? (
-                              <Link
-                                to={`/stores/${productDetail.store.id}`}
-                                className="text-[var(--color-gold)] hover:underline text-base font-medium"
-                              >
-                                {productDetail.store.name}
-                              </Link>
-                            ) : (
-                              <p className="text-[var(--color-text)]/70">정보 없음</p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-3 rounded-2xl bg-[var(--color-primary)] px-4 py-3">
-                          <div className="rounded-full bg-[var(--color-gold)]/10 p-2 text-[var(--color-gold)]">
-                            <MapPin className="h-4 w-4" />
-                          </div>
-                          <div className="text-sm">
-                            <p className="font-semibold text-[var(--color-text)]">위치</p>
-                            <p className="text-[var(--color-gold)]">
-                              {uiProduct?.storeLocation ?? '지역 정보 없음'}
-                            </p>
-                          </div>
-                        </div>
-                        {productDetail.store?.phone_number && (
-                          <div className="flex items-start gap-3 rounded-2xl bg-[var(--color-primary)] px-4 py-3 sm:col-span-2">
-                            <div className="rounded-full bg-[var(--color-gold)]/10 p-2 text-[var(--color-gold)]">
-                              <Phone className="h-4 w-4" />
-                            </div>
-                            <div className="text-sm">
-                              <p className="font-semibold text-[var(--color-text)]">연락처</p>
-                              <a
-                                href={`tel:${productDetail.store.phone_number}`}
-                                className="text-[var(--color-gold)] hover:underline"
-                              >
-                                {productDetail.store.phone_number}
-                              </a>
-                            </div>
-                          </div>
-                        )}
+                        <Button
+                          block
+                          size="lg"
+                          className="gap-2 sm:gap-3"
+                          loading={isAddingToCart}
+                          onClick={handleAddToCart}
+                          disabled={productDetail.stock_quantity === 0}
+                        >
+                          <ShoppingCart className="h-5 w-5" />
+                          {productDetail.stock_quantity === 0 ? '품절' : '장바구니 담기'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          block
+                          onClick={handleBuyNow}
+                          disabled={productDetail.stock_quantity === 0}
+                        >
+                          <CreditCard className="h-5 w-5" />
+                          {productDetail.stock_quantity === 0 ? '품절' : '바로 구매'}
+                        </Button>
                       </div>
                     </div>
-                  )}
+                  </div>
                 </section>
 
+                {/* 매장 정보 - 항상 펼쳐진 상태 */}
                 <section className="rounded-3xl border border-[var(--color-text)]/10 bg-[var(--color-secondary)] p-6 shadow-sm">
-                  <div className="flex items-center justify-between gap-3">
-                    <h2 className="flex items-center gap-2 text-lg font-semibold text-[var(--color-text)]">
-                      <CircleDollarSign className="h-5 w-5 text-[var(--color-gold)]" />
-                      상품 정보
-                    </h2>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsDescriptionOpen((prev) => !prev)}
-                      aria-expanded={isDescriptionOpen}
-                      aria-controls="product-description"
-                    >
-                      {isDescriptionOpen ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                    </Button>
+                  <h2 className="flex items-center gap-2 text-xl font-bold text-[var(--color-text)] mb-4">
+                    <StoreIcon className="h-5 w-5 text-[var(--color-gold)]" />
+                    매장 안내
+                  </h2>
+                  <StoreInfoCard store={productDetail.store} storeLocation={uiProduct?.storeLocation} />
+                </section>
+
+                {/* 상품 상세 정보 - 항상 펼쳐진 상태 */}
+                <section className="rounded-3xl border border-[var(--color-text)]/10 bg-[var(--color-secondary)] p-6 shadow-sm">
+                  <h2 className="flex items-center gap-2 text-xl font-bold text-[var(--color-text)] mb-4">
+                    <CircleDollarSign className="h-5 w-5 text-[var(--color-gold)]" />
+                    상품 상세
+                  </h2>
+                  <div className="prose max-w-none">
+                    <p className="whitespace-pre-line text-sm leading-7 text-[var(--color-text)]/70">
+                      {productDetail.description
+                        ? productDetail.description
+                        : '등록된 상품 설명이 없습니다.'}
+                    </p>
                   </div>
-                  {isDescriptionOpen && (
-                    <div id="product-description">
-                      <p className="mt-3 whitespace-pre-line text-sm leading-7 text-[var(--color-text)]/70">
-                        {productDetail.description
-                          ? productDetail.description
-                          : '등록된 상품 설명이 없습니다.'}
-                      </p>
-                      <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                        {productDetail.material && (
-                          <div className="rounded-2xl bg-[var(--color-primary)] px-4 py-3 border border-[var(--color-text)]/10">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text)]/60">
-                              소재
-                            </span>
-                            <p className="mt-1 text-sm text-[var(--color-text)]">
-                              {productDetail.material}
-                            </p>
-                          </div>
-                        )}
-                        {productDetail.weight && (
-                          <div className="rounded-2xl bg-[var(--color-primary)] px-4 py-3 border border-[var(--color-text)]/10">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text)]/60">
-                              중량
-                            </span>
-                            <p className="mt-1 text-sm text-[var(--color-text)]">
-                              {productDetail.weight}g
-                            </p>
-                          </div>
-                        )}
-                        {productDetail.purity && (
-                          <div className="rounded-2xl bg-[var(--color-primary)] px-4 py-3 border border-[var(--color-text)]/10">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text)]/60">
-                              순도
-                            </span>
-                            <p className="mt-1 text-sm text-[var(--color-text)]">
-                              {productDetail.purity}
-                            </p>
-                          </div>
-                        )}
-                        <div className="rounded-2xl bg-[var(--color-primary)] px-4 py-3 border border-[var(--color-text)]/10">
-                          <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text)]/60">
-                            재고
-                          </span>
-                          <p className="mt-1 text-sm text-[var(--color-text)]">
-                            {productDetail.stock_quantity ?? 0}개
-                          </p>
-                        </div>
+                  <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                    {productDetail.material && (
+                      <div className="rounded-2xl bg-[var(--color-primary)] px-4 py-3 border border-[var(--color-text)]/10">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text)]/60">
+                          소재
+                        </span>
+                        <p className="mt-1 text-sm text-[var(--color-text)]">
+                          {productDetail.material}
+                        </p>
                       </div>
+                    )}
+                    {productDetail.weight && (
+                      <div className="rounded-2xl bg-[var(--color-primary)] px-4 py-3 border border-[var(--color-text)]/10">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text)]/60">
+                          중량
+                        </span>
+                        <p className="mt-1 text-sm text-[var(--color-text)]">
+                          {productDetail.weight}g
+                        </p>
+                      </div>
+                    )}
+                    {productDetail.purity && (
+                      <div className="rounded-2xl bg-[var(--color-primary)] px-4 py-3 border border-[var(--color-text)]/10">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text)]/60">
+                          순도
+                        </span>
+                        <p className="mt-1 text-sm text-[var(--color-text)]">
+                          {productDetail.purity}
+                        </p>
+                      </div>
+                    )}
+                    <div className="rounded-2xl bg-[var(--color-primary)] px-4 py-3 border border-[var(--color-text)]/10">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text)]/60">
+                        재고
+                      </span>
+                      <p className="mt-1 text-sm text-[var(--color-text)]">
+                        {productDetail.stock_quantity ?? 0}개
+                      </p>
                     </div>
-                  )}
+                  </div>
                 </section>
               </div>
             </div>

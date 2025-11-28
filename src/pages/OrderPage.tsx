@@ -628,12 +628,12 @@ export default function OrderPage() {
             })}
           </div>
 
-          <div className="mb-8 pb-6 border-b border-[var(--color-text)]/10">
+          <div className="mb-8 pb-6 border-b-2 border-[var(--color-gold)]/20">
             <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <span className="badge badge-outline border-[var(--color-gold)] text-[var(--color-gold)]">Order</span>
-                <h1 className="mt-2 text-3xl font-bold text-[var(--color-text)]">주문</h1>
-                <p className="text-sm text-[var(--color-text)]/70">
+              <div className="space-y-2">
+                <span className="badge badge-lg border-2 border-[var(--color-gold)] text-[var(--color-gold)] bg-[var(--color-gold)]/10 font-semibold">Order</span>
+                <h1 className="text-4xl font-bold text-[var(--color-text)]">주문서 작성</h1>
+                <p className="text-base text-[var(--color-text)]/70">
                   선택한 상품 정보를 확인하고 배송 또는 픽업 정보를 입력하세요.
                 </p>
               </div>
@@ -654,12 +654,12 @@ export default function OrderPage() {
           )}
 
           {!directPurchase && !selectedItemIds?.length && showNoSelectionAlert && (
-            <div className="alert alert-info mb-6">
-              <Info className="h-5 w-5" />
-              <span>장바구니에서 선택한 상품 정보가 없어 전체 상품을 불러왔습니다.</span>
+            <div className="alert bg-info/10 border-2 border-info/30 mb-6 animate-fade-in">
+              <Info className="h-5 w-5 text-info" />
+              <span className="text-[var(--color-text)]">장바구니에서 선택한 상품 정보가 없어 전체 상품을 불러왔습니다.</span>
               <button
                 type="button"
-                className="btn btn-ghost btn-sm btn-circle ml-auto"
+                className="btn btn-ghost btn-sm btn-circle ml-auto hover:bg-info/20"
                 onClick={() => setShowNoSelectionAlert(false)}
                 aria-label="알림 닫기"
               >
@@ -669,12 +669,12 @@ export default function OrderPage() {
           )}
 
           {directPurchase && showDirectPurchaseAlert && (
-            <div className="alert alert-success mb-6">
-              <Info className="h-5 w-5" />
-              <span>바로구매 상품입니다. 배송 정보를 입력하고 결제를 진행하세요.</span>
+            <div className="alert bg-success/10 border-2 border-success/30 mb-6 animate-fade-in">
+              <Info className="h-5 w-5 text-success" />
+              <span className="text-[var(--color-text)]">바로구매 상품입니다. 배송 정보를 입력하고 결제를 진행하세요.</span>
               <button
                 type="button"
-                className="btn btn-ghost btn-sm btn-circle ml-auto"
+                className="btn btn-ghost btn-sm btn-circle ml-auto hover:bg-success/20"
                 onClick={() => setShowDirectPurchaseAlert(false)}
                 aria-label="알림 닫기"
               >
@@ -684,9 +684,9 @@ export default function OrderPage() {
           )}
 
           {missingSelectionCount > 0 && (
-            <div className="alert alert-warning mb-6">
-              <AlertTriangle className="h-5 w-5" />
-              <span>
+            <div className="alert bg-warning/10 border-2 border-warning/30 mb-6 animate-shake">
+              <AlertTriangle className="h-5 w-5 text-warning" />
+              <span className="text-[var(--color-text)]">
                 선택했던 상품 {missingSelectionCount}개를 찾을 수 없습니다. 장바구니 정보를
                 새로고침해주세요.
               </span>
@@ -694,15 +694,15 @@ export default function OrderPage() {
           )}
 
           {lowStockItems.length > 0 && showLowStockAlert && (
-            <div className="alert alert-info mb-6">
-              <Info className="h-5 w-5" />
-              <span>
-                {lowStockItems.map((item) => item.product.name).join(', ')} 상품의 재고가 얼마 남지
+            <div className="alert bg-warning/10 border-2 border-warning/30 mb-6 animate-fade-in">
+              <Info className="h-5 w-5 text-warning" />
+              <span className="text-[var(--color-text)]">
+                <strong className="font-semibold">{lowStockItems.map((item) => item.product.name).join(', ')}</strong> 상품의 재고가 얼마 남지
                 않았습니다.
               </span>
               <button
                 type="button"
-                className="btn btn-ghost btn-sm btn-circle ml-auto"
+                className="btn btn-ghost btn-sm btn-circle ml-auto hover:bg-warning/20"
                 onClick={() => setShowLowStockAlert(false)}
                 aria-label="알림 닫기"
               >
@@ -712,9 +712,9 @@ export default function OrderPage() {
           )}
 
           {hasInsufficientStock && (
-            <div className="alert alert-error mb-6">
-              <AlertTriangle className="h-5 w-5" />
-              <span>일부 상품 수량이 재고보다 많습니다. 수량을 조정해주세요.</span>
+            <div className="alert bg-error/10 border-2 border-error/30 mb-6 animate-shake">
+              <AlertTriangle className="h-5 w-5 text-error" />
+              <span className="text-[var(--color-text)] font-semibold">일부 상품 수량이 재고보다 많습니다. 수량을 조정해주세요.</span>
             </div>
           )}
 
@@ -729,20 +729,23 @@ export default function OrderPage() {
           )}
 
           {addressesError && (
-            <div className="alert alert-warning mb-6">
-              <AlertTriangle className="h-5 w-5" />
-              <div>
+            <div className="alert bg-warning/10 border-2 border-warning/30 mb-6">
+              <AlertTriangle className="h-5 w-5 text-warning" />
+              <div className="text-[var(--color-text)]">
                 <p className="font-semibold">저장된 배송지를 불러오지 못했습니다</p>
-                <p className="text-sm">{addressesError.message}</p>
-                <p className="text-xs mt-1">직접 입력하거나 나중에 다시 시도해주세요.</p>
+                <p className="text-sm text-[var(--color-text)]/70">{addressesError.message}</p>
+                <p className="text-xs text-[var(--color-text)]/60 mt-1">직접 입력하거나 나중에 다시 시도해주세요.</p>
               </div>
             </div>
           )}
 
           {isAddressesLoading && (
-            <div className="alert alert-info mb-6">
-              <Info className="h-5 w-5" />
-              <span>저장된 배송지 정보를 불러오는 중...</span>
+            <div className="alert bg-info/10 border-2 border-info/30 mb-6">
+              <Info className="h-5 w-5 text-info" />
+              <span className="text-[var(--color-text)] flex items-center gap-2">
+                <span className="loading loading-spinner loading-sm"></span>
+                저장된 배송지 정보를 불러오는 중...
+              </span>
             </div>
           )}
 
@@ -833,22 +836,23 @@ export default function OrderPage() {
 
       {/* Mobile CTA (Fixed Bottom Bar) */}
       {orderItems.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 border-t border-[var(--color-text)]/10 bg-[var(--color-primary)] px-4 py-4 md:hidden backdrop-blur-sm z-50">
-          <div className="mx-auto flex max-w-4xl items-center justify-between">
+        <div className="fixed bottom-0 left-0 right-0 border-t-2 border-[var(--color-gold)]/30 bg-gradient-to-t from-[var(--color-gold)]/5 to-[var(--color-primary)] px-4 py-4 md:hidden backdrop-blur-md z-50 shadow-[0_-4px_12px_rgba(0,0,0,0.1)]">
+          <div className="mx-auto flex max-w-4xl items-center justify-between gap-4">
             <div>
-              <p className="text-xs text-[var(--color-text)]/60">총 결제금액</p>
-              <p className="text-xl font-bold text-[var(--color-text)]">
+              <p className="text-xs text-[var(--color-text)]/60 mb-1">총 결제금액</p>
+              <p className="text-2xl font-bold text-[var(--color-gold)]">
                 {formatCurrency(totalDue)}
               </p>
             </div>
             <button
               type="button"
-              className={`btn btn-sm min-w-[140px] ${isCTAEnabled
+              className={`btn btn-md min-w-[140px] ${isCTAEnabled
                   ? 'bg-[var(--color-gold)] hover:bg-[var(--color-gold)]/80 text-[var(--color-primary)] border-[var(--color-gold)]'
                   : 'btn-disabled'
                 }`}
               onClick={handleProceedToPayment}
               disabled={!isCTAEnabled || isSubmittingOrder}
+              aria-label="결제 페이지로 이동"
             >
               {isSubmittingOrder ? (
                 <>
@@ -856,7 +860,7 @@ export default function OrderPage() {
                   처리 중
                 </>
               ) : (
-                '결제하기로 이동'
+                '결제하기'
               )}
             </button>
           </div>

@@ -48,18 +48,18 @@ export function PopularProductsCarousel({
 
   return (
     <section
-      className="py-8"
+      className="py-6"
       style={{
         background: `linear-gradient(to bottom, var(--color-secondary), var(--color-primary))`,
       }}
     >
       {isLoading ? (
         <div className="container mx-auto px-4">
-          <div className="skeleton h-96 w-full rounded-3xl bg-[var(--color-secondary)]"></div>
+          <div className="skeleton h-64 w-full rounded-3xl bg-[var(--color-secondary)]"></div>
         </div>
       ) : (
         <div className="container mx-auto px-4">
-          <div className="group relative h-96 w-full overflow-hidden rounded-3xl bg-[var(--color-primary)] shadow-2xl">
+          <div className="group relative h-64 w-full overflow-hidden rounded-3xl bg-[var(--color-primary)] shadow-2xl">
             <div
               className="flex h-full transition-transform duration-500 ease-in-out"
               style={{ transform: `translateX(-${currentSlide * 100}%)` }}
@@ -70,7 +70,7 @@ export function PopularProductsCarousel({
                   to={`/products/${product.id}`}
                   className="block h-full w-full flex-shrink-0"
                 >
-                  <div className="card card-side h-96 w-full cursor-pointer bg-[var(--color-primary)] transition-transform hover:scale-[1.01]">
+                  <div className="card card-side h-64 w-full cursor-pointer bg-[var(--color-primary)] transition-transform hover:scale-[1.01]">
                     <figure className="w-1/2">
                       <FallbackImage
                         src={product.imageUrl}
@@ -78,19 +78,19 @@ export function PopularProductsCarousel({
                         className="h-full w-full object-cover"
                       />
                     </figure>
-                    <div className="card-body w-1/2 justify-center p-10">
-                      <div className="space-y-4">
-                        <div className="badge border-[var(--color-gold)] bg-[var(--color-gold)] text-[var(--color-primary)]">
+                    <div className="card-body w-1/2 justify-center p-6">
+                      <div className="space-y-2">
+                        <div className="badge badge-sm border-[var(--color-gold)] bg-[var(--color-gold)] text-[var(--color-primary)]">
                           인기
                         </div>
-                        <h3 className="line-clamp-2 text-3xl font-bold text-[var(--color-text)]">
+                        <h3 className="line-clamp-2 text-2xl font-bold text-[var(--color-text)]">
                           {product.name}
                         </h3>
-                        <p className="text-base text-[var(--color-text)]/70">
+                        <p className="text-sm text-[var(--color-text)]/70">
                           {product.storeName && `${product.storeName} · `}
                           {MOCK_CATEGORIES.find((c) => c.id === product.categoryId)?.name}
                         </p>
-                        <p className="text-4xl font-bold text-[var(--color-gold)]">
+                        <p className="text-3xl font-bold text-[var(--color-gold)]">
                           {product.price.toLocaleString()}원
                         </p>
                       </div>

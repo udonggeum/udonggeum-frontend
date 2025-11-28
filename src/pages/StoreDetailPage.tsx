@@ -70,7 +70,6 @@ export default function StoreDetailPage() {
     page_size: 24,
   });
 
-  const categoryCounts = storeSummary?.categoryCounts ?? [];
   const totalProductCount = storeProductsData?.count ?? storeSummary?.productCount;
 
   const products: Product[] = useMemo(() => {
@@ -224,21 +223,7 @@ export default function StoreDetailPage() {
                   </p>
                 </div>
 
-                {categoryCounts.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {categoryCounts.map((category) => (
-                      <span
-                        key={category.id}
-                        className="badge badge-lg gap-2 bg-[var(--color-gold)]/10 border-[var(--color-gold)] text-[var(--color-gold)] shadow-sm"
-                      >
-                        {category.name}
-                        <span className="text-sm font-semibold">
-                          {category.count.toLocaleString('ko-KR')}개
-                        </span>
-                      </span>
-                    ))}
-                  </div>
-                )}
+                {/* 카테고리별 상품 개수 표시 제거 - 전체 개수만 아래에 표시 */}
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="rounded-2xl bg-[var(--color-primary)] p-5 shadow-sm border border-[var(--color-text)]/10">
@@ -301,19 +286,16 @@ export default function StoreDetailPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  {sanitizedPhone ? (
+                  {/* 전화 연결 버튼 - 모바일에서만 표시 */}
+                  {sanitizedPhone && (
                     <a
                       href={`tel:${sanitizedPhone}`}
-                      className="btn bg-[var(--color-gold)] hover:bg-[var(--color-gold)]/80 text-[var(--color-primary)] border-[var(--color-gold)]"
+                      className="btn bg-[var(--color-gold)] hover:bg-[var(--color-gold)]/80 text-[var(--color-primary)] border-[var(--color-gold)] md:hidden"
                       aria-label={`${storeSummary.name}에 전화하기`}
                     >
                       <Phone className="h-5 w-5" />
                       전화 연결
                     </a>
-                  ) : (
-                    <Button variant="ghost" className="border-[var(--color-text)]/20 text-[var(--color-text)]/50" disabled>
-                      연락처 정보 준비 중
-                    </Button>
                   )}
 
                   {mapUrl ? (
