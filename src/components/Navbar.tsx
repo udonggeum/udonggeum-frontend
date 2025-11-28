@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { LogIn, User, Moon, Sun, Settings, LogOut, LayoutDashboard, Home } from 'lucide-react';
+import { LogIn, User, Moon, Sun, Settings, LogOut, LayoutDashboard } from 'lucide-react';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useThemeStore } from '../stores/useThemeStore';
 import { useCart, useLogout } from '@/hooks/queries';
@@ -134,7 +134,11 @@ export default function Navbar({ navigationItems }: NavbarProps) {
           className="btn btn-ghost text-xl font-bold normal-case hover:bg-transparent flex items-center gap-2"
           aria-label="홈으로 이동"
         >
-          <Home className="w-6 h-6 text-[var(--color-gold)]" />
+          <img
+            src="/images/samll-icon.png"
+            alt="우동금 로고"
+            className="w-8 h-8"
+          />
           <span className="text-[var(--color-gold)]">우동금</span>
         </Link>
       </div>
