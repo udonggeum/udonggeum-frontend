@@ -23,7 +23,6 @@ import { useAuthStore } from '@/stores/useAuthStore';
 import {
   apiCategoryToUICategory,
   transformProductsFromAPI,
-  uiCategoryToAPICategory,
 } from '@/utils/apiAdapters';
 import { adaptFiltersToCategories, getMaterialLabel } from '@/utils/filterAdapters';
 import { MOCK_CATEGORIES } from '@/constants/mockData';
