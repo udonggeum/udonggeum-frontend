@@ -91,8 +91,8 @@ docker-clean: docker-stop
 # Build and push to GitHub Container Registry
 pushall:
 	@echo "Building and pushing Docker image to GHCR..."
-	@docker build -t ghcr.io/udonggeum/udonggeum-frontend:latest-test .
-	@docker push ghcr.io/udonggeum/udonggeum-frontend:latest-test
+	@docker build -t ghcr.io/udonggeum/udonggeum-frontend:latest .
+	@docker push ghcr.io/udonggeum/udonggeum-frontend:latest
 	@echo "Push complete!"
 
 # Docker Compose: Start all services
