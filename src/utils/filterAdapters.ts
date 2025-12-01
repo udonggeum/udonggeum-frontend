@@ -10,6 +10,29 @@ const CATEGORY_LABELS: Record<string, string> = {
   necklace: '목걸이',
   earring: '귀걸이',
   other: '기타',
+  // Korean to English mapping
+  반지: '반지',
+  팔찌: '팔찌',
+  목걸이: '목걸이',
+  귀걸이: '귀걸이',
+  기타: '기타',
+};
+
+/**
+ * Map Korean category names to English IDs
+ */
+const CATEGORY_TO_ID: Record<string, string> = {
+  반지: 'rings',
+  팔찌: 'bracelets',
+  목걸이: 'necklaces',
+  귀걸이: 'earrings',
+  기타: 'anklets',
+  // English names (from backend)
+  ring: 'rings',
+  bracelet: 'bracelets',
+  necklace: 'necklaces',
+  earring: 'earrings',
+  other: 'anklets',
 };
 
 /**
@@ -19,6 +42,10 @@ const MATERIAL_LABELS: Record<string, string> = {
   gold: '골드',
   silver: '실버',
   other: '기타',
+  // Korean values from backend
+  금: '금',
+  은: '은',
+  기타: '기타',
 };
 
 /**
@@ -50,11 +77,17 @@ export function adaptFiltersToCategories(
   filters: ProductFiltersResponse
 ): ProductCategory[] {
   return filters.categories
-    .map((categoryId) => ({
-      id: categoryId,
-      name: CATEGORY_LABELS[categoryId] || categoryId,
-      displayOrder: CATEGORY_ORDER[categoryId] || 99,
-    }))
+    .map((backendCategoryId) => {
+      // Convert backend ID (Korean or English) to UI ID (English)
+      const uiId = CATEGORY_TO_ID[backendCategoryId] || backendCategoryId;
+      const koreanName = CATEGORY_LABELS[backendCategoryId] || backendCategoryId;
+
+      return {
+        id: uiId, // Use English ID for consistency with product data
+        name: koreanName, // Display Korean name in UI
+        displayOrder: CATEGORY_ORDER[backendCategoryId] || CATEGORY_ORDER[uiId] || 99,
+      };
+    })
     .sort((a, b) => a.displayOrder - b.displayOrder);
 }
 

@@ -172,6 +172,7 @@ export default function ProductsPage() {
       const apiProductsMap = new Map(apiProducts.map(p => [p.id.toString(), p]));
       filtered = filtered.filter((product) => {
         const apiProduct = apiProductsMap.get(product.id);
+        // Exact match since backend returns "금", "은", "기타"
         return apiProduct?.material === selectedMaterialId;
       });
     }
