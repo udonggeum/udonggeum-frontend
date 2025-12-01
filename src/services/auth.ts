@@ -105,11 +105,14 @@ class AuthService {
 
   /**
    * Logout user
-   * Optional backend cleanup - clears auth state
+   * Revokes refresh token on backend and clears auth state
+   * @param refreshToken - Refresh token to revoke
    */
-  async logout(): Promise<void> {
+  async logout(refreshToken: string): Promise<void> {
     try {
-      await apiClient.post(ENDPOINTS.AUTH.LOGOUT);
+      await apiClient.post(ENDPOINTS.AUTH.LOGOUT, {
+        refresh_token: refreshToken,
+      });
     } catch (error) {
       // Logout should succeed even if backend call fails
       // Client-side state will be cleared regardless

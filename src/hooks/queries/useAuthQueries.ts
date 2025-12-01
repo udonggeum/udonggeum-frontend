@@ -102,18 +102,24 @@ export function useMe() {
 
 /**
  * useLogout mutation
- * Clears auth store and invalidates all queries
+ * Revokes refresh token on backend and clears auth store
  *
  * @example
  * const { mutate: logout } = useLogout();
  * logout();
  */
 export function useLogout() {
+  const tokens = useAuthStore((state) => state.tokens);
   const clearAuth = useAuthStore((state) => state.clearAuth);
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => authService.logout(),
+    mutationFn: async () => {
+      // Send refresh token to backend for revocation
+      if (tokens?.refresh_token) {
+        await authService.logout(tokens.refresh_token);
+      }
+    },
     onSuccess: () => {
       // Clear auth store
       clearAuth();
