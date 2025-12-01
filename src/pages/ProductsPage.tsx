@@ -119,6 +119,8 @@ export default function ProductsPage() {
 
   const selectedRegion = regionOptions.find((region) => region.id === selectedRegionId);
 
+  // Fetch all products with only region and sort filters (no category/material filter)
+  // Use large page_size to get all products for client-side filtering
   const {
     data: productsData,
     isLoading,
@@ -126,22 +128,19 @@ export default function ProductsPage() {
     refetch,
     isFetching,
   } = useProducts({
-    page: currentPage,
-    page_size: PAGE_SIZE,
-    category: uiCategoryToAPICategory(selectedCategoryId),
-    material: selectedMaterialId || undefined,
+    page: 1,
+    page_size: 1000, // Large page size for client-side filtering
     sort: selectedSort,
     region: selectedRegion?.region,
     district: selectedRegion?.district,
     include_options: true,
   });
 
-  // Fetch popular products for the selected category
+  // Fetch popular products (no category filter, will filter client-side)
   const { data: popularProductsData, isLoading: isLoadingPopular } = usePopularProducts({
-    category: uiCategoryToAPICategory(selectedCategoryId),
     region: selectedRegion?.region,
     district: selectedRegion?.district,
-    page_size: 4,
+    page_size: 10, // Get more since we'll filter client-side
   });
 
   // Store API products for cart modal (keeps original structure with options)
@@ -152,30 +151,64 @@ export default function ProductsPage() {
   );
 
   // Transform to UI products for display
-  const products: Product[] = useMemo(() => {
+  const allProducts: Product[] = useMemo(() => {
     if (!productsData) {
       return [];
     }
     return transformProductsFromAPI(productsData.products);
   }, [productsData]);
 
+  // Client-side filtering by category and material
+  const products: Product[] = useMemo(() => {
+    let filtered = [...allProducts];
+
+    // Filter by category
+    if (selectedCategoryId) {
+      filtered = filtered.filter((product) => product.categoryId === selectedCategoryId);
+    }
+
+    // Filter by material
+    if (selectedMaterialId) {
+      // Match material from API product data
+      const apiProductsMap = new Map(apiProducts.map(p => [p.id.toString(), p]));
+      filtered = filtered.filter((product) => {
+        const apiProduct = apiProductsMap.get(product.id);
+        return apiProduct?.material === selectedMaterialId;
+      });
+    }
+
+    return filtered;
+  }, [allProducts, selectedCategoryId, selectedMaterialId, apiProducts]);
+
   const popularProducts: Product[] = useMemo(() => {
     if (!popularProductsData) {
       return [];
     }
-    return transformProductsFromAPI(popularProductsData.products);
-  }, [popularProductsData]);
+    let popular = transformProductsFromAPI(popularProductsData.products);
 
-  const pageSizeFromResponse = productsData?.page_size ?? PAGE_SIZE;
+    // Client-side filter by selected category
+    if (selectedCategoryId) {
+      popular = popular.filter((product) => product.categoryId === selectedCategoryId);
+    }
+
+    // Limit to 4 items for display
+    return popular.slice(0, 4);
+  }, [popularProductsData, selectedCategoryId]);
+
+  // Client-side pagination
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    const endIndex = startIndex + PAGE_SIZE;
+    return products.slice(startIndex, endIndex);
+  }, [products, currentPage]);
 
   const totalPages = useMemo(() => {
-    const totalCount = productsData?.count ?? 0;
-    return Math.max(1, Math.ceil(totalCount / pageSizeFromResponse));
-  }, [productsData?.count, pageSizeFromResponse]);
+    return Math.max(1, Math.ceil(products.length / PAGE_SIZE));
+  }, [products.length]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedRegionId, selectedCategoryId, selectedSort]);
+  }, [selectedRegionId, selectedCategoryId, selectedSort, selectedMaterialId]);
 
   const handleWishlist = (productId: string) => {
     // Wishlist feature to be implemented
@@ -347,6 +380,7 @@ export default function ProductsPage() {
                 onClick={() => {
                   setSelectedRegionId(null);
                   setSelectedCategoryId(null);
+                  setSelectedMaterialId(null);
                   setSelectedSort('latest');
                 }}
               >
@@ -356,7 +390,7 @@ export default function ProductsPage() {
           ) : (
             <>
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {products.map((product) => (
+                {paginatedProducts.map((product) => (
                   <ProductCard
                     key={product.id}
                     product={product}
