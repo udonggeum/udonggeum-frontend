@@ -1,5 +1,4 @@
 // 1. Imports (외부 → 내부 순서)
-import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import MainPage from '@/pages/MainPage';
 import Home from '@/pages/Home';
@@ -33,23 +32,9 @@ import MinimalLayout from '@/components/layouts/MinimalLayout';
 import SellerLayout from '@/components/layouts/SellerLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import AdminRoute from '@/components/AdminRoute';
-import { useThemeStore } from '@/stores/useThemeStore';
 
 // 2. Component
 export default function App() {
-  const theme = useThemeStore((state) => state.theme);
-
-  // Update CSS variables when theme changes
-  useEffect(() => {
-    const root = document.documentElement;
-    root.style.setProperty('--color-primary', theme.primary);
-    root.style.setProperty('--color-secondary', theme.secondary);
-    root.style.setProperty('--color-gold', theme.gold);
-    root.style.setProperty('--color-text', theme.text);
-    root.style.setProperty('--color-line', theme.line || theme.secondary);
-  }, [theme]);
-
-  // 렌더링
   return (
     <BrowserRouter>
       <Routes>

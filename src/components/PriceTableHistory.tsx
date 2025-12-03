@@ -22,6 +22,7 @@ interface PriceTableHistoryProps {
  * - 차트와 동일한 기간의 데이터를 테이블로 표시
  * - 날짜, 가격, 전일대비, 등락률 표시
  * - 반응형 디자인
+ * - 스크롤 가능한 고정 높이 테이블
  */
 export default function PriceTableHistory({ type, period, currentPrice }: PriceTableHistoryProps) {
   // Mock 이력 데이터 생성 (차트와 동일한 데이터)
@@ -63,10 +64,6 @@ export default function PriceTableHistory({ type, period, currentPrice }: PriceT
 
   const historyData = generateHistoryData();
 
-  // 표시할 데이터 제한 (너무 많으면 일부만)
-  const displayLimit = period === '1주' ? 7 : period === '1개월' ? 30 : 30; // 최대 30개만 표시
-  const displayData = historyData.slice(0, displayLimit);
-
   const getTypeName = (type: GoldPriceType): string => {
     switch (type) {
       case '24K': return '24K 순금';
@@ -93,14 +90,14 @@ export default function PriceTableHistory({ type, period, currentPrice }: PriceT
           {getTypeName(type)} 시세 이력 ({period})
         </h2>
         <p className="text-[13px] text-gray-500 mt-1">
-          최근 {displayData.length}일간의 시세 변동
+          최근 {historyData.length}일간의 시세 변동
         </p>
       </div>
 
-      {/* 테이블 */}
-      <div className="overflow-x-auto">
+      {/* 테이블 - 스크롤 가능 */}
+      <div className="overflow-x-auto overflow-y-auto max-h-[500px]">
         <table className="w-full">
-          <thead>
+          <thead className="sticky top-0 z-10">
             <tr className="bg-gray-50 text-[12px] text-gray-500 font-medium">
               <th className="py-3 px-6 text-left">날짜</th>
               <th className="py-3 px-4 text-right">가격 (원/g)</th>
@@ -109,7 +106,7 @@ export default function PriceTableHistory({ type, period, currentPrice }: PriceT
             </tr>
           </thead>
           <tbody className="text-[14px]">
-            {displayData.map((row, index) => {
+            {historyData.map((row, index) => {
               const isPositive = row.change > 0;
               const isNegative = row.change < 0;
               const isToday = index === 0;

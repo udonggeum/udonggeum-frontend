@@ -13,7 +13,7 @@ import {
 import { MapPin, Phone, Clock, PackageSearch, ArrowLeft, ExternalLink } from 'lucide-react';
 import { useStoreDetail } from '@/hooks/queries/useStoresQueries';
 import { useStoreProducts, useProductFilters } from '@/hooks/queries/useProductsQueries';
-import { NAV_ITEMS } from '@/constants/navigation';
+import { NAVIGATION_ITEMS } from '@/constants/navigation';
 import { MOCK_CATEGORIES } from '@/constants/mockData';
 import {
   buildCategoryLabelMap,
@@ -125,7 +125,7 @@ export default function StoreDetailPage() {
   if (isInvalidId) {
     return (
       <div className="flex min-h-screen flex-col">
-        <Navbar navigationItems={NAV_ITEMS} />
+        <Navbar navigationItems={NAVIGATION_ITEMS} />
         <main className="flex-grow">
           <section className="container mx-auto px-4 py-16">
             <ErrorAlert
@@ -363,7 +363,7 @@ export default function StoreDetailPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar navigationItems={NAV_ITEMS} />
+      <Navbar navigationItems={NAVIGATION_ITEMS} />
       <main className="flex-grow">{mainContent}</main>
       <Footer />
     </div>

@@ -26,7 +26,7 @@ import {
 } from '@/utils/apiAdapters';
 import { adaptFiltersToCategories, getMaterialLabel } from '@/utils/filterAdapters';
 import { MOCK_CATEGORIES } from '@/constants/mockData';
-import { NAV_ITEMS } from '@/constants/navigation';
+import { NAVIGATION_ITEMS } from '@/constants/navigation';
 import type { Product } from '@/types';
 import type { Product as APIProduct } from '@/schemas/products';
 import { findRegionIdByNames, getRegionOptions, type RegionOption } from '@/utils/regionOptions';
@@ -266,7 +266,7 @@ export default function ProductsPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar navigationItems={NAV_ITEMS} />
+      <Navbar navigationItems={NAVIGATION_ITEMS} />
       <main className="flex-grow">
         {/* Popular Products Section */}
         <PopularProductsCarousel products={popularProducts} isLoading={isLoadingPopular} />

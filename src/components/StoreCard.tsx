@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Phone, PackageSearch, Clock } from 'lucide-react';
 import FallbackImage from './FallbackImage';
-import { useThemeStore } from '@/stores/useThemeStore';
 import type { StoreSummary } from '@/types';
 
 interface StoreCardProps {
@@ -16,8 +15,6 @@ interface StoreCardProps {
  */
 export default function StoreCard({ store }: StoreCardProps) {
   const navigate = useNavigate();
-  const mode = useThemeStore((state) => state.mode);
-  const theme = useThemeStore((state) => state.theme);
 
   const locationText = [store.region, store.district]
     .filter((value): value is string => Boolean(value))
@@ -34,7 +31,6 @@ export default function StoreCard({ store }: StoreCardProps) {
       : '상품 정보 준비 중';
 
   const sanitizedPhone = store.phone?.replace(/[^0-9+]/g, '');
-  const bgColor = mode === 'light' ? '#FAFAFA' : theme.secondary;
 
   const handleCardClick = () => {
     navigate(`/stores/${store.id}`);
@@ -49,9 +45,8 @@ export default function StoreCard({ store }: StoreCardProps) {
           handleCardClick();
         }
       }}
-      className="card card-side border border-[var(--color-text)]/10 flex group cursor-pointer hover-lift"
+      className="card card-side border border-[var(--color-text)]/10 flex group cursor-pointer hover-lift bg-[#FAFAFA]"
       style={{
-        backgroundColor: bgColor,
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06)'
       }}
       role="button"

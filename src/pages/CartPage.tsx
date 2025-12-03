@@ -9,7 +9,7 @@ import {
   CartItem as CartItemComponent,
 } from '@/components';
 import { OptionChangeModal, CartSummary, type OptionSelection } from '@/components/cart';
-import { NAV_ITEMS } from '@/constants/navigation';
+import { NAVIGATION_ITEMS } from '@/constants/navigation';
 import {
   useCart,
   useRemoveCartItem,
@@ -183,7 +183,7 @@ export default function CartPage() {
   if (!isAuthenticated) {
     return (
       <div className="flex min-h-screen flex-col">
-        <Navbar navigationItems={NAV_ITEMS} />
+        <Navbar navigationItems={NAVIGATION_ITEMS} />
         <main className="flex-grow">
           <div className="container mx-auto max-w-4xl px-4 py-20 text-center">
             <div className="rounded-3xl border border-[var(--color-text)]/10 bg-[var(--color-secondary)] p-12 shadow-sm">
@@ -220,7 +220,7 @@ export default function CartPage() {
   if (isLoading || isFetching) {
     return (
       <div className="flex min-h-screen flex-col">
-        <Navbar navigationItems={NAV_ITEMS} />
+        <Navbar navigationItems={NAVIGATION_ITEMS} />
         <main className="flex flex-1 items-center justify-center">
           <LoadingSpinner size="lg" message="장바구니를 불러오는 중입니다." />
         </main>
@@ -232,7 +232,7 @@ export default function CartPage() {
   if (error) {
     return (
       <div className="flex min-h-screen flex-col">
-        <Navbar navigationItems={NAV_ITEMS} />
+        <Navbar navigationItems={NAVIGATION_ITEMS} />
         <main className="flex-grow">
           <div className="container mx-auto max-w-4xl px-4 py-20">
             <ProductsError
@@ -252,7 +252,7 @@ export default function CartPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar navigationItems={NAV_ITEMS} />
+      <Navbar navigationItems={NAVIGATION_ITEMS} />
       <main className="flex-grow">
         <div className="container mx-auto max-w-6xl px-4 py-10">
           <header className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

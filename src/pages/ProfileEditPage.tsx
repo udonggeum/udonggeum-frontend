@@ -10,7 +10,7 @@ import { useAuthStore } from '@/stores/useAuthStore';
 import { useUpdateProfile } from '@/hooks/queries/useAuthQueries';
 import { UpdateProfileRequestSchema, type UpdateProfileRequest } from '@/schemas/auth';
 import { Navbar, Footer, ErrorAlert, LoadingSpinner, Button } from '@/components';
-import { NAV_ITEMS } from '@/constants/navigation';
+import { NAVIGATION_ITEMS } from '@/constants/navigation';
 
 interface FormErrors {
   name?: string;
@@ -153,7 +153,7 @@ export default function ProfileEditPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar navigationItems={NAV_ITEMS} />
+      <Navbar navigationItems={NAVIGATION_ITEMS} />
 
       <main className="flex-grow py-8">
         <section className="container mx-auto px-4 max-w-3xl">

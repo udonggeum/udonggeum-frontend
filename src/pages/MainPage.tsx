@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Search,
@@ -14,6 +14,7 @@ import {
   ChevronUp
 } from 'lucide-react';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useLatestGoldPrices } from '@/hooks/queries/useGoldPricesQueries';
 
 /**
  * MainPage Component (Renewed)
@@ -32,6 +33,9 @@ export default function MainPage() {
   const user = useAuthStore((state) => state.user);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // 백엔드에서 실시간 금시세 가져오기
+  const { data: pricesData, isLoading: isPricesLoading } = useLatestGoldPrices();
+
   // Redirect admin users to dashboard
   useEffect(() => {
     if (user?.role === 'admin') {
@@ -48,49 +52,43 @@ export default function MainPage() {
 
   const popularSearches = ['강남', '종로', '24K 반지', '금목걸이'];
 
-  // Mock data for real-time prices (실제로는 API에서 가져와야 함)
-  const goldPrices = [
-    {
-      id: '24k',
-      name: '순금',
-      karat: '24K',
-      price: 452000,
-      change: -1000,
-      changePercent: -0.22,
-      badgeBg: 'bg-yellow-100',
-      badgeText: 'text-yellow-700',
-    },
-    {
-      id: '18k',
-      name: '18K금',
-      karat: '18K',
-      price: 339000,
-      change: 500,
-      changePercent: 0.15,
-      badgeBg: 'bg-yellow-100',
-      badgeText: 'text-yellow-700',
-    },
-    {
-      id: '14k',
-      name: '14K금',
-      karat: '14K',
-      price: 264000,
-      change: 0,
-      changePercent: 0,
-      badgeBg: 'bg-yellow-100',
-      badgeText: 'text-yellow-700',
-    },
-    {
-      id: 'platinum',
-      name: '백금',
-      karat: 'Pt',
-      price: 158000,
-      change: 2000,
-      changePercent: 1.28,
-      badgeBg: 'bg-gray-100',
-      badgeText: 'text-gray-700',
-    },
-  ];
+  // 백엔드 데이터를 UI 형식으로 변환
+  const goldPrices = useMemo(() => {
+    if (!pricesData) {
+      // 로딩 중이거나 에러 시 빈 배열
+      return [];
+    }
+
+    // 정렬 순서 정의: 24K > 18K > 14K > Platinum
+    const typeOrder: Record<string, number> = {
+      '24K': 1,
+      '18K': 2,
+      '14K': 3,
+      'Platinum': 4,
+    };
+
+    return pricesData
+      .map((price) => {
+        const isGold = price.type !== 'Platinum';
+        // Mock 변동률 (백엔드에서 제공 예정)
+        const mockChange = price.type === '24K' ? -1000 : price.type === '18K' ? 500 : price.type === '14K' ? 0 : 2000;
+        const mockPercent = price.type === '24K' ? -0.22 : price.type === '18K' ? 0.15 : price.type === '14K' ? 0 : 1.28;
+
+        return {
+          id: price.type.toLowerCase(),
+          name: price.type === '24K' ? '순금' : price.type === '18K' ? '18K금' : price.type === '14K' ? '14K금' : '백금',
+          karat: price.type === 'Platinum' ? 'Pt' : price.type,
+          type: price.type, // 라우팅용
+          price: Math.round(price.sell_price), // 소수점 제거
+          change: mockChange,
+          changePercent: mockPercent,
+          badgeBg: isGold ? 'bg-yellow-100' : 'bg-gray-100',
+          badgeText: isGold ? 'text-yellow-700' : 'text-gray-700',
+          sortOrder: typeOrder[price.type] || 99,
+        };
+      })
+      .sort((a, b) => a.sortOrder - b.sortOrder); // 정렬
+  }, [pricesData]);
 
   // Mock data for nearby stores
   const nearbyStores = [
@@ -187,21 +185,39 @@ export default function MainPage() {
       <section className="pt-16 pb-20 px-5 bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-[1200px] mx-auto">
           {/* 실시간 시세 배너 - 크림 스타일 */}
-          <div className="inline-flex items-center gap-3 px-4 py-2.5 bg-white rounded-full border border-gray-200 mb-8">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              <span className="text-[13px] font-medium text-gray-500">실시간</span>
-            </span>
-            <span className="text-[13px] text-gray-300">|</span>
-            <span className="text-[14px] font-semibold text-gray-900">24K 금 시세</span>
-            <span className="text-[15px] font-bold text-gray-900">
-              {goldPrices[0].price.toLocaleString()}원
-            </span>
-            <span className="flex items-center text-[13px] font-semibold text-red-500">
-              <ChevronDown className="w-3 h-3 mr-0.5" />
-              {Math.abs(goldPrices[0].change).toLocaleString()}
-            </span>
-          </div>
+          {isPricesLoading ? (
+            <div className="inline-flex items-center gap-3 px-4 py-2.5 bg-white rounded-full border border-gray-200 mb-8">
+              <div className="animate-pulse flex items-center gap-3">
+                <div className="w-2 h-2 bg-gray-200 rounded-full"></div>
+                <div className="h-3 w-24 bg-gray-200 rounded"></div>
+                <div className="h-4 w-32 bg-gray-200 rounded"></div>
+              </div>
+            </div>
+          ) : goldPrices.length > 0 ? (
+            <div className="inline-flex items-center gap-3 px-4 py-2.5 bg-white rounded-full border border-gray-200 mb-8">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                <span className="text-[13px] font-medium text-gray-500">실시간</span>
+              </span>
+              <span className="text-[13px] text-gray-300">|</span>
+              <span className="text-[14px] font-semibold text-gray-900">24K 금 시세</span>
+              <span className="text-[15px] font-bold text-gray-900">
+                {goldPrices[0].price.toLocaleString()}원
+              </span>
+              {goldPrices[0].change !== 0 && (
+                <span className={`flex items-center text-[13px] font-semibold ${
+                  goldPrices[0].change > 0 ? 'text-green-500' : 'text-red-500'
+                }`}>
+                  {goldPrices[0].change > 0 ? (
+                    <ChevronUp className="w-3 h-3 mr-0.5" />
+                  ) : (
+                    <ChevronDown className="w-3 h-3 mr-0.5" />
+                  )}
+                  {Math.abs(goldPrices[0].change).toLocaleString()}
+                </span>
+              )}
+            </div>
+          ) : null}
 
           {/* 히어로 텍스트 */}
           <div className="mb-12">
@@ -301,12 +317,25 @@ export default function MainPage() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {goldPrices.map((item) => (
-              <Link
-                key={item.id}
-                to="/price"
-                className="bg-white p-5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer transform hover:-translate-y-0.5"
-              >
+            {isPricesLoading ? (
+              // 로딩 스켈레톤
+              Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="bg-white p-5 rounded-2xl shadow-sm animate-pulse">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 bg-gray-200 rounded-lg"></div>
+                    <div className="h-4 w-16 bg-gray-200 rounded"></div>
+                  </div>
+                  <div className="h-6 w-24 bg-gray-200 rounded mb-1"></div>
+                  <div className="h-4 w-20 bg-gray-200 rounded"></div>
+                </div>
+              ))
+            ) : (
+              goldPrices.map((item) => (
+                <Link
+                  key={item.id}
+                  to={`/price?type=${item.type}`}
+                  className="bg-white p-5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer transform hover:-translate-y-0.5"
+                >
                 <div className="flex items-center gap-2 mb-3">
                   <div className={`w-8 h-8 ${item.badgeBg} rounded-lg flex items-center justify-center`}>
                     <span className={`text-[12px] font-bold ${item.badgeText}`}>
@@ -339,7 +368,8 @@ export default function MainPage() {
                     : '0 (0.00%)'}
                 </div>
               </Link>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </section>

@@ -44,12 +44,17 @@ export default function StoreMap({
   center: propCenter,
   onCenterChange,
 }: StoreMapProps) {
-  console.log('🗺️ StoreMap rendered with:', {
-    storesCount: stores.length,
-    stores: stores.slice(0, 3), // 처음 3개만 로그
-    center: propCenter,
-    kakaoLoaded: typeof window.kakao !== 'undefined',
-  });
+  // 컴포넌트 렌더링 로그
+  useEffect(() => {
+    console.log('🗺️ StoreMap rendered with:', {
+      storesCount: stores.length,
+      stores: stores.slice(0, 3),
+      center: propCenter,
+      windowExists: typeof window !== 'undefined',
+      kakaoExists: typeof window !== 'undefined' && typeof window.kakao !== 'undefined',
+      kakaoMapsExists: typeof window !== 'undefined' && typeof window.kakao !== 'undefined' && typeof window.kakao.maps !== 'undefined',
+    });
+  }, [stores, propCenter]);
 
   const [map, setMap] = useState<kakao.maps.Map | null>(null);
   const [center, setCenter] = useState(
@@ -61,27 +66,48 @@ export default function StoreMap({
   const [isKakaoLoaded, setIsKakaoLoaded] = useState(false);
 
   useEffect(() => {
-    if (typeof window.kakao === 'undefined') {
-      console.error('❌ Kakao Maps SDK not loaded');
-      return;
-    }
+    let checkInterval: ReturnType<typeof setInterval> | null = null;
+    let mounted = true;
 
-    // SDK가 로드되었지만 maps가 준비되지 않은 경우 대기
-    if (!window.kakao.maps) {
-      console.log('⏳ Waiting for Kakao Maps SDK to load...');
-      const checkInterval = setInterval(() => {
-        if (window.kakao.maps) {
-          console.log('✅ Kakao Maps SDK loaded successfully');
-          clearInterval(checkInterval);
-          setIsKakaoLoaded(true);
-        }
-      }, 100);
-      return () => clearInterval(checkInterval);
-    }
+    const checkKakaoMaps = () => {
+      if (!mounted) return;
 
-    // 이미 로드된 경우
-    console.log('✅ Kakao Maps SDK loaded successfully');
-    setIsKakaoLoaded(true);
+      if (typeof window === 'undefined') {
+        console.error('❌ Window object not available');
+        return;
+      }
+
+      if (typeof window.kakao === 'undefined') {
+        console.error('❌ Kakao Maps SDK script not loaded');
+        return;
+      }
+
+      // SDK가 로드되었지만 maps가 준비되지 않은 경우 대기
+      if (!window.kakao.maps) {
+        console.log('⏳ Waiting for Kakao Maps SDK to initialize...');
+        checkInterval = setInterval(() => {
+          if (window.kakao && window.kakao.maps && mounted) {
+            console.log('✅ Kakao Maps SDK loaded successfully');
+            if (checkInterval) clearInterval(checkInterval);
+            setIsKakaoLoaded(true);
+          }
+        }, 100);
+        return;
+      }
+
+      // 이미 로드된 경우
+      console.log('✅ Kakao Maps SDK already loaded');
+      setIsKakaoLoaded(true);
+    };
+
+    // 약간의 지연을 주고 체크 시작 (SSR 대응)
+    const initTimeout = setTimeout(checkKakaoMaps, 100);
+
+    return () => {
+      mounted = false;
+      clearTimeout(initTimeout);
+      if (checkInterval) clearInterval(checkInterval);
+    };
   }, []);
 
   // prop center가 변경되면 지도 중심 업데이트

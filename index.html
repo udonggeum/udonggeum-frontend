@@ -32,14 +32,8 @@
     </style>
     <title>우리 동네 금은방</title>
 
-    <!-- Kakao Maps SDK -->
-    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=4a5dd8cf96499bba011844ec47091c0f&libraries=services&autoload=false"></script>
-    <script type="text/javascript">
-      // Kakao Maps SDK 명시적 로드
-      window.kakao && window.kakao.maps && window.kakao.maps.load(function() {
-        console.log('✅ Kakao Maps SDK loaded and ready');
-      });
-    </script>
+    <!-- Kakao Maps SDK - Synchronous load BEFORE Vite module scripts -->
+    <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=4a5dd8cf96499bba011844ec47091c0f&libraries=services"></script>
   </head>
   <body>
     <div id="root"></div>

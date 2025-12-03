@@ -5,7 +5,7 @@ import { useLogout } from '@/hooks/queries/useAuthQueries';
 import { useWishlist, useOrders } from '@/hooks/queries';
 import { User, LogOut, ShoppingBag, Heart, MapPin, Mail, Calendar } from 'lucide-react';
 import { Navbar, Footer, Button } from '@/components';
-import { NAV_ITEMS } from '@/constants/navigation';
+import { NAVIGATION_ITEMS } from '@/constants/navigation';
 
 const MyPage: React.FC = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -40,7 +40,7 @@ const MyPage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar navigationItems={NAV_ITEMS} />
+      <Navbar navigationItems={NAVIGATION_ITEMS} />
 
       <main className="flex-grow py-8">
         <div className="container mx-auto px-4 max-w-6xl">

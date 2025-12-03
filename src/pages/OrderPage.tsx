@@ -13,7 +13,7 @@ import {
   OrderItemsList,
   ShippingForm,
 } from '@/components/order';
-import { NAV_ITEMS } from '@/constants/navigation';
+import { NAVIGATION_ITEMS } from '@/constants/navigation';
 import {
   useCart,
   useRemoveCartItem,
@@ -586,7 +586,7 @@ export default function OrderPage() {
   if (isCartLoading && orderItems.length === 0) {
     return (
       <div className="flex min-h-screen flex-col">
-        <Navbar navigationItems={NAV_ITEMS} />
+        <Navbar navigationItems={NAVIGATION_ITEMS} />
         <main className="flex flex-1 items-center justify-center px-4">
           <LoadingSpinner message="주문 정보를 준비하고 있습니다..." />
         </main>
@@ -597,7 +597,7 @@ export default function OrderPage() {
 
   return (
     <div className="flex min-h-screen flex-col pb-28 md:pb-0">
-      <Navbar navigationItems={NAV_ITEMS} />
+      <Navbar navigationItems={NAVIGATION_ITEMS} />
       <main className="flex-1">
         <div className="container mx-auto max-w-6xl px-4 py-10">
           <div className="mb-6 flex flex-wrap items-center gap-2 text-sm text-[var(--color-text)]/70">

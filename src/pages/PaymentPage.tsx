@@ -7,7 +7,7 @@ import {
   LoadingSpinner,
   ErrorAlert,
 } from '@/components';
-import { NAV_ITEMS } from '@/constants/navigation';
+import { NAVIGATION_ITEMS } from '@/constants/navigation';
 import { useOrderDetail } from '@/hooks/queries/useOrdersQueries';
 import {
   useInitiateKakaoPay,
@@ -99,7 +99,7 @@ export default function PaymentPage() {
   if (isLoadingOrder || isLoadingPayment) {
     return (
       <div className="flex min-h-screen flex-col bg-base-100">
-        <Navbar navigationItems={NAV_ITEMS} />
+        <Navbar navigationItems={NAVIGATION_ITEMS} />
         <main className="flex flex-1 items-center justify-center">
           <LoadingSpinner />
         </main>
@@ -112,7 +112,7 @@ export default function PaymentPage() {
   if (orderError || paymentError || !order) {
     return (
       <div className="flex min-h-screen flex-col bg-base-100">
-        <Navbar navigationItems={NAV_ITEMS} />
+        <Navbar navigationItems={NAVIGATION_ITEMS} />
         <main className="flex flex-1 items-center justify-center p-4">
           <div className="w-full max-w-md">
             <ErrorAlert
@@ -165,7 +165,7 @@ export default function PaymentPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-base-100">
-      <Navbar navigationItems={NAV_ITEMS} />
+      <Navbar navigationItems={NAVIGATION_ITEMS} />
 
       <main className="flex flex-1 items-center justify-center p-4 py-12">
         <div className="w-full max-w-2xl space-y-6">

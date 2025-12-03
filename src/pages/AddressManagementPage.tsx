@@ -27,7 +27,7 @@ import {
   AddressFormModal,
   Button,
 } from '@/components';
-import { NAV_ITEMS } from '@/constants/navigation';
+import { NAVIGATION_ITEMS } from '@/constants/navigation';
 import type { Address } from '@/schemas/address';
 
 export default function AddressManagementPage() {
@@ -103,7 +103,7 @@ export default function AddressManagementPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar navigationItems={NAV_ITEMS} />
+      <Navbar navigationItems={NAVIGATION_ITEMS} />
 
       <main className="flex-grow">
         <section className="container mx-auto px-4 py-10">

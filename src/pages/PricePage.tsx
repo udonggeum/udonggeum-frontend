@@ -1,20 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useLatestGoldPrices } from '@/hooks/queries/useGoldPricesQueries';
 import Navbar from '@/components/Navbar';
 import GoldPriceChart from '@/components/GoldPriceChart';
 import PriceTableHistory from '@/components/PriceTableHistory';
 import PriceCalculator from '@/components/PriceCalculator';
-import type { NavigationItem } from '@/types';
+import { NAVIGATION_ITEMS } from '@/constants/navigation';
 import type { GoldPrice, GoldPriceWithCalculations, GoldPriceType } from '@/schemas/goldPrice';
-
-// Navigation items for Navbar
-const navigationItems: NavigationItem[] = [
-  { id: 'price', label: '금시세', path: '/price', displayOrder: 1 },
-  { id: 'products', label: '상품', path: '/products', displayOrder: 2 },
-  { id: 'stores', label: '매장찾기', path: '/stores', displayOrder: 3 },
-  { id: 'orders', label: '주문내역', path: '/orders', displayOrder: 4 },
-];
 
 /**
  * PricePage Component
@@ -29,8 +22,17 @@ const navigationItems: NavigationItem[] = [
  */
 export default function PricePage() {
   const { data: pricesData, isLoading } = useLatestGoldPrices();
+  const [searchParams] = useSearchParams();
   const [selectedType, setSelectedType] = useState<GoldPriceType>('24K'); // 선택된 금 유형
   const [selectedPeriod, setSelectedPeriod] = useState<'1주' | '1개월' | '3개월' | '1년' | '전체'>('1개월');
+
+  // URL 파라미터에서 타입 읽기 (예: /price?type=18K)
+  useEffect(() => {
+    const typeParam = searchParams.get('type');
+    if (typeParam && ['24K', '18K', '14K', 'Platinum'].includes(typeParam)) {
+      setSelectedType(typeParam as GoldPriceType);
+    }
+  }, [searchParams]);
 
   // 금 시세 데이터에 UI용 계산 필드 추가
   const prices: GoldPriceWithCalculations[] = useMemo(() => {
@@ -60,20 +62,33 @@ export default function PricePage() {
       return { bg: 'bg-yellow-100', text: 'text-yellow-700' };
     };
 
-    return pricesData.map((price: GoldPrice) => {
-      const colors = getBadgeColors(price.type);
-      return {
-        ...price,
-        // 1돈 = 3.75g
-        price_per_don: Math.round(price.sell_price * 3.75),
-        purity: getPurity(price.type),
-        badge_bg: colors.bg,
-        badge_text: colors.text,
-        // Mock 변동률 (백엔드 추가 예정)
-        change_percent: price.type === '24K' ? -0.22 : price.type === '18K' ? 0.15 : price.type === 'Platinum' ? 1.28 : 0,
-        change_amount: price.type === '24K' ? -1000 : price.type === '18K' ? 500 : price.type === 'Platinum' ? 2000 : 0,
-      };
-    });
+    // 정렬 순서 정의: 24K > 18K > 14K > Platinum
+    const typeOrder: Record<string, number> = {
+      '24K': 1,
+      '18K': 2,
+      '14K': 3,
+      'Platinum': 4,
+    };
+
+    return pricesData
+      .map((price: GoldPrice) => {
+        const colors = getBadgeColors(price.type);
+        return {
+          ...price,
+          sell_price: Math.round(price.sell_price), // 소수점 제거
+          buy_price: Math.round(price.buy_price), // 소수점 제거
+          // 1돈 = 3.75g
+          price_per_don: Math.round(price.sell_price * 3.75),
+          purity: getPurity(price.type),
+          badge_bg: colors.bg,
+          badge_text: colors.text,
+          // Mock 변동률 (백엔드 추가 예정)
+          change_percent: price.type === '24K' ? -0.22 : price.type === '18K' ? 0.15 : price.type === 'Platinum' ? 1.28 : 0,
+          change_amount: price.type === '24K' ? -1000 : price.type === '18K' ? 500 : price.type === 'Platinum' ? 2000 : 0,
+          sortOrder: typeOrder[price.type] || 99,
+        };
+      })
+      .sort((a, b) => a.sortOrder - b.sortOrder); // 정렬
   }, [pricesData]);
 
   // 선택된 금 유형의 가격 (차트용)
@@ -92,7 +107,7 @@ export default function PricePage() {
   return (
     <>
       {/* Navbar */}
-      <Navbar navigationItems={navigationItems} />
+      <Navbar navigationItems={NAVIGATION_ITEMS} />
 
       {/* Main Content */}
       <main className="max-w-[1200px] mx-auto px-5 py-8">

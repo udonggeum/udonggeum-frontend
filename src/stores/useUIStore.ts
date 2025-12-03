@@ -19,15 +19,9 @@ export interface Modal {
 }
 
 /**
- * Theme type
- */
-export type Theme = 'light' | 'dark';
-
-/**
  * UI store state
  */
 interface UIState {
-  theme: Theme;
   modals: Record<string, boolean>;
   toasts: Toast[];
 }
@@ -36,10 +30,6 @@ interface UIState {
  * UI store actions
  */
 interface UIActions {
-  // Theme actions
-  toggleTheme: () => void;
-  setTheme: (theme: Theme) => void;
-
   // Modal actions
   openModal: (id: string) => void;
   closeModal: (id: string) => void;
@@ -61,14 +51,10 @@ type UIStore = UIState & UIActions;
  * UI store
  *
  * Manages global UI state (no persistence)
- * - Theme: light/dark mode
  * - Modals: global modal state by ID
  * - Toasts: notification system
  *
  * @example
- * // Theme
- * const { theme, toggleTheme } = useUIStore();
- *
  * // Modals
  * const { openModal, closeModal } = useUIStore();
  * openModal('confirm-dialog');
@@ -80,17 +66,8 @@ type UIStore = UIState & UIActions;
  */
 export const useUIStore = create<UIStore>((set) => ({
   // Initial state
-  theme: 'light',
   modals: {},
   toasts: [],
-
-  // Theme actions
-  toggleTheme: () =>
-    set((state) => ({
-      theme: state.theme === 'light' ? 'dark' : 'light',
-    })),
-
-  setTheme: (theme) => set({ theme }),
 
   // Modal actions
   openModal: (id) =>

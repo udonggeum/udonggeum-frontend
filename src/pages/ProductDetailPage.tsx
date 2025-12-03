@@ -22,7 +22,7 @@ import { transformProductFromAPI } from '@/utils/apiAdapters';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useAddToCart } from '@/hooks/queries/useCartQueries';
 import { useWishlist, useAddToWishlist, useRemoveFromWishlist } from '@/hooks/queries/useWishlistQueries';
-import { NAV_ITEMS } from '@/constants/navigation';
+import { NAVIGATION_ITEMS } from '@/constants/navigation';
 import FallbackImage from '@/components/FallbackImage';
 
 function ProductDetailSkeleton() {
@@ -127,7 +127,7 @@ export default function ProductDetailPage() {
   if (numericProductId === null) {
     return (
       <div className="flex min-h-screen flex-col">
-        <Navbar navigationItems={NAV_ITEMS} />
+        <Navbar navigationItems={NAVIGATION_ITEMS} />
         <main className="flex-grow">
           <div className="container mx-auto px-4 py-20">
             <ProductsError
@@ -249,7 +249,7 @@ export default function ProductDetailPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar navigationItems={NAV_ITEMS} />
+      <Navbar navigationItems={NAVIGATION_ITEMS} />
       <main className="flex-grow">
         {isLoading || isFetching ? (
           <ProductDetailSkeleton />

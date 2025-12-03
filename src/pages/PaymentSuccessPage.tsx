@@ -7,7 +7,7 @@ import {
   LoadingSpinner,
   ErrorAlert,
 } from '@/components';
-import { NAV_ITEMS } from '@/constants/navigation';
+import { NAVIGATION_ITEMS } from '@/constants/navigation';
 import { usePaymentApproval } from '@/hooks/queries/usePaymentQueries';
 import { PaymentSuccessCallbackSchema } from '@/schemas/payment';
 import { CheckCircle2, Package, CreditCard, Clock } from 'lucide-react';
@@ -80,7 +80,7 @@ export default function PaymentSuccessPage() {
   if (!params) {
     return (
       <div className="flex min-h-screen flex-col bg-base-100">
-        <Navbar navigationItems={NAV_ITEMS} />
+        <Navbar navigationItems={NAVIGATION_ITEMS} />
         <main className="flex flex-1 items-center justify-center p-4">
           <div className="w-full max-w-md space-y-4">
             <div className="text-center">
@@ -118,7 +118,7 @@ export default function PaymentSuccessPage() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen flex-col bg-base-100">
-        <Navbar navigationItems={NAV_ITEMS} />
+        <Navbar navigationItems={NAVIGATION_ITEMS} />
         <main className="flex flex-1 flex-col items-center justify-center p-4">
           <LoadingSpinner size="lg" />
           <p className="mt-4 text-lg font-medium text-base-content">
@@ -137,7 +137,7 @@ export default function PaymentSuccessPage() {
   if (error || !isSuccess || !approvalData) {
     return (
       <div className="flex min-h-screen flex-col bg-base-100">
-        <Navbar navigationItems={NAV_ITEMS} />
+        <Navbar navigationItems={NAVIGATION_ITEMS} />
         <main className="flex flex-1 items-center justify-center p-4">
           <div className="w-full max-w-md space-y-4">
             <div className="text-center">
@@ -178,7 +178,7 @@ export default function PaymentSuccessPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-[var(--color-primary)]">
-      <Navbar navigationItems={NAV_ITEMS} />
+      <Navbar navigationItems={NAVIGATION_ITEMS} />
 
       <main className="flex flex-1 items-center justify-center p-4 py-12">
         <div className="w-full max-w-2xl space-y-8 animate-fade-in">

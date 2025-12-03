@@ -8,7 +8,7 @@ import {
 } from '@/components';
 import { useWishlist } from '@/hooks/queries';
 import { transformProductsFromAPI } from '@/utils/apiAdapters';
-import { NAV_ITEMS } from '@/constants/navigation';
+import { NAVIGATION_ITEMS } from '@/constants/navigation';
 import type { Product as APIProduct } from '@/schemas/products';
 import type { Product as UIProduct } from '@/types';
 
@@ -51,7 +51,7 @@ export default function WishlistPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar navigationItems={NAV_ITEMS} />
+      <Navbar navigationItems={NAVIGATION_ITEMS} />
 
       <main className="flex-grow">
         <section className="container mx-auto px-4 py-10">

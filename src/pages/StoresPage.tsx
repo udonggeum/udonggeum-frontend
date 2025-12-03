@@ -15,19 +15,12 @@ import { useStores } from '@/hooks/queries/useStoresQueries';
 import { mapStoreDetailToSummary } from '@/utils/storeAdapters';
 import StoreMap from '@/components/StoreMap';
 import Navbar from '@/components/Navbar';
-import type { StoreSummary, NavigationItem } from '@/types';
+import { NAVIGATION_ITEMS } from '@/constants/navigation';
+import type { StoreSummary } from '@/types';
 
 const PAGE_SIZE = 50;
 
 type FilterTag = 'all' | 'open' | '24k' | 'diamond' | 'repair';
-
-// Navigation items for Navbar
-const navigationItems: NavigationItem[] = [
-  { id: 'price', label: '금시세', path: '/price', displayOrder: 1 },
-  { id: 'products', label: '상품', path: '/products', displayOrder: 2 },
-  { id: 'stores', label: '매장찾기', path: '/stores', displayOrder: 3 },
-  { id: 'orders', label: '주문내역', path: '/orders', displayOrder: 4 },
-];
 
 interface StoreWithExtras extends StoreSummary {
   distance?: string;
@@ -194,7 +187,7 @@ export default function StoresPage() {
   return (
     <>
       {/* Navbar */}
-      <Navbar navigationItems={navigationItems} />
+      <Navbar navigationItems={NAVIGATION_ITEMS} />
 
       {/* Main Content */}
       <div className="flex h-[calc(100vh-64px)]">

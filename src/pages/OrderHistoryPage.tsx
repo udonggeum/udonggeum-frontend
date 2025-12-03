@@ -11,7 +11,7 @@ import {
   PaymentStatusBadge,
 } from '@/components';
 import { useOrders } from '@/hooks/queries';
-import { NAV_ITEMS } from '@/constants/navigation';
+import { NAVIGATION_ITEMS } from '@/constants/navigation';
 import type { Order } from '@/schemas/orders';
 import FallbackImage from '@/components/FallbackImage';
 
@@ -57,7 +57,7 @@ export default function OrderHistoryPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar navigationItems={NAV_ITEMS} />
+      <Navbar navigationItems={NAVIGATION_ITEMS} />
 
       <main className="flex-grow">
         <section className="container mx-auto px-4 py-10">

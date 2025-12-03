@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Navbar, Footer, Button } from '@/components';
-import { NAV_ITEMS } from '@/constants/navigation';
+import { NAVIGATION_ITEMS } from '@/constants/navigation';
 import { PaymentCancelCallbackSchema } from '@/schemas/payment';
 import { XCircle, RotateCcw, Home } from 'lucide-react';
 
@@ -46,7 +46,7 @@ export default function PaymentCancelPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-[var(--color-primary)]">
-      <Navbar navigationItems={NAV_ITEMS} />
+      <Navbar navigationItems={NAVIGATION_ITEMS} />
 
       <main className="flex flex-1 items-center justify-center p-4 py-12">
         <div className="w-full max-w-md space-y-6 animate-fade-in">

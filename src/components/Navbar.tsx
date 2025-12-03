@@ -1,7 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { LogIn, User, Moon, Sun, Settings, LogOut, LayoutDashboard } from 'lucide-react';
+import { LogIn, User, Settings, LogOut, LayoutDashboard } from 'lucide-react';
 import { useAuthStore } from '../stores/useAuthStore';
-import { useThemeStore } from '../stores/useThemeStore';
 import { useCart, useLogout } from '@/hooks/queries';
 import type { NavigationItem } from '../types';
 
@@ -20,7 +19,6 @@ export default function Navbar({ navigationItems }: NavbarProps) {
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
-  const { mode, toggleTheme } = useThemeStore();
   const { data: cartData } = useCart();
   const { mutate: logout } = useLogout();
   const cartItemCount = cartData?.cart_items?.length || 0;
@@ -73,19 +71,6 @@ export default function Navbar({ navigationItems }: NavbarProps) {
                 </Link>
               </li>
             ))}
-            <li className="menu-title mt-2">
-              <span>설정</span>
-            </li>
-            <li>
-              <button
-                type="button"
-                onClick={toggleTheme}
-                className="text-base"
-              >
-                {mode === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-                {mode === 'light' ? '다크 모드' : '라이트 모드'}
-              </button>
-            </li>
             <li className="menu-title mt-2">
               <span>계정</span>
             </li>
@@ -188,17 +173,6 @@ export default function Navbar({ navigationItems }: NavbarProps) {
             </div>
           </Link>
         )}
-
-        {/* Theme Toggle Button */}
-        <button
-          type="button"
-          onClick={toggleTheme}
-          className="btn btn-ghost btn-circle text-[var(--color-text)]"
-          aria-label={mode === 'light' ? '다크 모드로 전환' : '라이트 모드로 전환'}
-          title={mode === 'light' ? '다크 모드로 전환' : '라이트 모드로 전환'}
-        >
-          {mode === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-        </button>
 
         {/* Auth Buttons - Conditional based on auth state */}
         {!isAuthenticated ? (
