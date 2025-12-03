@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { Store, Plus, Edit, Trash2, MapPin, Phone, Clock } from 'lucide-react';
+import { Store, Plus, Edit, Trash2, MapPin, Phone, Clock, Search } from 'lucide-react';
 import {
   useSellerStores,
   useCreateStore,
@@ -14,12 +14,15 @@ import {
 import { LoadingSpinner, ErrorAlert, Button, ImageUploadWithOptimization, Card, CardBody } from '@/components';
 import type { CreateStoreRequest, UpdateStoreRequest } from '@/schemas/seller';
 import type { Store as StoreType } from '@/schemas';
+import { searchAddressToCoords } from '@/utils/geocoding';
 
 interface StoreFormData {
   name: string;
   region: string;
   district: string;
   address: string;
+  latitude: number | null;
+  longitude: number | null;
   phone_number: string;
   image_url: string;
   description: string;
@@ -61,6 +64,8 @@ export default function SellerStoresPage() {
     region: '',
     district: '',
     address: '',
+    latitude: null,
+    longitude: null,
     phone_number: '',
     image_url: '',
     description: '',
@@ -68,6 +73,7 @@ export default function SellerStoresPage() {
     close_time: '',
   });
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof StoreFormData, string>>>({});
+  const [isSearchingAddress, setIsSearchingAddress] = useState(false);
 
   const resetForm = () => {
     setFormData({
@@ -75,6 +81,8 @@ export default function SellerStoresPage() {
       region: '',
       district: '',
       address: '',
+      latitude: null,
+      longitude: null,
       phone_number: '',
       image_url: '',
       description: '',
@@ -97,6 +105,8 @@ export default function SellerStoresPage() {
       region: store.region || '',
       district: store.district || '',
       address: store.address || '',
+      latitude: (store as any).latitude || null,
+      longitude: (store as any).longitude || null,
       phone_number: store.phone_number || '',
       image_url: store.image_url || '',
       description: store.description || '',
@@ -120,6 +130,40 @@ export default function SellerStoresPage() {
     // Clear error for this field
     if (formErrors[name as keyof StoreFormData]) {
       setFormErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
+  };
+
+  // 주소 검색 및 위도/경도 자동 계산
+  const handleSearchAddress = async () => {
+    const fullAddress = `${formData.region} ${formData.district} ${formData.address}`.trim();
+
+    if (!fullAddress) {
+      alert('주소를 입력해주세요.');
+      return;
+    }
+
+    setIsSearchingAddress(true);
+    try {
+      const result = await searchAddressToCoords(fullAddress);
+
+      if (result) {
+        setFormData((prev) => ({
+          ...prev,
+          region: result.region,
+          district: result.district,
+          address: result.roadAddress || result.address,
+          latitude: result.latitude,
+          longitude: result.longitude,
+        }));
+        alert(`주소를 찾았습니다!\n위도: ${result.latitude}\n경도: ${result.longitude}`);
+      } else {
+        alert('주소를 찾을 수 없습니다. 주소를 다시 확인해주세요.');
+      }
+    } catch (error) {
+      console.error('Address search error:', error);
+      alert('주소 검색 중 오류가 발생했습니다.');
+    } finally {
+      setIsSearchingAddress(false);
     }
   };
 
@@ -160,6 +204,8 @@ export default function SellerStoresPage() {
         region: formData.region,
         district: formData.district,
         address: formData.address || undefined,
+        latitude: formData.latitude !== null ? formData.latitude : undefined,
+        longitude: formData.longitude !== null ? formData.longitude : undefined,
         phone_number: formData.phone_number || undefined,
         image_url: formData.image_url || undefined,
         description: formData.description || undefined,
@@ -182,6 +228,8 @@ export default function SellerStoresPage() {
         region: formData.region,
         district: formData.district,
         address: formData.address || undefined,
+        latitude: formData.latitude !== null ? formData.latitude : undefined,
+        longitude: formData.longitude !== null ? formData.longitude : undefined,
         phone_number: formData.phone_number || undefined,
         image_url: formData.image_url || undefined,
         description: formData.description || undefined,
@@ -409,23 +457,51 @@ export default function SellerStoresPage() {
                 </div>
               </div>
 
-              {/* Address */}
+              {/* Address with Search Button */}
               <div className="form-control w-full mb-4">
                 <label htmlFor="address" className="label">
                   <span className="label-text">상세 주소</span>
                 </label>
-                <input
-                  id="address"
-                  name="address"
-                  type="text"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  className={`input input-bordered bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 w-full ${formErrors.address ? 'input-error' : ''}`}
-                  placeholder="테헤란로 123"
-                />
+                <div className="flex gap-2">
+                  <input
+                    id="address"
+                    name="address"
+                    type="text"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    className={`input input-bordered bg-[var(--color-primary)] text-[var(--color-text)] border-[var(--color-text)]/20 flex-1 ${formErrors.address ? 'input-error' : ''}`}
+                    placeholder="테헤란로 123"
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleSearchAddress}
+                    disabled={isSearchingAddress}
+                    className="gap-2 whitespace-nowrap"
+                  >
+                    {isSearchingAddress ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                        검색중...
+                      </>
+                    ) : (
+                      <>
+                        <Search className="w-4 h-4" />
+                        주소 검색
+                      </>
+                    )}
+                  </Button>
+                </div>
                 {formErrors.address && (
                   <label className="label">
                     <span className="label-text-alt text-error">{formErrors.address}</span>
+                  </label>
+                )}
+                {formData.latitude && formData.longitude && (
+                  <label className="label">
+                    <span className="label-text-alt text-success">
+                      ✓ 위도: {formData.latitude.toFixed(6)}, 경도: {formData.longitude.toFixed(6)}
+                    </span>
                   </label>
                 )}
               </div>

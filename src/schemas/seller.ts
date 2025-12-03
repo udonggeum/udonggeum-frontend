@@ -27,6 +27,8 @@ export const CreateStoreRequestSchema = z.object({
   region: z.string().min(1, '시·도를 선택하세요'),
   district: z.string().min(1, '구·군을 선택하세요'),
   address: z.string().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
   phone_number: z
     .string()
     .regex(/^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/, '올바른 전화번호 형식이 아닙니다')
@@ -49,6 +51,8 @@ export const UpdateStoreRequestSchema = z.object({
   region: z.string().min(1, '시·도를 선택하세요').optional(),
   district: z.string().min(1, '구·군을 선택하세요').optional(),
   address: z.string().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
   phone_number: z
     .string()
     .regex(/^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/, '올바른 전화번호 형식이 아닙니다')

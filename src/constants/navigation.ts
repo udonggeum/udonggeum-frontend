@@ -8,15 +8,21 @@ import type { NavigationItem } from '../types';
  */
 export const NAV_ITEMS: NavigationItem[] = [
   {
+    id: 'price',
+    label: '금시세',
+    path: '/price',
+    displayOrder: 1,
+  },
+  {
     id: 'products',
     label: '상품',
     path: '/products',
-    displayOrder: 1,
+    displayOrder: 2,
   },
   {
     id: 'stores',
     label: '매장',
     path: '/stores',
-    displayOrder: 2,
+    displayOrder: 3,
   },
 ];

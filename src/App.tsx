@@ -15,6 +15,7 @@ import ProductsPage from '@/pages/ProductsPage';
 import ProductDetailPage from '@/pages/ProductDetailPage';
 import StoresPage from '@/pages/StoresPage';
 import StoreDetailPage from '@/pages/StoreDetailPage';
+import PricePage from '@/pages/PricePage';
 import CartPage from '@/pages/CartPage';
 import OrderPage from '@/pages/OrderPage';
 import WishlistPage from '@/pages/WishlistPage';
@@ -177,6 +178,7 @@ export default function App() {
         <Route path="/products/:productId" element={<ProductDetailPage />} />
         <Route path="/stores" element={<StoresPage />} />
         <Route path="/stores/:storeId" element={<StoreDetailPage />} />
+        <Route path="/price" element={<PricePage />} />
       </Routes>
     </BrowserRouter>
   );

@@ -1,5 +1,11 @@
 .PHONY: all init install dev build test lint clean docker-build docker-run docker-stop docker-clean pushall help
 
+# Docker configuration
+DOCKER_REGISTRY := ghcr.io/udonggeum
+DOCKER_IMAGE := udonggeum-frontend
+DOCKER_TAG := $(shell cat VERSION)
+DOCKER_FULL_IMAGE := $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG)
+
 # Default target
 all: build
 
@@ -18,7 +24,10 @@ help:
 	@echo "  make docker-run   - Run Docker container"
 	@echo "  make docker-stop  - Stop Docker container"
 	@echo "  make docker-clean - Remove Docker image and container"
+	@echo "  make docker-tag   - Show current Docker tag"
 	@echo "  make pushall      - Build and push to GitHub Container Registry"
+	@echo ""
+	@echo "Current version: $(DOCKER_TAG)"
 
 # Initialize project
 init:
@@ -65,14 +74,14 @@ clean:
 
 # Docker: Build image
 docker-build:
-	@echo "Building Docker image..."
-	@docker build -t ghcr.io/udonggeum/udonggeum-frontend:latest .
+	@echo "Building Docker image: $(DOCKER_FULL_IMAGE)"
+	@docker build -t $(DOCKER_FULL_IMAGE) .
 	@echo "Docker image built successfully!"
 
 # Docker: Run container
 docker-run:
 	@echo "Running Docker container..."
-	@docker run -d --name udonggeum-frontend -p 80:80 ghcr.io/udonggeum/udonggeum-frontend:latest
+	@docker run -d --name udonggeum-frontend -p 80:80 $(DOCKER_FULL_IMAGE)
 	@echo "Container started! Access at http://localhost"
 
 # Docker: Stop container
@@ -85,15 +94,21 @@ docker-stop:
 # Docker: Clean up
 docker-clean: docker-stop
 	@echo "Removing Docker image..."
-	@docker rmi ghcr.io/udonggeum/udonggeum-frontend:latest 2>/dev/null || true
+	@docker rmi $(DOCKER_FULL_IMAGE) 2>/dev/null || true
 	@echo "Docker cleanup complete!"
 
 # Build and push to GitHub Container Registry
 pushall:
 	@echo "Building and pushing Docker image to GHCR..."
-	@docker build -t ghcr.io/udonggeum/udonggeum-frontend:latest .
-	@docker push ghcr.io/udonggeum/udonggeum-frontend:latest
+	@echo "Image: $(DOCKER_FULL_IMAGE)"
+	@docker build -t $(DOCKER_FULL_IMAGE) .
+	@docker push $(DOCKER_FULL_IMAGE)
 	@echo "Push complete!"
+
+# Show current Docker tag
+docker-tag:
+	@echo "Current Docker tag: $(DOCKER_TAG)"
+	@echo "Full image name: $(DOCKER_FULL_IMAGE)"
 
 # Docker Compose: Start all services
 compose-up:
