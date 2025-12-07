@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { ChevronDown, ChevronUp, MapPin } from 'lucide-react';
 import { useLatestGoldPrices } from '@/hooks/queries/useGoldPricesQueries';
 import Navbar from '@/components/Navbar';
 import GoldPriceChart from '@/components/GoldPriceChart';
@@ -23,13 +23,15 @@ import type { GoldPrice, GoldPriceWithCalculations, GoldPriceType } from '@/sche
 export default function PricePage() {
   const { data: pricesData, isLoading } = useLatestGoldPrices();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [selectedType, setSelectedType] = useState<GoldPriceType>('24K'); // 선택된 금 유형
   const [selectedPeriod, setSelectedPeriod] = useState<'1주' | '1개월' | '3개월' | '1년' | '전체'>('1개월');
+  const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart'); // 차트/테이블 뷰 모드
 
   // URL 파라미터에서 타입 읽기 (예: /price?type=18K)
   useEffect(() => {
     const typeParam = searchParams.get('type');
-    if (typeParam && ['24K', '18K', '14K', 'Platinum'].includes(typeParam)) {
+    if (typeParam && ['24K', '18K', '14K', 'Platinum', 'Silver'].includes(typeParam)) {
       setSelectedType(typeParam as GoldPriceType);
     }
   }, [searchParams]);
@@ -49,6 +51,8 @@ export default function PricePage() {
           return '58.5%';
         case 'Platinum':
           return '99.95%';
+        case 'Silver':
+          return '99.9%';
         default:
           return '';
       }
@@ -59,15 +63,19 @@ export default function PricePage() {
       if (type === 'Platinum') {
         return { bg: 'bg-gray-100', text: 'text-gray-600' };
       }
+      if (type === 'Silver') {
+        return { bg: 'bg-slate-100', text: 'text-slate-600' };
+      }
       return { bg: 'bg-yellow-100', text: 'text-yellow-700' };
     };
 
-    // 정렬 순서 정의: 24K > 18K > 14K > Platinum
+    // 정렬 순서 정의: 24K > 18K > 14K > Platinum > Silver
     const typeOrder: Record<string, number> = {
       '24K': 1,
       '18K': 2,
       '14K': 3,
       'Platinum': 4,
+      'Silver': 5,
     };
 
     return pricesData
@@ -82,9 +90,9 @@ export default function PricePage() {
           purity: getPurity(price.type),
           badge_bg: colors.bg,
           badge_text: colors.text,
-          // Mock 변동률 (백엔드 추가 예정)
-          change_percent: price.type === '24K' ? -0.22 : price.type === '18K' ? 0.15 : price.type === 'Platinum' ? 1.28 : 0,
-          change_amount: price.type === '24K' ? -1000 : price.type === '18K' ? 500 : price.type === 'Platinum' ? 2000 : 0,
+          // 백엔드에서 제공하는 변동률 데이터 사용 (optional이므로 fallback 제공)
+          change_percent: price.change_percent ?? 0,
+          change_amount: price.change_amount ?? 0,
           sortOrder: typeOrder[price.type] || 99,
         };
       })
@@ -123,85 +131,103 @@ export default function PricePage() {
           <p className="text-[15px] text-gray-500">{currentTime} 기준</p>
         </div>
 
-        {/* 메인 시세 카드 (토스/크림 스타일) */}
+        {/* 메인 시세 카드 - 개선된 UI */}
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
             {prices.map((price) => {
               const isPositive = (price.change_percent || 0) > 0;
-              const isNegative = (price.change_percent || 0) < 0;
               const isZero = (price.change_percent || 0) === 0;
-
               const isSelected = selectedType === price.type;
 
               return (
                 <div
                   key={price.type}
                   onClick={() => setSelectedType(price.type)}
-                  className={`bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:-translate-y-0.5 cursor-pointer ${
-                    isSelected ? 'border-2 border-yellow-400' : 'border-2 border-transparent'
+                  className={`relative bg-white p-5 rounded-xl cursor-pointer transition-all duration-200 ${
+                    isSelected
+                      ? 'ring-2 ring-yellow-400 shadow-lg scale-[1.02]'
+                      : 'shadow-sm hover:shadow-md hover:scale-[1.01]'
                   }`}
                 >
-                  {/* 헤더 */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-10 h-10 ${price.badge_bg} rounded-xl flex items-center justify-center`}>
-                        <span className={`text-[13px] font-bold ${price.badge_text}`}>
-                          {price.type}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-[15px] font-semibold text-gray-900">
-                          {price.type === '24K' ? '순금' : price.type === '18K' ? '18K금' : price.type === '14K' ? '14K금' : '백금'}
-                        </span>
-                        <p className="text-[11px] text-gray-400">{price.purity}</p>
+                  {/* 선택 표시 */}
+                  {isSelected && (
+                    <div className="absolute top-3 right-3">
+                      <div className="w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
+                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
                       </div>
                     </div>
+                  )}
+
+                  {/* 금속 이름 + 배지 */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className={`w-8 h-8 ${price.badge_bg} rounded-lg flex items-center justify-center`}>
+                      <span className={`text-[11px] font-bold ${price.badge_text}`}>
+                        {price.type}
+                      </span>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-[14px] font-bold text-gray-900">
+                        {price.type === '24K' ? '순금' : price.type === '18K' ? '18K' : price.type === '14K' ? '14K' : price.type === 'Platinum' ? '백금' : '은'}
+                      </h3>
+                      <p className="text-[10px] text-gray-400">{price.purity}</p>
+                    </div>
+                  </div>
+
+                  {/* 가격 - 더 크고 명확하게 */}
+                  <div className="mb-3">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-[24px] font-bold text-gray-900 tabular-nums leading-none">
+                        {price.sell_price.toLocaleString()}
+                      </span>
+                      <span className="text-[12px] text-gray-500">원</span>
+                    </div>
+                    <div className="text-[11px] text-gray-400 mt-0.5">그램당 매도가</div>
+                  </div>
+
+                  {/* 변동률 - 더 눈에 띄게 */}
+                  <div className="space-y-1.5">
                     {!isZero && (
-                      <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${
-                        isPositive ? 'bg-green-50' : 'bg-red-50'
+                      <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${
+                        isPositive ? 'bg-red-50' : 'bg-blue-50'
                       }`}>
                         {isPositive ? (
-                          <ChevronUp className="w-3 h-3 text-green-500" />
+                          <ChevronUp className={`w-3.5 h-3.5 ${isPositive ? 'text-red-500' : 'text-blue-500'}`} />
                         ) : (
-                          <ChevronDown className="w-3 h-3 text-red-500" />
+                          <ChevronDown className={`w-3.5 h-3.5 ${isPositive ? 'text-red-500' : 'text-blue-500'}`} />
                         )}
-                        <span className={`text-[12px] font-semibold ${
-                          isPositive ? 'text-green-500' : 'text-red-500'
+                        <span className={`text-[13px] font-bold tabular-nums ${
+                          isPositive ? 'text-red-500' : 'text-blue-500'
                         }`}>
-                          {isPositive ? '+' : ''}{price.change_percent?.toFixed(2)}%
+                          {isPositive ? '+' : ''}{Math.abs(price.change_amount || 0).toLocaleString()}원
+                        </span>
+                        <span className={`text-[11px] font-medium ${
+                          isPositive ? 'text-red-400' : 'text-blue-400'
+                        }`}>
+                          ({isPositive ? '+' : ''}{price.change_percent?.toFixed(2)}%)
                         </span>
                       </div>
                     )}
                     {isZero && (
-                      <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-lg">
-                        <span className="text-[12px] font-semibold text-gray-500">0.00%</span>
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 rounded-lg">
+                        <span className="text-[13px] font-medium text-gray-500 tabular-nums">변동없음</span>
                       </div>
                     )}
-                  </div>
 
-                  {/* 가격 */}
-                  <div className="mb-2">
-                    <span className="text-[28px] font-bold text-gray-900 tabular-nums">
-                      {price.sell_price.toLocaleString()}
-                    </span>
-                    <span className="text-[14px] text-gray-500 ml-1">원/g</span>
-                  </div>
-
-                  {/* 변동 및 1돈 기준 */}
-                  <div className="flex items-center gap-2 text-[13px]">
-                    <span className={`font-medium tabular-nums ${
-                      isPositive ? 'text-green-500' : isNegative ? 'text-red-500' : 'text-gray-500'
-                    }`}>
-                      {isPositive ? '▲' : isNegative ? '▼' : '-'} {Math.abs(price.change_amount || 0).toLocaleString()}
-                    </span>
-                    <span className="text-gray-300">|</span>
-                    <span className="text-gray-500">
-                      1돈 <span className="font-semibold text-gray-900 tabular-nums">{price.price_per_don.toLocaleString()}</span>원
-                    </span>
+                    {/* 1돈 가격 - 회색 배경으로 구분 */}
+                    <div className="px-2.5 py-1 bg-gray-50 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] text-gray-500">1돈(3.75g)</span>
+                        <span className="text-[13px] font-bold text-gray-900 tabular-nums">
+                          {price.price_per_don.toLocaleString()}원
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
@@ -209,91 +235,128 @@ export default function PricePage() {
           </div>
         )}
 
-        {/* 시세 차트 섹션 (Placeholder) */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <div>
-              <h2 className="text-[20px] font-bold text-gray-900 mb-1">
-                {selectedType === '24K' ? '24K 순금' : selectedType === '18K' ? '18K 금' : selectedType === '14K' ? '14K 금' : '백금'} 시세 추이
-              </h2>
-              <p className="text-[14px] text-gray-500">국내 {selectedType === 'Platinum' ? '백금' : '금'} 시세 변동 그래프</p>
-            </div>
+        {/* 시세 차트/테이블 섹션 */}
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-8">
+          {/* 헤더 */}
+          <div className="p-6 border-b border-gray-100">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-[20px] font-bold text-gray-900 mb-1">
+                  {selectedType === '24K' ? '24K 순금' : selectedType === '18K' ? '18K 금' : selectedType === '14K' ? '14K 금' : selectedType === 'Platinum' ? '백금' : '은'} 시세 추이
+                </h2>
+                <p className="text-[14px] text-gray-500">국내 {selectedType === 'Platinum' ? '백금' : selectedType === 'Silver' ? '은' : '금'} 시세 변동 그래프</p>
+              </div>
 
-            {/* 기간 선택 */}
-            <div className="flex items-center gap-2">
-              {(['1주', '1개월', '3개월', '1년', '전체'] as const).map((period) => (
-                <button
-                  key={period}
-                  type="button"
-                  onClick={() => setSelectedPeriod(period)}
-                  className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 ${
-                    selectedPeriod === period
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  {period}
-                </button>
-              ))}
-            </div>
-          </div>
+              {/* 컨트롤 영역 */}
+              <div className="flex items-center gap-3">
+                {/* 차트/테이블 토글 */}
+                <div className="inline-flex rounded-lg border border-gray-200 p-1 bg-gray-50">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('chart')}
+                    className={`px-3 py-1.5 text-[13px] font-medium rounded-md transition-all duration-200 ${
+                      viewMode === 'chart'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    차트
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('table')}
+                    className={`px-3 py-1.5 text-[13px] font-medium rounded-md transition-all duration-200 ${
+                      viewMode === 'table'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    표
+                  </button>
+                </div>
 
-          {/* 차트 영역 */}
-          {selectedPrice ? (
-            <GoldPriceChart
-              type={selectedType}
-              currentPrice={selectedPrice.sell_price}
-              period={selectedPeriod}
-            />
-          ) : (
-            <div className="relative h-[320px] rounded-xl border border-gray-100 bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
-              <div className="text-center">
-                <p className="text-[16px] font-semibold text-gray-400 mb-2">데이터 로딩중</p>
-                <p className="text-[14px] text-gray-400">잠시만 기다려주세요</p>
+                {/* 기간 선택 */}
+                <div className="flex items-center gap-1.5">
+                  {(['1주', '1개월', '3개월', '1년', '전체'] as const).map((period) => (
+                    <button
+                      key={period}
+                      type="button"
+                      onClick={() => setSelectedPeriod(period)}
+                      className={`px-3 py-1.5 text-[13px] font-medium rounded-lg transition-all duration-200 ${
+                        selectedPeriod === period
+                          ? 'bg-gray-900 text-white shadow-sm'
+                          : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      {period}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-          )}
+          </div>
 
-          {/* 차트 하단 요약 */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-100">
-            <div>
-              <p className="text-[12px] text-gray-500 mb-1">기간 최고가</p>
-              <p className="text-[16px] font-bold text-gray-900 tabular-nums">
-                {selectedPrice ? (selectedPrice.sell_price + 6000).toLocaleString() : '-'}원
-              </p>
-              <p className="text-[11px] text-gray-400">11/15</p>
-            </div>
-            <div>
-              <p className="text-[12px] text-gray-500 mb-1">기간 최저가</p>
-              <p className="text-[16px] font-bold text-gray-900 tabular-nums">
-                {selectedPrice ? (selectedPrice.sell_price - 7000).toLocaleString() : '-'}원
-              </p>
-              <p className="text-[11px] text-gray-400">11/03</p>
-            </div>
-            <div>
-              <p className="text-[12px] text-gray-500 mb-1">기간 평균가</p>
-              <p className="text-[16px] font-bold text-gray-900 tabular-nums">
-                {selectedPrice ? (selectedPrice.sell_price - 800).toLocaleString() : '-'}원
-              </p>
-            </div>
-            <div>
-              <p className="text-[12px] text-gray-500 mb-1">기간 변동폭</p>
-              <p className="text-[16px] font-bold text-green-500 tabular-nums">+1.57%</p>
-              <p className="text-[11px] text-gray-400">+7,000원</p>
-            </div>
+          {/* 차트/테이블 영역 */}
+          <div className="p-6">
+            {viewMode === 'chart' ? (
+              <>
+                {selectedPrice ? (
+                  <GoldPriceChart
+                    type={selectedType}
+                    currentPrice={selectedPrice.sell_price}
+                    period={selectedPeriod}
+                  />
+                ) : (
+                  <div className="relative h-[320px] rounded-xl border border-gray-100 bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
+                    <div className="text-center">
+                      <p className="text-[16px] font-semibold text-gray-400 mb-2">데이터 로딩중</p>
+                      <p className="text-[14px] text-gray-400">잠시만 기다려주세요</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* 차트 하단 통계 요약 */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-100">
+                  <div className="text-center lg:text-left">
+                    <p className="text-[12px] text-gray-500 mb-1.5 font-medium">기간 최고가</p>
+                    <p className="text-[18px] font-bold text-gray-900 tabular-nums">
+                      {selectedPrice ? (selectedPrice.sell_price + 6000).toLocaleString() : '-'}원
+                    </p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">11/15</p>
+                  </div>
+                  <div className="text-center lg:text-left">
+                    <p className="text-[12px] text-gray-500 mb-1.5 font-medium">기간 최저가</p>
+                    <p className="text-[18px] font-bold text-gray-900 tabular-nums">
+                      {selectedPrice ? (selectedPrice.sell_price - 7000).toLocaleString() : '-'}원
+                    </p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">11/03</p>
+                  </div>
+                  <div className="text-center lg:text-left">
+                    <p className="text-[12px] text-gray-500 mb-1.5 font-medium">기간 평균가</p>
+                    <p className="text-[18px] font-bold text-gray-900 tabular-nums">
+                      {selectedPrice ? (selectedPrice.sell_price - 800).toLocaleString() : '-'}원
+                    </p>
+                  </div>
+                  <div className="text-center lg:text-left">
+                    <p className="text-[12px] text-gray-500 mb-1.5 font-medium">기간 변동폭</p>
+                    <p className="text-[18px] font-bold text-red-500 tabular-nums">+1.57%</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">+7,000원</p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {selectedPrice && (
+                  <PriceTableHistory
+                    type={selectedType}
+                    period={selectedPeriod}
+                    currentPrice={selectedPrice.sell_price}
+                  />
+                )}
+              </>
+            )}
           </div>
         </div>
-
-        {/* 상세 시세표 */}
-        {selectedPrice && (
-          <div className="mb-8">
-            <PriceTableHistory
-              type={selectedType}
-              period={selectedPeriod}
-              currentPrice={selectedPrice.sell_price}
-            />
-          </div>
-        )}
 
         {/* 시세 계산기 */}
         {!isLoading && prices.length > 0 && (
@@ -301,6 +364,30 @@ export default function PricePage() {
             <PriceCalculator prices={prices} />
           </div>
         )}
+
+        {/* 근처 매입 가능한 금은방 섹션 */}
+        <div className="mb-8">
+          <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl p-6 border border-yellow-200">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 bg-yellow-500 rounded-xl flex items-center justify-center">
+                <MapPin className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-[18px] font-bold text-gray-900">근처 매입 금은방</h3>
+                <p className="text-[13px] text-gray-600">내 주변 금 매입 가능한 매장 찾기</p>
+              </div>
+            </div>
+            <p className="text-[14px] text-gray-600 mb-4">
+              보유하신 금을 판매하고 싶으신가요? 가까운 매장에서 최적의 가격으로 매입해드립니다.
+            </p>
+            <button
+              onClick={() => navigate('/stores?buying=true')}
+              className="w-full px-5 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-xl transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-lg"
+            >
+              근처 매입 매장 보기
+            </button>
+          </div>
+        </div>
 
         {/* 정보 섹션 */}
         <div className="bg-gray-50 rounded-2xl p-6">

@@ -7,7 +7,7 @@ import { z } from 'zod';
  */
 
 // Gold price type enum
-export const GoldPriceTypeSchema = z.enum(['24K', '18K', '14K', 'Platinum']);
+export const GoldPriceTypeSchema = z.enum(['24K', '18K', '14K', 'Platinum', 'Silver']);
 export type GoldPriceType = z.infer<typeof GoldPriceTypeSchema>;
 
 // Single gold price schema
@@ -19,6 +19,11 @@ export const GoldPriceSchema = z.object({
   source_date: z.string().optional(),
   description: z.string().optional(),
   updated_at: z.string(),
+
+  // 전일 대비 변동률 필드 (백엔드에서 제공)
+  previous_day_price: z.number().optional(),
+  change_amount: z.number().optional(),
+  change_percent: z.number().optional(),
 });
 
 export type GoldPrice = z.infer<typeof GoldPriceSchema>;
@@ -39,6 +44,23 @@ export const GoldPriceByTypeResponseSchema = z.object({
 
 export type GoldPriceByTypeResponse = z.infer<typeof GoldPriceByTypeResponseSchema>;
 
+// Gold price history item schema
+export const GoldPriceHistoryItemSchema = z.object({
+  date: z.string(), // YYYY-MM-DD 형식
+  sell_price: z.number().positive('매도가는 양수여야 합니다'),
+  buy_price: z.number().positive('매입가는 양수여야 합니다'),
+});
+
+export type GoldPriceHistoryItem = z.infer<typeof GoldPriceHistoryItemSchema>;
+
+// Gold price history response (from GET /api/v1/gold-prices/history/:type)
+export const GoldPriceHistoryResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.array(GoldPriceHistoryItemSchema),
+});
+
+export type GoldPriceHistoryResponse = z.infer<typeof GoldPriceHistoryResponseSchema>;
+
 // Extended gold price with calculated fields for UI
 export interface GoldPriceWithCalculations extends GoldPrice {
   // 변동률 (전일 대비 %) - 백엔드 추가 예정
@@ -52,4 +74,5 @@ export interface GoldPriceWithCalculations extends GoldPrice {
   // 배지 색상
   badge_bg: string;
   badge_text: string;
+  sortOrder: number;
 }
