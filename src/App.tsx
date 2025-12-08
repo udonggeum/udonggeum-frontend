@@ -10,28 +10,13 @@ import ForgotPasswordPage from '@/pages/ForgotPasswordPage';
 import ResetPasswordPage from '@/pages/ResetPasswordPage';
 import MyPage from '@/pages/MyPage';
 import ProfileEditPage from '@/pages/ProfileEditPage';
-import ProductsPage from '@/pages/ProductsPage';
-import ProductDetailPage from '@/pages/ProductDetailPage';
 import StoresPage from '@/pages/StoresPage';
 import StoreDetailPage from '@/pages/StoreDetailPage';
 import PricePage from '@/pages/PricePage';
-import CartPage from '@/pages/CartPage';
-import OrderPage from '@/pages/OrderPage';
 import WishlistPage from '@/pages/WishlistPage';
-import OrderHistoryPage from '@/pages/OrderHistoryPage';
 import AddressManagementPage from '@/pages/AddressManagementPage';
-import PaymentPage from '@/pages/PaymentPage';
-import PaymentSuccessPage from '@/pages/PaymentSuccessPage';
-import PaymentFailPage from '@/pages/PaymentFailPage';
-import PaymentCancelPage from '@/pages/PaymentCancelPage';
-import SellerDashboardPage from '@/pages/SellerDashboardPage';
-import SellerStoresPage from '@/pages/SellerStoresPage';
-import SellerProductsPage from '@/pages/SellerProductsPage';
-import SellerOrdersPage from '@/pages/SellerOrdersPage';
 import MinimalLayout from '@/components/layouts/MinimalLayout';
-import SellerLayout from '@/components/layouts/SellerLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import AdminRoute from '@/components/AdminRoute';
 
 // 2. Component
 export default function App() {
@@ -47,22 +32,6 @@ export default function App() {
         </Route>
 
         {/* Protected Routes - Require authentication */}
-        <Route
-          path="/cart"
-          element={
-            <ProtectedRoute>
-              <CartPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/order"
-          element={
-            <ProtectedRoute>
-              <OrderPage />
-            </ProtectedRoute>
-          }
-        />
         <Route
           path="/mypage"
           element={
@@ -95,72 +64,12 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/orders"
-          element={
-            <ProtectedRoute>
-              <OrderHistoryPage />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Payment Routes */}
-        <Route
-          path="/payment/:orderId"
-          element={
-            <ProtectedRoute>
-              <PaymentPage />
-            </ProtectedRoute>
-          }
-        />
-        {/* Payment callback routes - public (Kakao Pay redirects here) */}
-        <Route path="/payment/success" element={<PaymentSuccessPage />} />
-        <Route path="/payment/fail" element={<PaymentFailPage />} />
-        <Route path="/payment/cancel" element={<PaymentCancelPage />} />
-
-        {/* Seller Routes - Require admin role with SellerLayout */}
-        <Route element={<SellerLayout />}>
-          <Route
-            path="/seller/dashboard"
-            element={
-              <AdminRoute>
-                <SellerDashboardPage />
-              </AdminRoute>
-            }
-          />
-          <Route
-            path="/seller/stores"
-            element={
-              <AdminRoute>
-                <SellerStoresPage />
-              </AdminRoute>
-            }
-          />
-          <Route
-            path="/seller/products"
-            element={
-              <AdminRoute>
-                <SellerProductsPage />
-              </AdminRoute>
-            }
-          />
-          <Route
-            path="/seller/orders"
-            element={
-              <AdminRoute>
-                <SellerOrdersPage />
-              </AdminRoute>
-            }
-          />
-        </Route>
 
         {/* Regular Routes - No layout (TODO: Add DefaultLayout) */}
         <Route path="/" element={<MainPage />} />
         <Route path="/old-home" element={<Home />} />
         <Route path="/apidemo" element={<ApiDemo />} />
         <Route path="/components-demo" element={<ComponentsDemo />} />
-        <Route path="/products" element={<ProductsPage />} />
-        <Route path="/products/:productId" element={<ProductDetailPage />} />
         <Route path="/stores" element={<StoresPage />} />
         <Route path="/stores/:storeId" element={<StoreDetailPage />} />
         <Route path="/price" element={<PricePage />} />
