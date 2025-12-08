@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { LogIn, User, Settings, LogOut, LayoutDashboard } from 'lucide-react';
+import { LogIn, User, Settings, LogOut } from 'lucide-react';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useCart, useLogout } from '@/hooks/queries';
 import type { NavigationItem } from '../types';
@@ -85,11 +85,11 @@ export default function Navbar({ navigationItems }: NavbarProps) {
               <>
                 <li>
                   <Link
-                    to={user?.role === 'admin' ? '/seller/dashboard' : '/mypage'}
+                    to="/mypage"
                     className="text-base"
                   >
-                    {user?.role === 'admin' ? <LayoutDashboard className="w-4 h-4" /> : <User className="w-4 h-4" />}
-                    {user?.role === 'admin' ? '대시보드' : '마이페이지'}
+                    <User className="w-4 h-4" />
+                    마이페이지
                   </Link>
                 </li>
                 <li>
@@ -115,7 +115,7 @@ export default function Navbar({ navigationItems }: NavbarProps) {
 
         {/* Logo */}
         <Link
-          to={user?.role === 'admin' ? '/seller/dashboard' : '/'}
+          to="/"
           className="btn btn-ghost text-xl font-bold normal-case hover:bg-transparent flex items-center gap-2"
           aria-label="홈으로 이동"
         >
@@ -220,20 +220,11 @@ export default function Navbar({ navigationItems }: NavbarProps) {
               </li>
               <li>
                 <Link
-                  to={user?.role === 'admin' ? '/seller/dashboard' : '/mypage'}
+                  to="/mypage"
                   className="text-base"
                 >
-                  {user?.role === 'admin' ? (
-                    <>
-                      <LayoutDashboard className="w-4 h-4" />
-                      대시보드
-                    </>
-                  ) : (
-                    <>
-                      <User className="w-4 h-4" />
-                      마이페이지
-                    </>
-                  )}
+                  <User className="w-4 h-4" />
+                  마이페이지
                 </Link>
               </li>
               <li>

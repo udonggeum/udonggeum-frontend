@@ -6,6 +6,51 @@
 import { http, HttpResponse } from 'msw';
 import type { StoreDetail, StoresResponse } from '@/services/stores';
 
+// Mock reviews data
+const mockReviews = [
+  {
+    id: 1,
+    store_id: 1,
+    user_id: 1,
+    user: { id: 1, email: 'user1@example.com', name: '김철수', role: 'user' as const },
+    rating: 5,
+    content: '정말 친절하시고 가격도 합리적이에요. 금목걸이 구매했는데 너무 만족합니다!',
+    image_urls: [
+      'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&auto=format&fit=crop&q=80',
+    ],
+    is_visitor: true,
+    like_count: 12,
+    created_at: '2025-01-07T14:00:00Z',
+    updated_at: '2025-01-07T14:00:00Z',
+  },
+  {
+    id: 2,
+    store_id: 1,
+    user_id: 2,
+    user: { id: 2, email: 'user2@example.com', name: '이영희', role: 'user' as const },
+    rating: 4,
+    content: '매장이 깔끔하고 상품 종류가 다양해요. 또 방문할 예정입니다.',
+    image_urls: [
+      'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&auto=format&fit=crop&q=80',
+    ],
+    is_visitor: true,
+    like_count: 8,
+    created_at: '2025-01-06T11:30:00Z',
+    updated_at: '2025-01-06T11:30:00Z',
+  },
+];
+
+// Mock statistics
+const mockStatistics: Record<number, any> = {
+  1: {
+    review_count: 2,
+    average_rating: 4.5,
+    visitor_review_count: 2,
+    post_count: 2,
+    gallery_image_count: 3,
+  },
+};
+
 // Mock store data
 const mockStores: StoreDetail[] = [
   {
@@ -23,6 +68,9 @@ const mockStores: StoreDetail[] = [
     product_count: 15,
     total_products: 15,
     image_url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600',
+    buying_gold: true,
+    buying_platinum: true,
+    buying_silver: true,
     category_counts: {
       '목걸이': 5,
       '반지': 4,
@@ -45,6 +93,9 @@ const mockStores: StoreDetail[] = [
     product_count: 12,
     total_products: 12,
     image_url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600',
+    buying_gold: true,
+    buying_platinum: false,
+    buying_silver: true,
     category_counts: {
       '반지': 5,
       '귀걸이': 4,
@@ -66,6 +117,9 @@ const mockStores: StoreDetail[] = [
     product_count: 18,
     total_products: 18,
     image_url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600',
+    buying_gold: false,
+    buying_platinum: true,
+    buying_silver: false,
     category_counts: {
       '목걸이': 6,
       '반지': 5,
@@ -88,6 +142,9 @@ const mockStores: StoreDetail[] = [
     product_count: 22,
     total_products: 22,
     image_url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600',
+    buying_gold: false,
+    buying_platinum: false,
+    buying_silver: true,
     category_counts: {
       '귀걸이': 8,
       '팔찌': 6,
@@ -110,6 +167,9 @@ const mockStores: StoreDetail[] = [
     product_count: 20,
     total_products: 20,
     image_url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600',
+    buying_gold: true,
+    buying_platinum: true,
+    buying_silver: false,
     category_counts: {
       '반지': 7,
       '목걸이': 6,
@@ -205,5 +265,91 @@ export const storesHandlers = [
     }
 
     return HttpResponse.json({ store });
+  }),
+
+  // GET /api/v1/stores/:id/reviews - Get store reviews
+  http.get('/api/v1/stores/:id/reviews', ({ params, request }) => {
+    const storeId = parseInt(params.id as string, 10);
+    const url = new URL(request.url);
+    const page = parseInt(url.searchParams.get('page') || '1', 10);
+    const pageSize = parseInt(url.searchParams.get('page_size') || '10', 10);
+
+    const storeReviews = mockReviews.filter((r) => r.store_id === storeId);
+    const offset = (page - 1) * pageSize;
+    const paginated = storeReviews.slice(offset, offset + pageSize);
+
+    return HttpResponse.json({
+      data: paginated,
+      total: storeReviews.length,
+      page,
+      page_size: pageSize,
+    });
+  }),
+
+  // GET /api/v1/stores/:id/stats - Get store statistics
+  http.get('/api/v1/stores/:id/stats', ({ params }) => {
+    const storeId = parseInt(params.id as string, 10);
+    const stats = mockStatistics[storeId] || {
+      review_count: 0,
+      average_rating: 0,
+      visitor_review_count: 0,
+      post_count: 0,
+      gallery_image_count: 0,
+    };
+
+    return HttpResponse.json(stats);
+  }),
+
+  // GET /api/v1/stores/:id/gallery - Get store gallery
+  http.get('/api/v1/stores/:id/gallery', ({ params, request }) => {
+    const storeId = parseInt(params.id as string, 10);
+    const url = new URL(request.url);
+    const page = parseInt(url.searchParams.get('page') || '1', 10);
+    const pageSize = parseInt(url.searchParams.get('page_size') || '20', 10);
+
+    // Collect all images from reviews and posts for this store
+    const galleryImages: any[] = [];
+
+    // Add images from reviews
+    mockReviews
+      .filter((r) => r.store_id === storeId)
+      .forEach((review) => {
+        if (review.image_urls && review.image_urls.length > 0) {
+          review.image_urls.forEach((url: string) => {
+            galleryImages.push({
+              image_url: url,
+              post_id: review.id,
+              source_type: 'review',
+              caption: review.content.substring(0, 50) + '...',
+              rating: review.rating,
+              author_name: review.user.name,
+              created_at: review.created_at,
+            });
+          });
+        }
+      });
+
+    // Add image from community post (금목걸이 이벤트)
+    galleryImages.push({
+      image_url: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&auto=format&fit=crop&q=80',
+      post_id: 15,
+      source_type: 'community',
+      caption: '🎁 새해 특가! 18K 금목걸이 30% 할인 이벤트',
+      author_name: '관리자',
+      created_at: '2025-01-09T10:30:00Z',
+    });
+
+    // Sort by created_at descending
+    galleryImages.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    const offset = (page - 1) * pageSize;
+    const paginated = galleryImages.slice(offset, offset + pageSize);
+
+    return HttpResponse.json({
+      data: paginated,
+      total: galleryImages.length,
+      page,
+      page_size: pageSize,
+    });
   }),
 ];

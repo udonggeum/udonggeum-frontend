@@ -1,19 +1,15 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Search,
   TrendingUp,
   MapPin,
   Store,
-  Heart,
-  Tag,
-  FileText,
-  Menu,
   ArrowRight,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  MessageCircle
 } from 'lucide-react';
-import { useAuthStore } from '../stores/useAuthStore';
 import { useLatestGoldPrices } from '@/hooks/queries/useGoldPricesQueries';
 
 /**
@@ -30,18 +26,12 @@ import { useLatestGoldPrices } from '@/hooks/queries/useGoldPricesQueries';
  */
 export default function MainPage() {
   const navigate = useNavigate();
-  const user = useAuthStore((state) => state.user);
   const [searchQuery, setSearchQuery] = useState('');
 
   // 백엔드에서 실시간 금시세 가져오기
   const { data: pricesData, isLoading: isPricesLoading } = useLatestGoldPrices();
 
-  // Redirect admin users to dashboard
-  useEffect(() => {
-    if (user?.role === 'admin') {
-      void navigate('/seller/dashboard', { replace: true });
-    }
-  }, [user, navigate]);
+  // Remove admin redirect - no longer needed
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,32 +140,11 @@ export default function MainPage() {
       iconColor: 'text-purple-600',
     },
     {
-      icon: Heart,
-      label: '찜목록',
-      path: '/wishlist',
-      bgColor: 'bg-pink-50',
-      iconColor: 'text-pink-600',
-    },
-    {
-      icon: Tag,
-      label: '이벤트',
-      path: '/products',
-      bgColor: 'bg-orange-50',
-      iconColor: 'text-orange-600',
-    },
-    {
-      icon: FileText,
-      label: '주문내역',
-      path: '/orders',
-      bgColor: 'bg-cyan-50',
-      iconColor: 'text-cyan-600',
-    },
-    {
-      icon: Menu,
-      label: '전체메뉴',
-      path: '/products',
-      bgColor: 'bg-gray-100',
-      iconColor: 'text-gray-600',
+      icon: MessageCircle,
+      label: '금광산',
+      path: '/community',
+      bgColor: 'bg-emerald-50',
+      iconColor: 'text-emerald-600',
     },
   ];
 
@@ -278,7 +247,7 @@ export default function MainPage() {
       {/* 빠른 메뉴 - 당근/토스 스타일 아이콘 그리드 */}
       <section className="py-12 px-5">
         <div className="max-w-[1200px] mx-auto">
-          <div className="grid grid-cols-4 md:grid-cols-7 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             {quickMenuItems.map((item) => (
               <Link
                 key={item.label}
@@ -447,10 +416,10 @@ export default function MainPage() {
             </div>
             <button
               type="button"
-              onClick={() => navigate('/seller/stores')}
+              onClick={() => navigate('/stores')}
               className="px-8 py-4 bg-white hover:bg-gray-100 text-gray-900 text-[15px] font-semibold rounded-xl transition-colors duration-200 flex-shrink-0"
             >
-              매장 등록하기
+              매장 둘러보기
             </button>
           </div>
         </div>

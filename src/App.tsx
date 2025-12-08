@@ -15,6 +15,9 @@ import StoreDetailPage from '@/pages/StoreDetailPage';
 import PricePage from '@/pages/PricePage';
 import WishlistPage from '@/pages/WishlistPage';
 import AddressManagementPage from '@/pages/AddressManagementPage';
+import CommunityPage from '@/pages/CommunityPage';
+import CommunityDetailPage from '@/pages/CommunityDetailPage';
+import CommunityWritePage from '@/pages/CommunityWritePage';
 import MinimalLayout from '@/components/layouts/MinimalLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
@@ -73,6 +76,27 @@ export default function App() {
         <Route path="/stores" element={<StoresPage />} />
         <Route path="/stores/:storeId" element={<StoreDetailPage />} />
         <Route path="/price" element={<PricePage />} />
+
+        {/* Community Routes */}
+        <Route path="/community" element={<CommunityPage />} />
+        <Route path="/community/:id" element={<CommunityDetailPage />} />
+        <Route path="/community/posts/:id" element={<CommunityDetailPage />} />
+        <Route
+          path="/community/write"
+          element={
+            <ProtectedRoute>
+              <CommunityWritePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/community/edit/:id"
+          element={
+            <ProtectedRoute>
+              <CommunityWritePage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

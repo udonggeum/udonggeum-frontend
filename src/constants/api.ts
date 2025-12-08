@@ -32,6 +32,9 @@ export const ENDPOINTS = {
     CREATE: '/api/v1/stores',
     UPDATE: (id: number) => `/api/v1/stores/${id}`,
     DELETE: (id: number) => `/api/v1/stores/${id}`,
+    REVIEWS: (id: number) => `/api/v1/stores/${id}/reviews`,
+    STATS: (id: number) => `/api/v1/stores/${id}/stats`,
+    GALLERY: (id: number) => `/api/v1/stores/${id}/gallery`,
   },
 
   PRODUCTS: {
@@ -108,6 +111,24 @@ export const ENDPOINTS = {
   IMAGES: {
     PRESIGNED_URL: '/api/v1/upload/presigned-url',
     OPTIMIZE: '/api/v1/images/optimize',
+  },
+
+  COMMUNITY: {
+    POSTS: '/api/v1/community/posts',
+    POST_DETAIL: (id: number) => `/api/v1/community/posts/${id}`,
+    POST_LIKE: (id: number) => `/api/v1/community/posts/${id}/like`,
+    POST_ACCEPT: (postId: number, commentId: number) =>
+      `/api/v1/community/posts/${postId}/accept/${commentId}`,
+    COMMENTS: '/api/v1/community/comments',
+    COMMENT_DETAIL: (id: number) => `/api/v1/community/comments/${id}`,
+    COMMENT_LIKE: (id: number) => `/api/v1/community/comments/${id}/like`,
+  },
+
+  REVIEWS: {
+    USER_REVIEWS: '/api/v1/users/me/reviews',
+    UPDATE: (id: number) => `/api/v1/reviews/${id}`,
+    DELETE: (id: number) => `/api/v1/reviews/${id}`,
+    TOGGLE_LIKE: (id: number) => `/api/v1/reviews/${id}/like`,
   },
 } as const;
 

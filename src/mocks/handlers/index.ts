@@ -7,6 +7,7 @@ import { paymentHandlers } from './payment';
 import { productsHandlers } from './products';
 import { storesHandlers } from './stores';
 import { goldPricesHandlers } from './goldPrices';
+import { communityHandlers } from './community';
 
 // Combine all handlers
 export const handlers = [
@@ -14,4 +15,5 @@ export const handlers = [
   ...productsHandlers,
   ...storesHandlers,
   ...goldPricesHandlers,
+  ...communityHandlers,
 ];

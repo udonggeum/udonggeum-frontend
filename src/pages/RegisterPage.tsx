@@ -49,9 +49,8 @@ export default function RegisterPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
-      // Redirect based on user role
-      const defaultPath = user.role === 'admin' ? '/seller/dashboard' : '/';
-      navigate(defaultPath, { replace: true });
+      // Redirect to homepage
+      navigate('/', { replace: true });
     }
   }, [isAuthenticated, user, navigate]);
 
@@ -204,12 +203,9 @@ export default function RegisterPage() {
 
       // Call register mutation
       register(validatedData, {
-        onSuccess: (response) => {
-          // Navigate based on user role
-          const defaultPath = response.user.role === 'admin'
-            ? '/seller/dashboard'
-            : '/';
-          navigate(defaultPath, { replace: true });
+        onSuccess: () => {
+          // Navigate to homepage
+          navigate('/', { replace: true });
         },
       });
     } catch (err) {

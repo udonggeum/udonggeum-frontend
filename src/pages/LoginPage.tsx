@@ -39,9 +39,8 @@ export default function LoginPage() {
       if (redirectParam) {
         void navigate(redirectParam, { replace: true });
       } else {
-        // Redirect based on user role
-        const defaultPath = user.role === 'admin' ? '/seller/dashboard' : '/';
-        void navigate(defaultPath, { replace: true });
+        // Redirect to homepage
+        void navigate('/', { replace: true });
       }
     }
   }, [isAuthenticated, user, navigate, searchParams]);
@@ -139,18 +138,15 @@ export default function LoginPage() {
 
     // Call login mutation
     login(validatedData, {
-      onSuccess: (response) => {
+      onSuccess: () => {
         // If redirect parameter exists, use it
         if (redirectParam) {
           void navigate(redirectParam, { replace: true });
           return;
         }
 
-        // Otherwise, redirect based on user role
-        const defaultPath = response.user.role === 'admin'
-          ? '/seller/dashboard'
-          : '/';
-        void navigate(defaultPath, { replace: true });
+        // Otherwise, redirect to homepage
+        void navigate('/', { replace: true });
       },
     });
   };

@@ -23,8 +23,7 @@ export default function ProfileEditPage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { mutate: updateProfile, isPending, isError, error, isSuccess } = useUpdateProfile();
 
-  const isAdmin = user?.role === 'admin';
-  const backPath = isAdmin ? '/seller/dashboard' : '/mypage';
+  const backPath = '/mypage';
 
   const [formData, setFormData] = useState<UpdateProfileRequest>({
     name: user?.name || '',
@@ -165,7 +164,7 @@ export default function ProfileEditPage() {
               className="gap-2 mb-4"
             >
               <ArrowLeft className="w-4 h-4" />
-              {isAdmin ? '대시보드로 돌아가기' : '마이페이지로 돌아가기'}
+              마이페이지로 돌아가기
             </Button>
             <h1 className="text-3xl font-bold text-[var(--color-text)]">프로필 수정</h1>
             <p className="mt-2 text-[var(--color-text)]/60">
