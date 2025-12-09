@@ -127,6 +127,13 @@ export default function StoresPage() {
   ];
 
   const handleStoreClick = (store: StoreWithExtras) => {
+    // 모바일 화면(768px 미만)에서는 상세 페이지로 이동
+    if (window.innerWidth < 768) {
+      navigate(`/stores/${store.id}`);
+      return;
+    }
+
+    // 데스크톱에서는 사이드 패널 열기
     setSelectedStore(store);
     setIsDetailPanelOpen(true);
   };

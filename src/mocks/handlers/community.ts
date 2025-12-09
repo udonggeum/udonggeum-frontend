@@ -7,7 +7,6 @@ import { http, HttpResponse } from 'msw';
 import type {
   CommunityPost,
   CommunityComment,
-  PostListQuery,
   PostListResponse,
   PostDetailResponse,
   CreatePostRequest,
@@ -705,7 +704,7 @@ function findCommentById(id: number): CommunityComment | undefined {
   for (const comment of mockComments) {
     if (comment.id === id) return comment;
     if (comment.replies) {
-      const found = comment.replies.find((r) => r.id === id);
+      const found = comment.replies.find((r: CommunityComment) => r.id === id);
       if (found) return found;
     }
   }
@@ -773,6 +772,10 @@ export const communityHandlers = [
       );
     }
 
+    // Auto-assign store for buy_gold type (simulates backend logic)
+    const assignedStoreId = body.type === 'buy_gold' ? mockStores[0]?.id || null : null;
+    const assignedStore = assignedStoreId ? mockStores.find((s) => s.id === assignedStoreId) || null : null;
+
     const newPost: CommunityPost = {
       id: nextPostId++,
       created_at: new Date().toISOString(),
@@ -788,8 +791,8 @@ export const communityHandlers = [
       weight: body.weight || null,
       price: body.price || null,
       location: body.location || null,
-      store_id: body.store_id || null,
-      store: body.store_id ? mockStores.find((s) => s.id === body.store_id) || null : null,
+      store_id: assignedStoreId,
+      store: assignedStore,
       is_answered: false,
       accepted_answer_id: null,
       view_count: 0,
@@ -974,7 +977,7 @@ export const communityHandlers = [
     // Find and remove from replies
     for (const comment of mockComments) {
       if (comment.replies) {
-        index = comment.replies.findIndex((r) => r.id === commentId);
+        index = comment.replies.findIndex((r: CommunityComment) => r.id === commentId);
         if (index !== -1) {
           const reply = comment.replies[index];
           comment.replies.splice(index, 1);

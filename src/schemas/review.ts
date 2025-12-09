@@ -37,13 +37,13 @@ export type StoreReview = z.infer<typeof StoreReviewSchema>;
 
 // Create review request
 export const CreateReviewRequestSchema = z.object({
-  store_id: z.number({ required_error: '매장 ID를 입력하세요' }),
+  store_id: z.number({ message: '매장 ID를 입력하세요' }),
   rating: z
-    .number({ required_error: '평점을 선택하세요' })
+    .number({ message: '평점을 선택하세요' })
     .min(1, '평점은 1점 이상이어야 합니다')
     .max(5, '평점은 5점 이하여야 합니다'),
   content: z
-    .string({ required_error: '리뷰 내용을 입력하세요' })
+    .string({ message: '리뷰 내용을 입력하세요' })
     .min(10, '리뷰 내용은 최소 10자 이상이어야 합니다'),
   image_urls: z.array(z.string().url('유효한 URL을 입력하세요')).optional(),
   is_visitor: z.boolean().optional(),

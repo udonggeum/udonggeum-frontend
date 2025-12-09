@@ -2,18 +2,19 @@ import { z } from 'zod';
 
 // ==================== Enums ====================
 
-export const PostCategorySchema = z.enum(['gold_trade', 'gold_news', 'qna'], {
-  errorMap: () => ({ message: '유효한 카테고리를 선택하세요' }),
-});
+export const PostCategorySchema = z.enum(['gold_trade', 'gold_news', 'qna']);
 
-export const PostTypeSchema = z.enum(
-  ['sell_gold', 'buy_gold', 'news', 'review', 'tip', 'question', 'faq'],
-  { errorMap: () => ({ message: '유효한 게시글 타입을 선택하세요' }) }
-);
+export const PostTypeSchema = z.enum([
+  'sell_gold',
+  'buy_gold',
+  'news',
+  'review',
+  'tip',
+  'question',
+  'faq',
+]);
 
-export const PostStatusSchema = z.enum(['active', 'inactive', 'deleted', 'reported'], {
-  errorMap: () => ({ message: '유효한 상태를 선택하세요' }),
-});
+export const PostStatusSchema = z.enum(['active', 'inactive', 'deleted', 'reported']);
 
 // ==================== Models ====================
 
@@ -72,8 +73,8 @@ export const CommunityPostSchema = z.object({
   image_urls: z.array(z.string().url()).optional().default([]),
 });
 
-// Community Comment
-export const CommunityCommentSchema = z.object({
+// Community Comment (with explicit type to handle circular reference)
+export const CommunityCommentSchema: z.ZodType<any> = z.object({
   id: z.number(),
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
@@ -100,12 +101,12 @@ export const CommunityCommentSchema = z.object({
 // Create Post Request
 export const CreatePostRequestSchema = z.object({
   title: z
-    .string({ required_error: '제목을 입력하세요' })
+    .string({ message: '제목을 입력하세요' })
     .min(2, '제목은 최소 2자 이상이어야 합니다')
     .max(200, '제목은 최대 200자까지 입력 가능합니다'),
 
   content: z
-    .string({ required_error: '내용을 입력하세요' })
+    .string({ message: '내용을 입력하세요' })
     .min(10, '내용은 최소 10자 이상이어야 합니다'),
 
   category: PostCategorySchema,
@@ -120,7 +121,7 @@ export const CreatePostRequestSchema = z.object({
   // buy_gold 타입일 때 백엔드가 사용자의 매장 ID를 자동으로 설정
 
   // 이미지
-  image_urls: z.array(z.string().url()).optional().default([]),
+  image_urls: z.array(z.string().url()).default([]),
 });
 
 // Update Post Request
@@ -138,10 +139,10 @@ export const UpdatePostRequestSchema = z.object({
 // Create Comment Request
 export const CreateCommentRequestSchema = z.object({
   content: z
-    .string({ required_error: '댓글 내용을 입력하세요' })
+    .string({ message: '댓글 내용을 입력하세요' })
     .min(1, '댓글 내용을 입력하세요'),
 
-  post_id: z.number({ required_error: '게시글 ID가 필요합니다' }),
+  post_id: z.number({ message: '게시글 ID가 필요합니다' }),
   parent_id: z.number().optional(),
   is_answer: z.boolean().optional().default(false),
 });
@@ -170,7 +171,7 @@ export const PostListQuerySchema = z.object({
 
 // Comment List Query
 export const CommentListQuerySchema = z.object({
-  post_id: z.number({ required_error: '게시글 ID가 필요합니다' }),
+  post_id: z.number({ message: '게시글 ID가 필요합니다' }),
   parent_id: z.number().optional(),
   page: z.number().int().min(1).optional().default(1),
   page_size: z.number().int().min(1).max(100).optional().default(50),

@@ -25,7 +25,6 @@ import type {
   PostListResponse,
   PostDetailResponse,
   CommentListResponse,
-  LikeResponse,
   AcceptAnswerResponse,
   CommunityPost,
   CommunityComment,

@@ -129,9 +129,9 @@ export function useCreateComment() {
   return useMutation({
     mutationFn: (request: CreateCommentRequest) => communityService.createComment(request),
     onSuccess: (newComment) => {
-      // Invalidate comment list for this post
+      // Invalidate all comment lists (invalidates all pages)
       queryClient.invalidateQueries({
-        queryKey: communityKeys.commentList({ post_id: newComment.post_id }),
+        queryKey: communityKeys.comments(),
       });
       // Invalidate post to update comment count
       queryClient.invalidateQueries({ queryKey: communityKeys.post(newComment.post_id) });
@@ -148,10 +148,10 @@ export function useUpdateComment() {
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateCommentRequest }) =>
       communityService.updateComment(id, data),
-    onSuccess: (updatedComment) => {
-      // Invalidate comment list for this post
+    onSuccess: () => {
+      // Invalidate all comment lists (invalidates all pages)
       queryClient.invalidateQueries({
-        queryKey: communityKeys.commentList({ post_id: updatedComment.post_id }),
+        queryKey: communityKeys.comments(),
       });
     },
   });
@@ -164,12 +164,12 @@ export function useDeleteComment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, postId }: { id: number; postId: number }) =>
+    mutationFn: ({ id }: { id: number; postId: number }) =>
       communityService.deleteComment(id),
     onSuccess: (_, { postId }) => {
-      // Invalidate comment list for this post
+      // Invalidate all comment lists (invalidates all pages)
       queryClient.invalidateQueries({
-        queryKey: communityKeys.commentList({ post_id: postId }),
+        queryKey: communityKeys.comments(),
       });
       // Invalidate post to update comment count
       queryClient.invalidateQueries({ queryKey: communityKeys.post(postId) });
@@ -184,12 +184,12 @@ export function useToggleCommentLike() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, postId }: { id: number; postId: number }) =>
+    mutationFn: ({ id }: { id: number; postId: number }) =>
       communityService.toggleCommentLike(id),
-    onSuccess: (_, { postId }) => {
-      // Invalidate comment list to update like count
+    onSuccess: () => {
+      // Invalidate all comment lists to update like count
       queryClient.invalidateQueries({
-        queryKey: communityKeys.commentList({ post_id: postId }),
+        queryKey: communityKeys.comments(),
       });
     },
   });
@@ -207,10 +207,10 @@ export function useAcceptAnswer() {
     mutationFn: ({ postId, commentId }: { postId: number; commentId: number }) =>
       communityService.acceptAnswer(postId, commentId),
     onSuccess: (_, { postId }) => {
-      // Invalidate post and comments
+      // Invalidate post and all comment lists
       queryClient.invalidateQueries({ queryKey: communityKeys.post(postId) });
       queryClient.invalidateQueries({
-        queryKey: communityKeys.commentList({ post_id: postId }),
+        queryKey: communityKeys.comments(),
       });
     },
   });

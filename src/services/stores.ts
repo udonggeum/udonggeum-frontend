@@ -35,6 +35,9 @@ export interface StoreDetail {
   image_url?: string;
   logo_url?: string;
   thumbnail_url?: string;
+  buying_gold?: boolean;
+  buying_platinum?: boolean;
+  buying_silver?: boolean;
   category_counts?: StoreCategoryCounts;
   products?: unknown[];
 }

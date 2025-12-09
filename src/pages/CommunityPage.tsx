@@ -1,15 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { usePosts } from '@/hooks/queries/useCommunityQueries';
 import { useAuthStore } from '@/stores/useAuthStore';
 import Navbar from '@/components/Navbar';
 import { NAVIGATION_ITEMS } from '@/constants/navigation';
-import {
-  POST_CATEGORY_LABELS,
-  POST_TYPE_LABELS,
-  type PostCategory,
-  type PostType,
-} from '@/schemas/community';
+import { type PostCategory, type PostType } from '@/schemas/community';
 
 export default function CommunityPage() {
   const [searchParams] = useSearchParams();

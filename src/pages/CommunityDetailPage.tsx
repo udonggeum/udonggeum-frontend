@@ -12,7 +12,7 @@ import {
 import { useAuthStore } from '@/stores/useAuthStore';
 import Navbar from '@/components/Navbar';
 import { NAVIGATION_ITEMS } from '@/constants/navigation';
-import { POST_TYPE_LABELS } from '@/schemas/community';
+import { POST_TYPE_LABELS, type CommunityComment } from '@/schemas/community';
 
 export default function CommunityDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -358,7 +358,7 @@ export default function CommunityDetailPage() {
                   {/* Replies */}
                   {comment.replies && comment.replies.length > 0 && (
                     <div className="mt-4 space-y-3 ml-6">
-                      {comment.replies.map((reply) => (
+                      {comment.replies.map((reply: CommunityComment) => (
                         <div key={reply.id} className="border-l-2 border-base-300 pl-4">
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex items-center gap-2">

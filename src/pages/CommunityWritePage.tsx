@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,8 +14,12 @@ import {
   ADMIN_ONLY_TYPES,
   type CreatePostRequest,
   type PostCategory,
-  type PostType,
 } from '@/schemas/community';
+
+// Form data type (before transformation to API request)
+type FormData = Omit<CreatePostRequest, 'image_urls'> & {
+  image_urls?: string[];
+};
 
 export default function CommunityWritePage() {
   const navigate = useNavigate();
@@ -29,18 +33,24 @@ export default function CommunityWritePage() {
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm<CreatePostRequest>({
+  } = useForm<FormData>({
     resolver: zodResolver(CreatePostRequestSchema),
     defaultValues: {
       category: 'gold_trade',
       type: 'sell_gold',
+      image_urls: [],
     },
   });
 
   const selectedType = watch('type');
 
-  const onSubmit = (data: CreatePostRequest) => {
-    createPost.mutate(data, {
+  const onSubmit = (data: FormData) => {
+    // Transform form data to API request type
+    const requestData: CreatePostRequest = {
+      ...data,
+      image_urls: data.image_urls || [],
+    };
+    createPost.mutate(requestData, {
       onSuccess: (post) => {
         navigate(`/community/posts/${post.id}`);
       },

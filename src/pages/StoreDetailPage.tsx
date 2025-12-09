@@ -6,11 +6,9 @@ import {
   Share2,
   Heart,
   Star,
-  ArrowLeft,
   Store as StoreIcon,
   Image as ImageIcon,
   MessageSquare,
-  Info,
 } from 'lucide-react';
 import {
   Navbar,
@@ -44,10 +42,7 @@ export default function StoreDetailPage() {
     error: storeError,
   } = useStoreDetail(storeId, false, { enabled: isValidId });
 
-  const {
-    data: stats,
-    isLoading: statsLoading,
-  } = useStoreStatistics(storeId);
+  const { data: stats } = useStoreStatistics(storeId);
 
   const {
     data: feedData,
@@ -295,7 +290,6 @@ export default function StoreDetailPage() {
                   <ReviewsTab
                     reviewsData={reviewsData}
                     isLoading={reviewsLoading}
-                    storeId={storeId}
                   />
                 )}
                 {activeTab === 'gallery' && (
@@ -310,7 +304,7 @@ export default function StoreDetailPage() {
 
           {/* 우측: 사이드바 */}
           <div className="lg:col-span-1">
-            <StoreSidebar store={store} stats={stats} />
+            <StoreSidebar store={store} />
           </div>
         </div>
       </div>
@@ -415,11 +409,9 @@ function StoreNewsTab({
 function ReviewsTab({
   reviewsData,
   isLoading,
-  storeId,
 }: {
   reviewsData: any;
   isLoading: boolean;
-  storeId: number;
 }) {
   if (isLoading) {
     return (
@@ -673,7 +665,7 @@ function GalleryTab({
 }
 
 // 사이드바 컴포넌트
-function StoreSidebar({ store, stats }: { store: any; stats: any }) {
+function StoreSidebar({ store }: { store: any }) {
   return (
     <div className="sticky top-[180px] space-y-4">
       {/* 매장 정보 카드 */}

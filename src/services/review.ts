@@ -11,9 +11,6 @@ import {
 import type {
   CreateReviewRequest,
   UpdateReviewRequest,
-  ReviewListResponse,
-  StoreStatistics,
-  GalleryResponse,
   ReviewQueryParams,
   GalleryQueryParams,
 } from '@/schemas/review';
