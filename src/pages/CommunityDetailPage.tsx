@@ -25,6 +25,14 @@ export default function CommunityDetailPage() {
   const postId = Number(id);
   const { data, isLoading, error } = usePost(postId);
 
+  // Debug: Log post data to check image_urls
+  React.useEffect(() => {
+    if (data?.data) {
+      console.log('[CommunityDetailPage] Post data:', data.data);
+      console.log('[CommunityDetailPage] Image URLs:', data.data.image_urls);
+    }
+  }, [data]);
+
   const toggleLike = useTogglePostLike();
   const deletePost = useDeletePost();
   const createComment = useCreateComment();
@@ -139,7 +147,11 @@ export default function CommunityDetailPage() {
                 <h1 className="text-3xl font-bold mb-3">{post.title}</h1>
 
                 <div className="flex items-center gap-4 text-sm text-base-content/60">
-                  <span>{post.user.name}</span>
+                  <span>
+                    {post.user.role === 'admin'
+                      ? post.store?.name || post.user.nickname
+                      : post.user.nickname}
+                  </span>
                   <span>{new Date(post.created_at).toLocaleString()}</span>
                   <span>조회 {post.view_count}</span>
                 </div>
@@ -172,27 +184,22 @@ export default function CommunityDetailPage() {
             {post.category === 'gold_trade' && (
               <div className="bg-base-200 p-4 rounded-lg mb-4">
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  {post.gold_type && (
-                    <div>
-                      <span className="font-semibold">금 종류:</span> {post.gold_type}
-                    </div>
-                  )}
-                  {post.weight && (
-                    <div>
-                      <span className="font-semibold">중량:</span> {post.weight}g
-                    </div>
-                  )}
-                  {post.price && (
-                    <div>
-                      <span className="font-semibold">가격:</span>{' '}
-                      {post.price.toLocaleString()}원
-                    </div>
-                  )}
-                  {post.location && (
-                    <div>
-                      <span className="font-semibold">지역:</span> {post.location}
-                    </div>
-                  )}
+                  <div>
+                    <span className="font-semibold">금 종류:</span>{' '}
+                    {post.gold_type || <span className="text-gray-500">문의</span>}
+                  </div>
+                  <div>
+                    <span className="font-semibold">중량:</span>{' '}
+                    {post.weight ? `${post.weight}g` : <span className="text-gray-500">문의</span>}
+                  </div>
+                  <div>
+                    <span className="font-semibold">가격:</span>{' '}
+                    {post.price ? `${post.price.toLocaleString()}원` : <span className="text-gray-500">문의</span>}
+                  </div>
+                  <div>
+                    <span className="font-semibold">지역:</span>{' '}
+                    {post.location || <span className="text-gray-500">-</span>}
+                  </div>
                   {post.store && (
                     <div className="col-span-2">
                       <span className="font-semibold">매장:</span>{' '}
@@ -213,14 +220,23 @@ export default function CommunityDetailPage() {
             {/* Images */}
             {post.image_urls && post.image_urls.length > 0 && (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-                {post.image_urls.map((url, index) => (
-                  <img
-                    key={index}
-                    src={url}
-                    alt={`이미지 ${index + 1}`}
-                    className="w-full h-48 object-cover rounded-lg"
-                  />
-                ))}
+                {post.image_urls.map((url, index) => {
+                  console.log(`[CommunityDetailPage] Rendering image ${index + 1}:`, url);
+                  return (
+                    <img
+                      key={index}
+                      src={url}
+                      alt={`이미지 ${index + 1}`}
+                      className="w-full h-48 object-cover rounded-lg"
+                      onError={(e) => {
+                        console.error(`[CommunityDetailPage] Image load error for ${url}:`, e);
+                      }}
+                      onLoad={() => {
+                        console.log(`[CommunityDetailPage] Image loaded successfully:`, url);
+                      }}
+                    />
+                  );
+                })}
               </div>
             )}
 

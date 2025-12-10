@@ -182,7 +182,7 @@ export default function CommunityPage() {
                         : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    금 매수
+                    금 판매
                   </button>
                   <button
                     onClick={() => setSelectedType('buy_gold')}
@@ -192,7 +192,7 @@ export default function CommunityPage() {
                         : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    금 매입
+                    금 구매
                   </button>
                 </div>
               </div>
@@ -213,34 +213,34 @@ export default function CommunityPage() {
                     전체
                   </button>
                   <button
-                    onClick={() => setSelectedType('news')}
+                    onClick={() => setSelectedType('product_news')}
                     className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-all border ${
-                      selectedType === 'news'
+                      selectedType === 'product_news'
                         ? 'bg-primary text-gray-900 border-primary'
                         : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    뉴스
+                    상품 소식
                   </button>
                   <button
-                    onClick={() => setSelectedType('review')}
+                    onClick={() => setSelectedType('store_news')}
                     className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-all border ${
-                      selectedType === 'review'
+                      selectedType === 'store_news'
                         ? 'bg-primary text-gray-900 border-primary'
                         : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    후기
+                    매장 소식
                   </button>
                   <button
-                    onClick={() => setSelectedType('tip')}
+                    onClick={() => setSelectedType('other')}
                     className={`px-4 py-2 text-[14px] font-medium rounded-lg transition-all border ${
-                      selectedType === 'tip'
+                      selectedType === 'other'
                         ? 'bg-primary text-gray-900 border-primary'
                         : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    팁
+                    기타
                   </button>
                 </div>
               </div>
@@ -387,12 +387,20 @@ export default function CommunityPage() {
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center">
                             <span className="text-[11px] font-bold text-white">
-                              {post.user.name.charAt(0)}
+                              {(() => {
+                                const authorName =
+                                  post.user.role === 'admin'
+                                    ? post.store?.name || post.user.nickname
+                                    : post.user.nickname;
+                                return authorName.charAt(0);
+                              })()}
                             </span>
                           </div>
                           <div className="flex flex-col">
                             <span className="text-[12px] font-medium text-gray-900">
-                              {post.user.name}
+                              {post.user.role === 'admin'
+                                ? post.store?.name || post.user.nickname
+                                : post.user.nickname}
                             </span>
                             <span className="text-[11px] text-gray-400">
                               {new Date(post.created_at).toLocaleDateString()}

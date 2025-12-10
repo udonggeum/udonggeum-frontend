@@ -21,11 +21,11 @@ import type {
 
 // Mock users
 const mockUsers = [
-  { id: 1, email: 'user1@example.com', name: '김철수', role: 'user' as const },
-  { id: 2, email: 'user2@example.com', name: '이영희', role: 'user' as const },
-  { id: 3, email: 'admin@example.com', name: '관리자', role: 'admin' as const },
-  { id: 4, email: 'user3@example.com', name: '박민수', role: 'user' as const },
-  { id: 5, email: 'user4@example.com', name: '정수진', role: 'user' as const },
+  { id: 1, email: 'user1@example.com', name: '김철수', nickname: '철수왕', role: 'user' as const, store_id: null },
+  { id: 2, email: 'user2@example.com', name: '이영희', nickname: '영희짱', role: 'user' as const, store_id: null },
+  { id: 3, email: 'admin@example.com', name: '관리자', nickname: '강남 금은방', role: 'admin' as const, store_id: 1 }, // 닉네임 = 금은방 이름, 매장 ID = 1
+  { id: 4, email: 'user3@example.com', name: '박민수', nickname: '민수123', role: 'user' as const, store_id: null },
+  { id: 5, email: 'user4@example.com', name: '정수진', nickname: '수진_골드', role: 'user' as const, store_id: null },
 ];
 
 // Mock stores
@@ -36,6 +36,7 @@ const mockStores = [
     region: '서울',
     district: '강남구',
     address: '서울 강남구 테헤란로 123',
+    image_url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600',
   },
   {
     id: 2,
@@ -43,6 +44,7 @@ const mockStores = [
     region: '서울',
     district: '서초구',
     address: '서울 서초구 서초대로 456',
+    image_url: 'https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=600',
   },
 ];
 
@@ -135,7 +137,7 @@ let mockPosts: CommunityPost[] = [
     content:
       '강남 금은방 신년 특별 이벤트를 진행합니다! 💝\n\n🎯 이벤트 상품\n- 18K 금목걸이 (15g)\n- 정상가: 1,200,000원\n- 할인가: 840,000원 (30% 할인)\n\n✨ 제품 특징\n• 순도 보증 18K (각인 확인 가능)\n• 세련된 디자인으로 일상/특별한 날 모두 착용 가능\n• 무료 각인 서비스 제공\n• 평생 A/S 보증\n\n📅 이벤트 기간: 2025년 1월 9일 ~ 1월 31일\n📍 매장 방문 시 즉시 구매 가능\n💳 카드 무이자 할부 가능 (2~6개월)\n\n🎁 선착순 10분께 금 세척 서비스 무료 제공!\n\n자세한 문의는 매장으로 연락주세요 😊\n📞 02-1234-5678',
     category: 'gold_news',
-    type: 'news',
+    type: 'product_news',
     status: 'active',
     user_id: 3,
     user: mockUsers[2],
@@ -164,7 +166,7 @@ let mockPosts: CommunityPost[] = [
     content:
       '국제 금 시세가 온스당 2,400달러를 돌파하며 사상 최고치를 경신했습니다.\n\n전문가들은 미국 달러 약세와 지정학적 리스크 증가로 인해 금값 상승세가 당분간 지속될 것으로 전망하고 있습니다.\n\n투자자들은 안전자산인 금에 대한 관심을 높이고 있으며, 국내 금값도 함께 상승 중입니다.',
     category: 'gold_news',
-    type: 'news',
+    type: 'product_news',
     status: 'active',
     user_id: 3,
     user: mockUsers[2],
@@ -191,7 +193,7 @@ let mockPosts: CommunityPost[] = [
     content:
       '어제 강남 금은방에서 금목걸이를 팔았습니다.\n\n처음에는 걱정했는데 사장님이 정말 친절하시고, 시세보다 높은 가격에 매입해주셨어요.\n무게도 정확하게 재주시고 설명도 자세히 해주셨습니다.\n\n금 거래하실 분들께 추천드립니다! ⭐⭐⭐⭐⭐',
     category: 'gold_news',
-    type: 'review',
+    type: 'store_news',
     status: 'active',
     user_id: 1,
     user: mockUsers[0],
@@ -218,7 +220,7 @@ let mockPosts: CommunityPost[] = [
     content:
       '금 투자를 처음 시작하시는 분들을 위해 유용한 팁을 공유합니다.\n\n1. 순도 확인하기\n   - 24K, 18K, 14K 등 순도를 꼭 확인하세요\n   - 순도에 따라 가격이 크게 달라집니다\n\n2. 시세 파악하기\n   - 국제 금 시세를 주기적으로 확인하세요\n   - 우동금 앱에서 실시간 시세를 볼 수 있습니다\n\n3. 신뢰할 수 있는 매장 찾기\n   - 평판이 좋은 금은방을 이용하세요\n   - 후기를 꼭 확인하세요\n\n4. 무게 확인하기\n   - 거래 시 무게를 정확히 재는지 확인하세요\n   - 가능하면 본인이 직접 확인하세요\n\n5. 장기 투자 관점으로\n   - 금은 단기보다는 장기 투자에 적합합니다\n   - 분산 투자를 고려하세요',
     category: 'gold_news',
-    type: 'tip',
+    type: 'other',
     status: 'active',
     user_id: 4,
     user: mockUsers[3],

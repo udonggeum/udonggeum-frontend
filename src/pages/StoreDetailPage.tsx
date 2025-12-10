@@ -1,39 +1,87 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import {
-  Phone,
-  MapPin,
-  Share2,
-  Heart,
-  Star,
-  Store as StoreIcon,
-  Image as ImageIcon,
-  MessageSquare,
-} from 'lucide-react';
+import { Phone, MapPin, Share2, Heart, Star, Store as StoreIcon, Image as ImageIcon, MessageSquare, Settings, Pencil, Clock } from 'lucide-react';
 import {
   Navbar,
   Footer,
   LoadingSpinner,
   ErrorAlert,
+  StoreEditModal,
 } from '@/components';
+import type { StoreEditType } from '@/components/modals/StoreEditModal';
 import { NAVIGATION_ITEMS } from '@/constants/navigation';
-import { useStoreDetail } from '@/hooks/queries/useStoresQueries';
+import { useStoreDetail, useUpdateStore } from '@/hooks/queries/useStoresQueries';
 import {
   useStoreReviews,
   useStoreStatistics,
   useStoreGallery,
 } from '@/hooks/queries/useReviewQueries';
 import { usePosts } from '@/hooks/queries/useCommunityQueries';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 type TabType = 'news' | 'reviews' | 'gallery';
+type EditSections = { name: boolean; description: boolean; address: boolean; phone: boolean; hours: boolean };
+
+function getStoreStatus(open?: string | null, close?: string | null) {
+  if (!open || !close) {
+    return { statusLabel: '운영시간 미설정', statusClass: 'bg-gray-100 text-gray-500' };
+  }
+
+  const toMinutes = (t: string) => {
+    const [h, m] = t.split(':').map((v) => Number(v));
+    if (Number.isNaN(h) || Number.isNaN(m)) return null;
+    return h * 60 + m;
+  };
+
+  const openM = toMinutes(open);
+  const closeM = toMinutes(close);
+  const now = new Date();
+  const nowM = now.getHours() * 60 + now.getMinutes();
+
+  if (openM === null || closeM === null) {
+    return { statusLabel: '운영시간 미설정', statusClass: 'bg-gray-100 text-gray-500' };
+  }
+
+  const isOvernight = openM > closeM;
+  const isOpen = isOvernight ? nowM >= openM || nowM < closeM : nowM >= openM && nowM < closeM;
+
+  return isOpen
+    ? { statusLabel: '영업중', statusClass: 'bg-green-100 text-green-700' }
+    : { statusLabel: '영업종료', statusClass: 'bg-gray-200 text-gray-700' };
+}
 
 export default function StoreDetailPage() {
   const { storeId: storeIdParam } = useParams<{ storeId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<TabType>('news');
+  const [imageError, setImageError] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [currentEditType, setCurrentEditType] = useState<StoreEditType | null>(null);
+  const [isAllEditMode, setIsAllEditMode] = useState(false);
+  const [editSections, setEditSections] = useState<EditSections>({
+    name: false,
+    description: false,
+    address: false,
+    phone: false,
+    hours: false,
+  });
+
+  // 인라인 편집용 폼 데이터
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    address: '',
+    phone_number: '',
+    open_time: '',
+    close_time: '',
+  });
 
   const storeId = Number(storeIdParam);
   const isValidId = !Number.isNaN(storeId) && storeId > 0;
+
+  // Mutation
+  const { mutate: updateStore, isPending: isUpdating } = useUpdateStore();
 
   // 데이터 조회
   const {
@@ -72,6 +120,20 @@ export default function StoreDetailPage() {
     page: 1,
     page_size: 20,
   });
+
+  // 매장 데이터가 로드되면 폼 데이터 초기화
+  React.useEffect(() => {
+    if (store) {
+      setFormData({
+        name: store.name || '',
+        description: store.description || '',
+        address: store.address || '',
+        phone_number: store.phone_number || store.phone || '',
+        open_time: store.open_time || '',
+        close_time: store.close_time || '',
+      });
+    }
+  }, [store]);
 
   if (!isValidId) {
     return (
@@ -121,17 +183,147 @@ export default function StoreDetailPage() {
     );
   }
 
+  // 본인 매장 여부 확인
+  const isMyStore = user?.id === store.user_id;
+  const isAnyEditing = Object.values(editSections).some(Boolean);
+  const isAllEditing = Object.values(editSections).every(Boolean);
+  const isImageEditing = editModalOpen && currentEditType === 'image';
+  const { statusLabel, statusClass } = getStoreStatus(store.open_time, store.close_time);
+
+  // 수정 모달 열기
+  const openEditModal = (editType: StoreEditType) => {
+    setCurrentEditType(editType);
+    setEditModalOpen(true);
+  };
+
+  // 수정 모달 닫기
+  const closeEditModal = () => {
+    setEditModalOpen(false);
+    setCurrentEditType(null);
+  };
+
+  // 매장 정보 저장 (모달용 - tags, image)
+  const handleSaveStore = (data: any) => {
+    updateStore(
+      { id: storeId, data },
+      {
+        onSuccess: () => {
+          closeEditModal();
+          if (data.image_url) {
+            setImageError(false);
+          }
+        },
+        onError: (error) => {
+          console.error('매장 정보 수정 실패:', error);
+          alert(`수정 실패: ${error.message}`);
+        },
+      }
+    );
+  };
+
+  const syncFormDataWithStore = () => {
+    setFormData({
+      name: store.name || '',
+      description: store.description || '',
+      address: store.address || '',
+      phone_number: store.phone_number || store.phone || '',
+      open_time: store.open_time || '',
+      close_time: store.close_time || '',
+    });
+  };
+
+  const handleStartSectionEdit = (section: keyof EditSections) => {
+    setIsAllEditMode(false);
+    setEditSections((prev) => ({ ...prev, [section]: true }));
+  };
+
+  const handleCancelSectionEdit = (section: keyof EditSections) => {
+    const updated = { ...editSections, [section]: false };
+    setEditSections(updated);
+
+    setFormData((prev) => {
+      if (section === 'name') {
+        return { ...prev, name: store.name || '' };
+      }
+      if (section === 'description') {
+        return { ...prev, description: store.description || '' };
+      }
+      if (section === 'address') {
+        return { ...prev, address: store.address || '' };
+      }
+      if (section === 'phone') {
+        return { ...prev, phone_number: store.phone_number || store.phone || '' };
+      }
+      if (section === 'hours') {
+        return { ...prev, open_time: store.open_time || '', close_time: store.close_time || '' };
+      }
+      return prev;
+    });
+
+    if (!Object.values(updated).some(Boolean)) {
+      setIsAllEditMode(false);
+    }
+  };
+
+  const handleSaveSection = (section: keyof EditSections) => {
+    let dataToSave: any = {};
+
+    if (section === 'name') {
+      dataToSave = { name: formData.name };
+    } else if (section === 'description') {
+      dataToSave = { description: formData.description };
+    } else if (section === 'address') {
+      dataToSave = { address: formData.address };
+    } else if (section === 'phone') {
+      dataToSave = { phone: formData.phone_number, phone_number: formData.phone_number };
+    } else if (section === 'hours') {
+      dataToSave = { open_time: formData.open_time, close_time: formData.close_time };
+    }
+
+    if (Object.keys(dataToSave).length === 0) {
+      return;
+    }
+
+    updateStore(
+      { id: storeId, data: dataToSave },
+      {
+        onSuccess: () => {
+          const updated = { ...editSections, [section]: false };
+          setEditSections(updated);
+          if (!Object.values(updated).some(Boolean)) {
+            setIsAllEditMode(false);
+          }
+        },
+        onError: (error) => {
+          console.error('매장 정보 수정 실패:', error);
+          alert(`수정 실패: ${error.message}`);
+        },
+      }
+    );
+  };
+
+  const handleToggleAllEdit = () => {
+    if (isAnyEditing) {
+      syncFormDataWithStore();
+      setEditSections({ name: false, description: false, address: false, phone: false, hours: false });
+      setIsAllEditMode(false);
+    } else {
+      setEditSections({ name: true, description: true, address: true, phone: true, hours: true });
+      setIsAllEditMode(true);
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <Navbar navigationItems={NAVIGATION_ITEMS} />
 
       {/* 커버 이미지 */}
-      <div className="relative h-[280px] w-full overflow-hidden bg-gradient-to-br from-yellow-50 via-yellow-100 to-yellow-200">
+      <div className="relative h-[280px] w-full overflow-hidden bg-gradient-to-br from-black-50 via-black-100 to-yellow-100">
         <div className="absolute inset-0 opacity-20">
           <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
             <defs>
               <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                <circle cx="5" cy="5" r="1" fill="#D4AF37" />
+                <circle cx="5" cy="5" r="1" fill="#2e2b29ff" />
               </pattern>
             </defs>
             <rect width="100" height="100" fill="url(#grid)" />
@@ -141,31 +333,87 @@ export default function StoreDetailPage() {
 
       {/* 매장 메인 정보 (커버와 겹치게) */}
       <div className="relative z-10 -mt-20 max-w-[1080px] mx-auto px-5 w-full">
-        <div className="bg-white rounded-2xl p-8 shadow-lg mb-6">
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* 매장 아이콘 */}
-            <div className="w-32 h-32 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-2xl flex items-center justify-center flex-shrink-0">
-              <StoreIcon className="w-16 h-16 text-white" />
+        <div className="bg-white rounded-2xl p-6 shadow-lg mb-5">
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* 매장 이미지 */}
+            <div
+              className={`w-32 h-32 bg-white border border-gray-200 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden ${
+                isMyStore ? 'group relative' : ''
+              }`}
+            >
+              {store.image_url && !imageError ? (
+                <img
+                  src={store.image_url}
+                  alt={store.name}
+                  onError={() => setImageError(true)}
+                  className="w-full h-full object-cover transition-all"
+                />
+              ) : (
+                <StoreIcon className="w-16 h-16 text-white transition-all" />
+              )}
+              {isMyStore && (
+                <button
+                  onClick={() => openEditModal('image')}
+                  className={`absolute inset-0 flex items-center justify-center transition-all ${
+                    isImageEditing
+                      ? 'bg-white/40 backdrop-blur-sm opacity-100 pointer-events-none'
+                    : isAllEditMode || isAllEditing
+                      ? 'bg-white/50 backdrop-blur-[1px] opacity-100'
+                      : 'bg-white/50 backdrop-blur-[1px] opacity-0 group-hover:opacity-100'
+                  }`}
+                >
+                  <Pencil className="w-6 h-6 text-white drop-shadow-lg" />
+                </button>
+              )}
             </div>
 
-            {/* 매장 정보 */}
-            <div className="flex-1">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <h1 className="text-[28px] font-bold text-gray-900">{store.name}</h1>
-                    <span className="px-3 py-1 bg-green-100 text-green-700 text-[13px] font-semibold rounded-full">
-                      영업중
-                    </span>
+              {/* 매장 정보 */}
+              <div className="flex-1">
+                <div className="flex items-start justify-between mb-1.5">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div
+                        className={`inline-flex items-center gap-2 ${
+                          isMyStore && editSections.name
+                            ? 'bg-yellow-50 border-2 border-yellow-200 px-3 py-2 rounded-lg'
+                            : isMyStore
+                            ? 'group px-3 py-2 rounded-lg hover:bg-gray-50'
+                            : ''
+                        }`}
+                      >
+                        {isMyStore && editSections.name ? (
+                          <input
+                            type="text"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            className="text-[28px] font-bold text-gray-900 bg-transparent border-none outline-none w-full min-w-[200px]"
+                            placeholder="매장 이름"
+                          />
+                        ) : (
+                          <h1 className="text-[28px] font-bold text-gray-900">{store.name}</h1>
+                        )}
+                        {isMyStore && !editSections.name && (
+                          <button
+                            onClick={() => handleStartSectionEdit('name')}
+                            className="transition-opacity p-1.5 hover:bg-gray-100 rounded-lg opacity-0 group-hover:opacity-100"
+                          >
+                            <Pencil className="w-4 h-4 text-gray-600" />
+                          </button>
+                        )}
+                    </div>
                   </div>
                   {stats && (
-                    <div className="flex items-center gap-3 text-[15px]">
+                    <div className="flex items-center gap-3 text-[15px] px-2">
                       <span className="flex items-center gap-1 text-yellow-500 font-semibold">
                         <Star className="w-5 h-5 fill-current" />
                         {stats.average_rating.toFixed(1)}
                       </span>
                       <span className="text-gray-300">|</span>
-                      <Link to="#reviews" onClick={() => setActiveTab('reviews')} className="text-gray-600 hover:text-gray-900">
+                      <Link
+                        to="#reviews"
+                        onClick={() => setActiveTab('reviews')}
+                        className="text-gray-600 hover:text-gray-900"
+                      >
                         리뷰 {stats.review_count}개
                       </Link>
                       <span className="text-gray-300">|</span>
@@ -173,36 +421,133 @@ export default function StoreDetailPage() {
                     </div>
                   )}
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-                  <Heart className="w-5 h-5 text-red-500" />
-                  <span className="text-[14px] font-semibold text-gray-900">찜하기</span>
-                </button>
+                {isMyStore ? (
+                  <button
+                    onClick={handleToggleAllEdit}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg transition-colors ${
+                      isAnyEditing
+                        ? 'bg-gray-900 hover:bg-gray-800 text-white'
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
+                    }`}
+                  >
+                    <Settings className="w-5 h-5" />
+                    <span className="text-[14px] font-semibold">
+                      {isAllEditMode || isAllEditing
+                        ? '전체 편집 종료'
+                        : isAnyEditing
+                        ? '편집 종료'
+                        : '전체 편집'}
+                    </span>
+                  </button>
+                ) : (
+                  <button className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                    <Heart className="w-5 h-5 text-red-500" />
+                    <span className="text-[14px] font-semibold text-gray-900">찜하기</span>
+                  </button>
+                )}
               </div>
 
               {/* 한줄 소개 */}
-              {store.description && (
-                <p className="text-[15px] text-gray-600 mb-4 leading-relaxed">
-                  {store.description}
-                </p>
+              {(store.description || isMyStore) && (
+                <div
+                  className={`mb-1 p-3 rounded-lg transition-all ${
+                    isMyStore && editSections.description
+                      ? 'bg-yellow-50 border-2 border-yellow-200'
+                      : isMyStore
+                      ? 'group hover:bg-gray-50'
+                      : ''
+                  }`}
+                >
+                <div className="flex items-start gap-2.5">
+                    <div className="flex-1">
+                      {isMyStore && editSections.description ? (
+                        <textarea
+                          value={formData.description}
+                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                          className="w-full text-[15px] leading-relaxed text-gray-600 bg-transparent border-none outline-none resize-none"
+                          placeholder="한줄로 매장을 소개해주세요"
+                          rows={2}
+                        />
+                      ) : (
+                        <p
+                          className={`text-[15px] leading-relaxed ${
+                            store.description ? 'text-gray-600' : 'text-gray-400 italic'
+                          }`}
+                        >
+                          {store.description || '한줄 소개를 입력해주세요'}
+                        </p>
+                      )}
+                    </div>
+                    {isMyStore && !editSections.description && (
+                      <button
+                        onClick={() => handleStartSectionEdit('description')}
+                        className="transition-opacity p-1.5 hover:bg-gray-100 rounded-lg flex-shrink-0 opacity-0 group-hover:opacity-100"
+                      >
+                        <Pencil className="w-4 h-4 text-gray-600" />
+                      </button>
+                    )}
+                  </div>
+                  {isMyStore && editSections.description && (
+                    <div className="flex justify-end gap-2 mt-2">
+                      <button
+                        onClick={() => handleCancelSectionEdit('description')}
+                        className="px-4 py-2 bg-white hover:bg-gray-100 text-gray-900 text-[13px] font-semibold rounded-lg border border-gray-200 transition-colors"
+                        disabled={isUpdating}
+                      >
+                        취소
+                      </button>
+                      <button
+                        onClick={() => handleSaveSection('description')}
+                        className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-[13px] font-semibold rounded-lg transition-colors disabled:opacity-50"
+                        disabled={isUpdating}
+                      >
+                        {isUpdating ? '저장 중...' : '저장'}
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
 
-              {/* 태그 */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                {store.buying_gold && (
-                  <span className="px-3 py-1.5 bg-gray-100 text-gray-700 text-[13px] font-medium rounded-lg">
-                    금 매입
-                  </span>
-                )}
-                {store.buying_platinum && (
-                  <span className="px-3 py-1.5 bg-gray-100 text-gray-700 text-[13px] font-medium rounded-lg">
-                    백금 매입
-                  </span>
-                )}
-                {store.buying_silver && (
-                  <span className="px-3 py-1.5 bg-gray-100 text-gray-700 text-[13px] font-medium rounded-lg">
-                    은 매입
-                  </span>
-                )}
+              {/* 매장 태그 */}
+              <div
+                className={`p-3 rounded-lg mb-1 transition-all ${
+                  isMyStore && (isAllEditMode || isAllEditing)
+                    ? 'bg-yellow-50 border-2 border-yellow-200'
+                    : isMyStore
+                    ? 'group hover:bg-gray-50'
+                    : ''
+                }`}
+              >
+                <div className="flex items-start gap-2.5">
+                  <div className="flex-1">
+                    <div className="flex flex-wrap gap-2">
+                      {store.tags && store.tags.length > 0 ? (
+                        store.tags.map((tag: string) => (
+                          <span
+                            key={tag}
+                            className="px-3 py-1.5 bg-yellow-50 text-yellow-800 text-[13px] font-medium rounded-full border border-yellow-200"
+                          >
+                            {tag}
+                          </span>
+                        ))
+                      ) : isMyStore ? (
+                        <span className="px-3 py-1.5 text-gray-400 text-[13px] italic">
+                          매장 태그를 선택해주세요
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                  {isMyStore && (
+                    <button
+                      onClick={() => openEditModal('tags')}
+                      className={`transition-opacity p-1.5 hover:bg-gray-100 rounded-lg flex-shrink-0 ${
+                        isAllEditMode || isAllEditing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                      }`}
+                    >
+                      <Pencil className="w-4 h-4 text-gray-600" />
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* 빠른 액션 버튼 */}
@@ -212,8 +557,8 @@ export default function StoreDetailPage() {
                     href={`tel:${store.phone_number.replace(/[^0-9]/g, '')}`}
                     className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-900 hover:bg-gray-800 text-white text-[15px] font-semibold rounded-xl transition-colors"
                   >
-                    <Phone className="w-5 h-5" />
-                    전화하기
+                    <MessageSquare className="w-5 h-5" />
+                    상담하기
                   </a>
                 )}
                 {store.address && (
@@ -280,23 +625,12 @@ export default function StoreDetailPage() {
 
               {/* 탭 콘텐츠 */}
               <div className="p-6">
-                {activeTab === 'news' && (
-                  <StoreNewsTab
-                    feedData={feedData}
-                    isLoading={feedLoading}
-                  />
-                )}
+                {activeTab === 'news' && <StoreNewsTab feedData={feedData} isLoading={feedLoading} />}
                 {activeTab === 'reviews' && (
-                  <ReviewsTab
-                    reviewsData={reviewsData}
-                    isLoading={reviewsLoading}
-                  />
+                  <ReviewsTab reviewsData={reviewsData} isLoading={reviewsLoading} />
                 )}
                 {activeTab === 'gallery' && (
-                  <GalleryTab
-                    galleryData={galleryData}
-                    isLoading={galleryLoading}
-                  />
+                  <GalleryTab galleryData={galleryData} isLoading={galleryLoading} />
                 )}
               </div>
             </div>
@@ -304,12 +638,36 @@ export default function StoreDetailPage() {
 
           {/* 우측: 사이드바 */}
           <div className="lg:col-span-1">
-            <StoreSidebar store={store} />
+            <StoreSidebar
+              store={store}
+              isMyStore={isMyStore}
+              editSections={editSections}
+              formData={formData}
+              setFormData={setFormData}
+              onStartEdit={handleStartSectionEdit}
+              onCancelEdit={handleCancelSectionEdit}
+              onSaveEdit={handleSaveSection}
+              isUpdating={isUpdating}
+              statusLabel={statusLabel}
+              statusClass={statusClass}
+            />
           </div>
         </div>
       </div>
 
       <Footer />
+
+      {/* 수정 모달 (tags, image만) */}
+      {editModalOpen && currentEditType && (
+        <StoreEditModal
+          store={store}
+          editType={currentEditType}
+          isOpen={editModalOpen}
+          onClose={closeEditModal}
+          onSave={handleSaveStore}
+          isSaving={isUpdating}
+        />
+      )}
     </div>
   );
 }
@@ -355,11 +713,23 @@ function StoreNewsTab({
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <span className="px-3 py-1 bg-yellow-50 text-yellow-700 text-[12px] font-semibold rounded-full border border-yellow-200">
-                    {post.category === 'gold_trade' ? '금거래' : post.category === 'gold_news' ? '금소식' : 'QnA'}
+                    {post.category === 'gold_trade'
+                      ? '금거래'
+                      : post.category === 'gold_news'
+                      ? '금소식'
+                      : 'QnA'}
                   </span>
                   {post.type && (
                     <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[11px] font-medium rounded">
-                      {post.type === 'buy_gold' ? '매입' : post.type === 'news' ? '뉴스' : post.type}
+                      {post.type === 'buy_gold'
+                        ? '매입'
+                        : post.type === 'product_news'
+                        ? '상품소식'
+                        : post.type === 'store_news'
+                        ? '매장소식'
+                        : post.type === 'other'
+                        ? '기타'
+                        : post.type}
                     </span>
                   )}
                 </div>
@@ -392,7 +762,7 @@ function StoreNewsTab({
                     {new Date(post.created_at).toLocaleDateString('ko-KR', {
                       year: 'numeric',
                       month: 'long',
-                      day: 'numeric'
+                      day: 'numeric',
                     })}
                   </span>
                 </div>
@@ -440,7 +810,9 @@ function ReviewsTab({
                 {review.user?.name?.charAt(0) || '?'}
               </div>
               <div>
-                <div className="text-[15px] font-semibold text-gray-900">{review.user?.name || '익명'}</div>
+                <div className="text-[15px] font-semibold text-gray-900">
+                  {review.user?.name || '익명'}
+                </div>
                 <div className="flex items-center gap-2">
                   <div className="flex text-yellow-500">
                     {Array.from({ length: review.rating }).map((_, i) => (
@@ -495,7 +867,6 @@ function GalleryTab({
   const navigate = useNavigate();
   const [selectedImage, setSelectedImage] = React.useState<any | null>(null);
 
-  // Debug: 데이터 확인
   React.useEffect(() => {
     if (galleryData) {
       console.log('Gallery Data:', galleryData);
@@ -589,11 +960,13 @@ function GalleryTab({
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <h3 className="text-[18px] font-bold text-gray-900">이미지 정보</h3>
-                    <span className={`px-2 py-1 text-[11px] font-semibold rounded ${
-                      selectedImage.source_type === 'community'
-                        ? 'bg-yellow-100 text-yellow-700'
-                        : 'bg-blue-100 text-blue-700'
-                    }`}>
+                    <span
+                      className={`px-2 py-1 text-[11px] font-semibold rounded ${
+                        selectedImage.source_type === 'community'
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : 'bg-blue-100 text-blue-700'
+                      }`}
+                    >
                       {selectedImage.source_type === 'community' ? '매장 소식' : '리뷰'}
                     </span>
                   </div>
@@ -665,31 +1038,229 @@ function GalleryTab({
 }
 
 // 사이드바 컴포넌트
-function StoreSidebar({ store }: { store: any }) {
+function StoreSidebar({
+  store,
+  isMyStore,
+  editSections,
+  formData,
+  setFormData,
+  onStartEdit,
+  onCancelEdit,
+  onSaveEdit,
+  isUpdating,
+  statusLabel,
+  statusClass,
+}: {
+  store: any;
+  isMyStore: boolean;
+  editSections: EditSections;
+  formData: { name: string; description: string; address: string; phone_number: string; open_time: string; close_time: string };
+  setFormData: React.Dispatch<
+    React.SetStateAction<{
+      name: string;
+      description: string;
+      address: string;
+      phone_number: string;
+      open_time: string;
+      close_time: string;
+    }>
+  >;
+  onStartEdit: (section: keyof EditSections) => void;
+  onCancelEdit: (section: keyof EditSections) => void;
+  onSaveEdit: (section: keyof EditSections) => void;
+  isUpdating: boolean;
+  statusLabel: string;
+  statusClass: string;
+}) {
   return (
     <div className="sticky top-[180px] space-y-4">
       {/* 매장 정보 카드 */}
       <div className="bg-white rounded-2xl p-5 shadow-sm">
-        <h3 className="text-[16px] font-bold text-gray-900 mb-4">매장 정보</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-[16px] font-bold text-gray-900">매장 정보</h3>
+          <span className={`px-2.5 py-1 text-[12px] font-semibold rounded-full ${statusClass}`}>
+            {statusLabel}
+          </span>
+        </div>
         <div className="space-y-3 text-[14px]">
-          {store.address && (
-            <div className="flex gap-3">
-              <MapPin className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <div className="text-gray-900 font-medium mb-1">주소</div>
-                <div className="text-gray-600">{store.address}</div>
+          {(store.address || isMyStore) && (
+            <div
+              className={`p-3 rounded-lg transition-all ${
+                isMyStore && editSections.address
+                  ? 'bg-yellow-50 border-2 border-yellow-200'
+                  : 'bg-gray-50 border border-gray-100'
+              } ${
+                isMyStore && !editSections.address ? 'group hover:bg-gray-100' : ''
+              }`}
+            >
+              <div className="flex gap-3">
+                <MapPin className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  {isMyStore && editSections.address ? (
+                    <input
+                      type="text"
+                      value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      className="w-full text-[14px] text-gray-600 bg-transparent border-none outline-none"
+                      placeholder="매장 주소를 입력해주세요"
+                    />
+                  ) : (
+                    <div className={store.address ? 'text-gray-600' : 'text-gray-400 italic'}>
+                      {store.address || '매장 주소를 입력해주세요'}
+                    </div>
+                  )}
+                </div>
+                {isMyStore && !editSections.address && (
+                  <button
+                    onClick={() => onStartEdit('address')}
+                    className="transition-opacity p-1.5 hover:bg-gray-100 rounded-lg self-start flex-shrink-0 opacity-0 group-hover:opacity-100"
+                  >
+                    <Pencil className="w-4 h-4 text-gray-600" />
+                  </button>
+                )}
               </div>
+              {isMyStore && editSections.address && (
+                <div className="flex justify-end gap-2 mt-3">
+                  <button
+                    onClick={() => onCancelEdit('address')}
+                    className="px-3 py-2 bg-white hover:bg-gray-100 text-gray-900 text-[13px] font-semibold rounded-lg border border-gray-200 transition-colors"
+                    disabled={isUpdating}
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={() => onSaveEdit('address')}
+                    className="px-3 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-[13px] font-semibold rounded-lg transition-colors disabled:opacity-50"
+                    disabled={isUpdating}
+                  >
+                    {isUpdating ? '저장 중...' : '저장'}
+                  </button>
+                </div>
+              )}
             </div>
           )}
-          {store.phone_number && (
-            <div className="flex gap-3">
-              <Phone className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <div className="text-gray-900 font-medium mb-1">전화번호</div>
-                <a href={`tel:${store.phone_number}`} className="text-blue-600 hover:underline">
-                  {store.phone_number}
-                </a>
+          {(store.phone_number || isMyStore) && (
+            <div
+              className={`p-3 rounded-lg transition-all ${
+                isMyStore && editSections.phone
+                  ? 'bg-yellow-50 border-2 border-yellow-200'
+                  : 'bg-gray-50 border border-gray-100'
+              } ${
+                isMyStore && !editSections.phone ? 'group hover:bg-gray-100' : ''
+              }`}
+            >
+              <div className="flex gap-3">
+                <Phone className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  {isMyStore && editSections.phone ? (
+                    <input
+                      type="tel"
+                      value={formData.phone_number}
+                      onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                      className="w-full text-[14px] text-gray-600 bg-transparent border-none outline-none"
+                      placeholder="전화번호를 입력해주세요"
+                    />
+                  ) : store.phone_number ? (
+                    <a href={`tel:${store.phone_number}`} className="text-blue-600 hover:underline">
+                      {store.phone_number}
+                    </a>
+                  ) : (
+                    <div className="text-gray-400 italic">전화번호를 입력해주세요</div>
+                  )}
+                </div>
+                {isMyStore && !editSections.phone && (
+                  <button
+                    onClick={() => onStartEdit('phone')}
+                    className="transition-opacity p-1.5 hover:bg-gray-100 rounded-lg self-start flex-shrink-0 opacity-0 group-hover:opacity-100"
+                  >
+                    <Pencil className="w-4 h-4 text-gray-600" />
+                  </button>
+                )}
               </div>
+              {isMyStore && editSections.phone && (
+                <div className="flex justify-end gap-2 mt-3">
+                  <button
+                    onClick={() => onCancelEdit('phone')}
+                    className="px-3 py-2 bg-white hover:bg-gray-100 text-gray-900 text-[13px] font-semibold rounded-lg border border-gray-200 transition-colors"
+                    disabled={isUpdating}
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={() => onSaveEdit('phone')}
+                    className="px-3 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-[13px] font-semibold rounded-lg transition-colors disabled:opacity-50"
+                    disabled={isUpdating}
+                  >
+                    {isUpdating ? '저장 중...' : '저장'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          {(store.open_time || store.close_time || isMyStore) && (
+            <div
+              className={`p-3 rounded-lg transition-all ${
+                isMyStore && editSections.hours
+                  ? 'bg-yellow-50 border-2 border-yellow-200'
+                  : 'bg-gray-50 border border-gray-100'
+              } ${
+                isMyStore && !editSections.hours ? 'group hover:bg-gray-100' : ''
+              }`}
+            >
+              <div className="flex gap-3 items-center">
+                <Clock className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                <div className="flex-1">
+                  {isMyStore && editSections.hours ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        type="time"
+                        value={formData.open_time}
+                        onChange={(e) => setFormData({ ...formData, open_time: e.target.value })}
+                        className="flex-1 basis-0 min-w-[140px] text-[14px] leading-none text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                      />
+                      <span className="text-gray-500 text-sm flex items-center">-</span>
+                      <input
+                        type="time"
+                        value={formData.close_time}
+                        onChange={(e) => setFormData({ ...formData, close_time: e.target.value })}
+                        className="flex-1 basis-0 min-w-[140px] text-[14px] leading-none text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                      />
+                    </div>
+                  ) : (
+                    <div className="text-[14px] text-gray-900 font-medium">
+                      {(store.open_time || formData.open_time || '--:--') +
+                        ' - ' +
+                        (store.close_time || formData.close_time || '--:--')}
+                    </div>
+                  )}
+                </div>
+                {isMyStore && !editSections.hours && (
+                  <button
+                    onClick={() => onStartEdit('hours')}
+                    className="transition-opacity p-1.5 hover:bg-gray-100 rounded-lg self-start flex-shrink-0 opacity-0 group-hover:opacity-100"
+                  >
+                    <Pencil className="w-4 h-4 text-gray-600" />
+                  </button>
+                )}
+              </div>
+              {isMyStore && editSections.hours && (
+                <div className="flex justify-end gap-2 mt-3">
+                  <button
+                    onClick={() => onCancelEdit('hours')}
+                    className="px-3 py-2 bg-white hover:bg-gray-100 text-gray-900 text-[13px] font-semibold rounded-lg border border-gray-200 transition-colors"
+                    disabled={isUpdating}
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={() => onSaveEdit('hours')}
+                    className="px-3 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-[13px] font-semibold rounded-lg transition-colors disabled:opacity-50"
+                    disabled={isUpdating}
+                  >
+                    {isUpdating ? '저장 중...' : '저장'}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

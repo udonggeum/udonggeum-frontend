@@ -7,9 +7,9 @@ export const PostCategorySchema = z.enum(['gold_trade', 'gold_news', 'qna']);
 export const PostTypeSchema = z.enum([
   'sell_gold',
   'buy_gold',
-  'news',
-  'review',
-  'tip',
+  'product_news',
+  'store_news',
+  'other',
   'question',
   'faq',
 ]);
@@ -23,6 +23,7 @@ export const PostAuthorSchema = z.object({
   id: z.number(),
   email: z.string().email(),
   name: z.string(),
+  nickname: z.string(),
   role: z.enum(['user', 'admin']),
 });
 
@@ -215,6 +216,23 @@ export const AcceptAnswerResponseSchema = z.object({
   message: z.string(),
 });
 
+// AI Content Generation Request
+export const GenerateContentRequestSchema = z.object({
+  type: PostTypeSchema,
+  keywords: z.array(z.string()).min(1, '최소 1개의 키워드를 선택하세요'),
+  title: z.string().optional(), // 제목도 전달하면 더 정확한 내용 생성 가능
+  gold_type: z.string().optional(), // 금 종류 (18K, 24K 등)
+  weight: z.number().optional(), // 중량
+  price: z.number().optional(), // 가격
+  location: z.string().optional(), // 거래 장소
+});
+
+// AI Content Generation Response
+export const GenerateContentResponseSchema = z.object({
+  content: z.string(),
+  generated_at: z.string().datetime().optional(),
+});
+
 // ==================== TypeScript Types ====================
 
 export type PostCategory = z.infer<typeof PostCategorySchema>;
@@ -240,6 +258,8 @@ export type PostDetailResponse = z.infer<typeof PostDetailResponseSchema>;
 export type CommentListResponse = z.infer<typeof CommentListResponseSchema>;
 export type LikeResponse = z.infer<typeof LikeResponseSchema>;
 export type AcceptAnswerResponse = z.infer<typeof AcceptAnswerResponseSchema>;
+export type GenerateContentRequest = z.infer<typeof GenerateContentRequestSchema>;
+export type GenerateContentResponse = z.infer<typeof GenerateContentResponseSchema>;
 
 // ==================== 유틸리티 상수 ====================
 
@@ -250,11 +270,11 @@ export const POST_CATEGORY_LABELS: Record<PostCategory, string> = {
 };
 
 export const POST_TYPE_LABELS: Record<PostType, string> = {
-  sell_gold: '금 매수 (팔기)',
-  buy_gold: '금 매입',
-  news: '뉴스',
-  review: '후기',
-  tip: '팁',
+  sell_gold: '금 판매',
+  buy_gold: '금 구매',
+  product_news: '상품 소식',
+  store_news: '매장 소식',
+  other: '기타',
   question: '질문',
   faq: 'FAQ',
 };
@@ -268,10 +288,10 @@ export const POST_STATUS_LABELS: Record<PostStatus, string> = {
 
 // 카테고리별 허용 타입
 export const CATEGORY_TYPES: Record<PostCategory, PostType[]> = {
-  gold_trade: ['sell_gold', 'buy_gold', 'faq'],
-  gold_news: ['news', 'review', 'tip', 'faq'],
-  qna: ['question', 'faq'],
+  gold_trade: ['sell_gold', 'buy_gold'],
+  gold_news: ['product_news', 'store_news', 'other'],
+  qna: ['question'],
 };
 
 // 관리자만 작성 가능한 타입
-export const ADMIN_ONLY_TYPES: PostType[] = ['buy_gold', 'faq'];
+export const ADMIN_ONLY_TYPES: PostType[] = ['buy_gold'];

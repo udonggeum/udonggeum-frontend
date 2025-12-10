@@ -55,6 +55,7 @@ const mockStatistics: Record<number, any> = {
 const mockStores: StoreDetail[] = [
   {
     id: 1,
+    user_id: 3, // Admin user (admin@example.com)
     name: '강남 금은방',
     region: '서울',
     district: '강남구',
@@ -64,7 +65,7 @@ const mockStores: StoreDetail[] = [
     business_hours: '평일 09:00-19:00',
     open_time: '09:00',
     close_time: '19:00',
-    description: '강남 최고의 금은방입니다. 품질 좋은 골드 제품을 판매합니다.',
+    description: '', // 빈 값으로 설정하여 플레이스홀더 테스트
     product_count: 15,
     total_products: 15,
     image_url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600',
@@ -80,6 +81,7 @@ const mockStores: StoreDetail[] = [
   },
   {
     id: 2,
+    user_id: 4, // Another store owner
     name: '서초 보석상',
     region: '서울',
     district: '서초구',
@@ -351,5 +353,32 @@ export const storesHandlers = [
       page,
       page_size: pageSize,
     });
+  }),
+
+  // PUT /api/v1/stores/:id - Update store information
+  http.put('/api/v1/stores/:id', async ({ params, request }) => {
+    const storeId = parseInt(params.id as string, 10);
+    const storeIndex = mockStores.findIndex((s) => s.id === storeId);
+
+    if (storeIndex === -1) {
+      return HttpResponse.json(
+        { message: '매장을 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    // Parse request body
+    const updates = await request.json();
+
+    // Update store fields
+    const updatedStore = {
+      ...mockStores[storeIndex],
+      ...updates,
+    };
+
+    // Update in mock data
+    mockStores[storeIndex] = updatedStore;
+
+    return HttpResponse.json({ store: updatedStore });
   }),
 ];

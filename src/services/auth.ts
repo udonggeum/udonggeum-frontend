@@ -10,6 +10,8 @@ import {
   TokensSchema,
   UpdateProfileRequestSchema,
   UpdateProfileResponseSchema,
+  CheckNicknameRequestSchema,
+  CheckNicknameResponseSchema,
   ForgotPasswordRequestSchema,
   ResetPasswordRequestSchema,
   MessageResponseSchema,
@@ -20,6 +22,8 @@ import {
   type Tokens,
   type UpdateProfileRequest,
   type UpdateProfileResponse,
+  type CheckNicknameRequest,
+  type CheckNicknameResponse,
   type ForgotPasswordRequest,
   type ResetPasswordRequest,
   type MessageResponse,
@@ -136,7 +140,7 @@ class AuthService {
 
   /**
    * Update user profile
-   * @param data - Profile data (name, phone)
+   * @param data - Profile data (name, nickname, phone)
    * @returns Updated user information
    */
   async updateProfile(data: UpdateProfileRequest): Promise<UpdateProfileResponse> {
@@ -152,6 +156,34 @@ class AuthService {
 
       // Validate response
       const validatedResponse = UpdateProfileResponseSchema.parse(response.data);
+
+      return validatedResponse;
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw ValidationError.fromZod(error);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Check nickname availability
+   * @param data - Nickname to check
+   * @returns Availability status
+   */
+  async checkNickname(data: CheckNicknameRequest): Promise<CheckNicknameResponse> {
+    try {
+      // Validate input
+      const validatedInput = CheckNicknameRequestSchema.parse(data);
+
+      // API call
+      const response = await apiClient.post(
+        ENDPOINTS.AUTH.CHECK_NICKNAME,
+        validatedInput
+      );
+
+      // Validate response
+      const validatedResponse = CheckNicknameResponseSchema.parse(response.data);
 
       return validatedResponse;
     } catch (error) {

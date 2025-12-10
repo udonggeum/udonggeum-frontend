@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { storesService, type StoresRequest } from '@/services/stores';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { storesService, type StoresRequest, type UpdateStoreRequest } from '@/services/stores';
 
 /**
  * Stores Query Keys Factory
@@ -69,5 +69,31 @@ export function useStoreDetail(
     queryFn: () => storesService.getStoreDetail(id, includeProducts),
     staleTime: 1000 * 60 * 15, // 15 minutes
     enabled: options?.enabled ?? true,
+  });
+}
+
+/**
+ * useUpdateStore mutation
+ * Updates store information
+ *
+ * @example
+ * const { mutate: updateStore } = useUpdateStore();
+ * updateStore({ id: 1, data: { name: '새 매장 이름' } });
+ */
+export function useUpdateStore() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdateStoreRequest }) =>
+      storesService.updateStore(id, data),
+    onSuccess: (updatedStore) => {
+      // Invalidate all queries related to this store (더 넓은 범위로 무효화)
+      queryClient.invalidateQueries({ queryKey: storesKeys.details() });
+      // Invalidate specific store detail
+      queryClient.invalidateQueries({ queryKey: storesKeys.detail(updatedStore.id, false) });
+      queryClient.invalidateQueries({ queryKey: storesKeys.detail(updatedStore.id, true) });
+      // Invalidate stores list
+      queryClient.invalidateQueries({ queryKey: storesKeys.lists() });
+    },
   });
 }

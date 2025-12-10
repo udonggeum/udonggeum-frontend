@@ -9,6 +9,7 @@ export const UserSchema = z.object({
   id: z.number().int().positive(),
   email: z.string().email(AUTH_ERRORS.EMAIL_INVALID),
   name: z.string().min(1, AUTH_ERRORS.NAME_REQUIRED),
+  nickname: z.string().min(2, '닉네임은 최소 2자 이상이어야 합니다').max(20, '닉네임은 최대 20자까지 가능합니다'),
   phone: z
     .string()
     .regex(
@@ -16,7 +17,9 @@ export const UserSchema = z.object({
       AUTH_ERRORS.PHONE_INVALID
     )
     .optional(),
+  address: z.string().optional(), // 사용자 주소
   role: z.enum(['user', 'admin']),
+  store_id: z.number().int().positive().optional().nullable(), // 매장 사장님의 매장 ID
   created_at: z.iso.datetime().optional(),
   updated_at: z.iso.datetime().optional(),
 });
@@ -93,16 +96,19 @@ export type MeResponse = z.infer<typeof MeResponseSchema>;
 /**
  * Update profile request schema
  * Validates user input for profile update
- * NOTE: Only name and phone can be updated (email and password have separate flows)
+ * NOTE: Only name, nickname, and phone can be updated (email and password have separate flows)
  */
 export const UpdateProfileRequestSchema = z.object({
-  name: z.string().min(1, AUTH_ERRORS.NAME_REQUIRED),
+  name: z.string().min(1, AUTH_ERRORS.NAME_REQUIRED).optional(),
+  nickname: z.string().min(2, '닉네임은 최소 2자 이상이어야 합니다').max(20, '닉네임은 최대 20자까지 가능합니다').optional(),
   phone: z
     .string()
     .regex(
       /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/,
       AUTH_ERRORS.PHONE_INVALID
     )
+    .optional(),
+  address: z.string()
     .optional(),
 });
 
@@ -149,3 +155,24 @@ export const MessageResponseSchema = z.object({
 });
 
 export type MessageResponse = z.infer<typeof MessageResponseSchema>;
+
+/**
+ * Check nickname request schema
+ * Validates nickname for duplicate check
+ */
+export const CheckNicknameRequestSchema = z.object({
+  nickname: z.string().min(2, '닉네임은 최소 2자 이상이어야 합니다').max(20, '닉네임은 최대 20자까지 가능합니다'),
+});
+
+export type CheckNicknameRequest = z.infer<typeof CheckNicknameRequestSchema>;
+
+/**
+ * Check nickname response schema
+ * Validates response from nickname duplicate check
+ */
+export const CheckNicknameResponseSchema = z.object({
+  available: z.boolean(),
+  message: z.string(),
+});
+
+export type CheckNicknameResponse = z.infer<typeof CheckNicknameResponseSchema>;

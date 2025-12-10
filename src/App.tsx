@@ -10,6 +10,7 @@ import ForgotPasswordPage from '@/pages/ForgotPasswordPage';
 import ResetPasswordPage from '@/pages/ResetPasswordPage';
 import MyPage from '@/pages/MyPage';
 import ProfileEditPage from '@/pages/ProfileEditPage';
+import MyStorePage from '@/pages/MyStorePage';
 import StoresPage from '@/pages/StoresPage';
 import StoreDetailPage from '@/pages/StoreDetailPage';
 import PricePage from '@/pages/PricePage';
@@ -64,6 +65,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <WishlistPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-store"
+          element={
+            <ProtectedRoute>
+              <MyStorePage />
             </ProtectedRoute>
           }
         />

@@ -1,20 +1,22 @@
 /**
  * ProfileEditPage Component
- * Allows authenticated users to update their profile information (name, phone)
+ * Allows authenticated users to update their profile information
  */
 
 import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User as UserIcon, ArrowLeft, Save, Lock, Edit3, Shield, Mail, Phone, Key } from 'lucide-react';
+import { Save, Mail } from 'lucide-react';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useUpdateProfile } from '@/hooks/queries/useAuthQueries';
 import { UpdateProfileRequestSchema, type UpdateProfileRequest } from '@/schemas/auth';
-import { Navbar, Footer, ErrorAlert, LoadingSpinner, Button } from '@/components';
+import { Navbar } from '@/components';
 import { NAVIGATION_ITEMS } from '@/constants/navigation';
 
 interface FormErrors {
   name?: string;
   phone?: string;
+  nickname?: string;
+  address?: string;
 }
 
 export default function ProfileEditPage() {
@@ -28,6 +30,8 @@ export default function ProfileEditPage() {
   const [formData, setFormData] = useState<UpdateProfileRequest>({
     name: user?.name || '',
     phone: user?.phone || '',
+    nickname: user?.nickname || '',
+    address: user?.address || '',
   });
 
   const [formErrors, setFormErrors] = useState<FormErrors>({});
@@ -58,9 +62,14 @@ export default function ProfileEditPage() {
       if (name === 'name') {
         UpdateProfileRequestSchema.pick({ name: true }).parse({ name: value });
       } else if (name === 'phone') {
-        // Allow empty phone (it's optional)
         if (value === '') return undefined;
         UpdateProfileRequestSchema.pick({ phone: true }).parse({ phone: value });
+      } else if (name === 'nickname') {
+        if (value === '') return undefined;
+        UpdateProfileRequestSchema.pick({ nickname: true }).parse({ nickname: value });
+      } else if (name === 'address') {
+        if (value === '') return undefined;
+        UpdateProfileRequestSchema.pick({ address: true }).parse({ address: value });
       }
       return undefined;
     } catch (err: unknown) {
@@ -81,18 +90,32 @@ export default function ProfileEditPage() {
     const errors: FormErrors = {};
     let isValid = true;
 
-    // Validate name
-    const nameError = validateField('name', formData.name);
+    const nameError = validateField('name', formData.name || '');
     if (nameError) {
       errors.name = nameError;
       isValid = false;
     }
 
-    // Validate phone (if provided)
     if (formData.phone) {
       const phoneError = validateField('phone', formData.phone);
       if (phoneError) {
         errors.phone = phoneError;
+        isValid = false;
+      }
+    }
+
+    if (formData.nickname) {
+      const nicknameError = validateField('nickname', formData.nickname);
+      if (nicknameError) {
+        errors.nickname = nicknameError;
+        isValid = false;
+      }
+    }
+
+    if (formData.address) {
+      const addressError = validateField('address', formData.address);
+      if (addressError) {
+        errors.address = addressError;
         isValid = false;
       }
     }
@@ -104,24 +127,22 @@ export default function ProfileEditPage() {
   /**
    * Handle input change
    */
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Clear error when user starts typing
     if (formErrors[name as keyof FormErrors]) {
       setFormErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
   /**
-   * Handle input blur (mark as touched and validate)
+   * Handle input blur
    */
-  const handleBlur = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleBlur = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setTouched((prev) => ({ ...prev, [name]: true }));
 
-    // Validate on blur
     const error = validateField(name, value);
     if (error) {
       setFormErrors((prev) => ({ ...prev, [name]: error }));
@@ -134,15 +155,12 @@ export default function ProfileEditPage() {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Mark all fields as touched
-    setTouched({ name: true, phone: true });
+    setTouched({ name: true, phone: true, nickname: true, address: true });
 
-    // Validate form
     if (!validateForm()) {
       return;
     }
 
-    // Submit form
     updateProfile(formData);
   };
 
@@ -151,233 +169,212 @@ export default function ProfileEditPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="min-h-screen bg-white">
       <Navbar navigationItems={NAVIGATION_ITEMS} />
 
-      <main className="flex-grow py-8">
-        <section className="container mx-auto px-4 max-w-3xl">
-          {/* Page Header */}
-          <div className="mb-8">
-            <Button onClick={() => navigate(backPath)}
-              variant="outline"
-              size="sm"
-              className="gap-2 mb-4"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              마이페이지로 돌아가기
-            </Button>
-            <h1 className="text-3xl font-bold text-[var(--color-text)]">프로필 수정</h1>
-            <p className="mt-2 text-[var(--color-text)]/60">
-              회원 정보를 수정하세요
-            </p>
-          </div>
+      <div className="container mx-auto px-4 py-8 max-w-[900px]">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-8">프로필 수정</h2>
 
-          {/* Form Card */}
-          <div className="card bg-[var(--color-primary)] shadow border border-[var(--color-text)]/10">
-            <div className="card-body">
-              {/* Success Message */}
-              {isSuccess && (
-                <div className="alert alert-success mb-6">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="stroke-current shrink-0 h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <span>프로필이 성공적으로 업데이트되었습니다!</span>
-                </div>
-              )}
-
-              {/* Error Alert */}
-              {isError && error && (
-                <div className="mb-6">
-                  <ErrorAlert
-                    title="프로필 업데이트 실패"
-                    message={
-                      error instanceof Error
-                        ? error.message
-                        : '프로필을 업데이트하는 중 오류가 발생했습니다.'
-                    }
+            {/* Success Message */}
+            {isSuccess && (
+              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="stroke-green-600 shrink-0 w-5 h-5 mt-0.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
-                </div>
-              )}
+                </svg>
+                <span className="text-sm text-green-700">프로필이 성공적으로 업데이트되었습니다!</span>
+              </div>
+            )}
 
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-8">
-                {/* 🔒 계정 정보 (변경 불가) */}
+            {/* Error Alert */}
+            {isError && error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="stroke-red-600 shrink-0 w-5 h-5 mt-0.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
                 <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <Lock className="w-5 h-5 text-[var(--color-text)]/70" />
-                    <h3 className="text-lg font-bold text-[var(--color-text)]">계정 정보</h3>
-                    <span className="badge badge-sm bg-[var(--color-text)]/10 text-[var(--color-text)]/70 border-none">변경 불가</span>
-                  </div>
-
-                  <div className="bg-[var(--color-secondary)] p-4 rounded-lg border border-[var(--color-text)]/10">
-                    <div className="flex items-center gap-3">
-                      <Mail className="w-5 h-5 text-[var(--color-text)]/50" />
-                      <div className="flex-1">
-                        <p className="text-xs text-[var(--color-text)]/70 mb-1">이메일</p>
-                        <p className="text-sm font-semibold text-[var(--color-text)]">{user?.email || '-'}</p>
-                      </div>
-                      <Lock className="w-4 h-4 text-[var(--color-text)]/30" />
-                    </div>
-                    <p className="text-xs text-[var(--color-text)]/60 mt-3 ml-8">
-                      이메일은 계정 식별에 사용되어 변경할 수 없습니다
-                    </p>
-                  </div>
+                  <p className="text-sm font-medium text-red-700">프로필 업데이트 실패</p>
+                  <p className="text-sm text-red-600 mt-1">
+                    {error instanceof Error ? error.message : '프로필을 업데이트하는 중 오류가 발생했습니다.'}
+                  </p>
                 </div>
+              </div>
+            )}
 
-                {/* ✏️ 개인 정보 */}
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <Edit3 className="w-5 h-5 text-[var(--color-gold)]" />
-                    <h3 className="text-lg font-bold text-[var(--color-text)]">개인 정보</h3>
-                    <span className="badge badge-sm bg-[var(--color-gold)]/10 text-[var(--color-gold)] border-none">수정 가능</span>
-                  </div>
-
-                  <div className="space-y-4">
-                    {/* Name */}
-                    <div className="form-control">
-                      <label className="label pb-2" htmlFor="name">
-                        <span className="label-text font-medium text-[var(--color-text)] flex items-center gap-2">
-                          <UserIcon className="w-4 h-4" />
-                          이름 <span className="text-error">*</span>
-                        </span>
-                      </label>
-                      <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        className={`input input-bordered bg-[var(--color-secondary)] text-[var(--color-text)] border-[var(--color-text)]/20 h-12 ${
-                          touched.name && formErrors.name ? 'input-error' : ''
-                        }`}
-                        placeholder="홍길동"
-                        disabled={isPending}
-                        required
-                      />
-                      {touched.name && formErrors.name && (
-                        <label className="label pt-2">
-                          <span className="label-text-alt text-error">
-                            {formErrors.name}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-
-                    {/* Phone */}
-                    <div className="form-control">
-                      <label className="label pb-2" htmlFor="phone">
-                        <span className="label-text font-medium text-[var(--color-text)] flex items-center gap-2">
-                          <Phone className="w-4 h-4" />
-                          전화번호
-                        </span>
-                      </label>
-                      <input
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        value={formData.phone || ''}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        className={`input input-bordered bg-[var(--color-secondary)] text-[var(--color-text)] border-[var(--color-text)]/20 h-12 ${
-                          touched.phone && formErrors.phone ? 'input-error' : ''
-                        }`}
-                        placeholder="010-1234-5678"
-                        disabled={isPending}
-                      />
-                      {touched.phone && formErrors.phone && (
-                        <label className="label pt-2">
-                          <span className="label-text-alt text-error">
-                            {formErrors.phone}
-                          </span>
-                        </label>
-                      )}
-                      <label className="label pt-2">
-                        <span className="label-text-alt text-[var(--color-text)]/60">
-                          형식: 010-1234-5678 또는 01012345678
-                        </span>
-                      </label>
-                    </div>
-                  </div>
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Email (Read-only) */}
+              <div className="form-control">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  이메일 (변경 불가)
+                </label>
+                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 flex items-center gap-3">
+                  <Mail className="w-5 h-5 text-gray-400" />
+                  <span className="text-sm text-gray-700">{user?.email || '-'}</span>
                 </div>
+              </div>
 
-                {/* 🔐 보안 설정 */}
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <Shield className="w-5 h-5 text-[var(--color-text)]/70" />
-                    <h3 className="text-lg font-bold text-[var(--color-text)]">보안 설정</h3>
-                  </div>
+              {/* Name */}
+              <div className="form-control">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  이름 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`w-full p-3 rounded-lg border ${
+                    touched.name && formErrors.name ? 'border-red-500' : 'border-gray-200'
+                  } focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent`}
+                  placeholder="홍길동"
+                  disabled={isPending}
+                  required
+                />
+                {touched.name && formErrors.name && (
+                  <p className="mt-2 text-sm text-red-500">{formErrors.name}</p>
+                )}
+              </div>
 
-                  <div className="bg-[var(--color-secondary)] p-4 rounded-lg border border-[var(--color-text)]/10">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Key className="w-5 h-5 text-[var(--color-text)]/50" />
-                        <div>
-                          <p className="text-sm font-semibold text-[var(--color-text)]">비밀번호</p>
-                          <p className="text-xs text-[var(--color-text)]/60 mt-1">
-                            계정 보안을 위해 정기적으로 변경하세요
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          // TODO: 비밀번호 변경 페이지로 이동
-                          alert('비밀번호 변경 기능은 곧 제공될 예정입니다');
-                        }}
-                      >
-                        변경하기
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+              {/* Nickname */}
+              <div className="form-control">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  닉네임
+                  {user?.role === 'admin' && (
+                    <span className="ml-2 text-xs text-gray-500">(매장 이름과 자동 동기화)</span>
+                  )}
+                </label>
+                <input
+                  type="text"
+                  id="nickname"
+                  name="nickname"
+                  value={formData.nickname || ''}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`w-full p-3 rounded-lg border ${
+                    touched.nickname && formErrors.nickname ? 'border-red-500' : 'border-gray-200'
+                  } focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent ${
+                    user?.role === 'admin' ? 'bg-gray-50 cursor-not-allowed' : ''
+                  }`}
+                  placeholder="닉네임을 입력하세요"
+                  disabled={isPending || user?.role === 'admin'}
+                />
+                {user?.role === 'admin' ? (
+                  <p className="mt-2 text-sm text-gray-500">
+                    금은방 사장님의 닉네임은 매장 이름으로 자동 설정됩니다.
+                  </p>
+                ) : touched.nickname && formErrors.nickname ? (
+                  <p className="mt-2 text-sm text-red-500">{formErrors.nickname}</p>
+                ) : (
+                  <p className="mt-2 text-sm text-gray-500">2-20자 이내로 입력하세요</p>
+                )}
+              </div>
 
-                <div className="divider my-6"></div>
+              {/* Phone */}
+              <div className="form-control">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  전화번호
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={formData.phone || ''}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`w-full p-3 rounded-lg border ${
+                    touched.phone && formErrors.phone ? 'border-red-500' : 'border-gray-200'
+                  } focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent`}
+                  placeholder="010-1234-5678"
+                  disabled={isPending}
+                />
+                {touched.phone && formErrors.phone ? (
+                  <p className="mt-2 text-sm text-red-500">{formErrors.phone}</p>
+                ) : (
+                  <p className="mt-2 text-sm text-gray-500">010-1234-5678 형식으로 입력하세요</p>
+                )}
+              </div>
 
-                {/* Submit Button */}
-                <div className="flex justify-end gap-3 pt-2">
-                  <Button onClick={() => navigate(backPath)}
-                    variant="outline"
-                    disabled={isPending}
-                  >
-                    취소
-                  </Button>
-                  <Button type="submit" variant="primary" className="gap-2"
-                    disabled={isPending}
-                  >
-                    {isPending ? (
-                      <>
-                        <LoadingSpinner size="sm" />
-                        <span>저장 중...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4" />
-                        <span>변경사항 저장</span>
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </div>
+              {/* Address */}
+              <div className="form-control">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  주소
+                </label>
+                <textarea
+                  id="address"
+                  name="address"
+                  value={formData.address || ''}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`w-full p-3 rounded-lg border ${
+                    touched.address && formErrors.address ? 'border-red-500' : 'border-gray-200'
+                  } focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none`}
+                  rows={3}
+                  placeholder="서울특별시 강남구 테헤란로 123"
+                  disabled={isPending}
+                />
+                {touched.address && formErrors.address ? (
+                  <p className="mt-2 text-sm text-red-500">{formErrors.address}</p>
+                ) : (
+                  <p className="mt-2 text-sm text-gray-500">주소를 입력하세요</p>
+                )}
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="flex items-center justify-between pt-6 border-t">
+                <button
+                  type="button"
+                  className="px-4 py-3 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  onClick={() => navigate(backPath)}
+                  disabled={isPending}
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-sm font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  disabled={isPending}
+                >
+                  {isPending ? (
+                    <>
+                      <span className="inline-block w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin"></span>
+                      <span>저장 중...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>저장하기</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
-
-        </section>
-      </main>
-
-      <Footer />
+        </div>
+      </div>
     </div>
   );
 }

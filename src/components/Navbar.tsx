@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { LogIn, User, Settings, LogOut } from 'lucide-react';
+import { LogIn, User, Settings, LogOut, Store } from 'lucide-react';
 import { useAuthStore } from '../stores/useAuthStore';
-import { useCart, useLogout } from '@/hooks/queries';
+import { useLogout } from '@/hooks/queries';
 import type { NavigationItem } from '../types';
 
 interface NavbarProps {
@@ -19,9 +19,7 @@ export default function Navbar({ navigationItems }: NavbarProps) {
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
-  const { data: cartData } = useCart();
   const { mutate: logout } = useLogout();
-  const cartItemCount = cartData?.cart_items?.length || 0;
   const sortedItems = [...navigationItems].sort(
     (a, b) => a.displayOrder - b.displayOrder
   );
@@ -92,6 +90,14 @@ export default function Navbar({ navigationItems }: NavbarProps) {
                     마이페이지
                   </Link>
                 </li>
+                {user?.role === 'admin' && (
+                  <li>
+                    <Link to="/my-store" className="text-base">
+                      <Store className="w-4 h-4" />
+                      내 매장 관리
+                    </Link>
+                  </li>
+                )}
                 <li>
                   <Link to="/mypage/edit" className="text-base">
                     <Settings className="w-4 h-4" />
@@ -143,37 +149,6 @@ export default function Navbar({ navigationItems }: NavbarProps) {
 
       {/* Right Side Actions */}
       <div className="navbar-end gap-2">
-        {/* Cart Badge - Hidden for admin users */}
-        {user?.role !== 'admin' && (
-          <Link
-            to="/cart"
-            className="btn btn-ghost btn-circle text-[var(--color-text)]"
-            aria-label="장바구니로 이동"
-          >
-            <div className="indicator">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
-              {cartItemCount > 0 && (
-                <span className="badge badge-sm bg-[var(--color-gold)] text-[var(--color-primary)] border-[var(--color-gold)] indicator-item">
-                  {cartItemCount}
-                </span>
-              )}
-            </div>
-          </Link>
-        )}
-
         {/* Auth Buttons - Conditional based on auth state */}
         {!isAuthenticated ? (
           <Link
@@ -193,7 +168,7 @@ export default function Navbar({ navigationItems }: NavbarProps) {
             >
               <User className="w-5 h-5" />
               <span className="hidden sm:inline">
-                {user?.name || '사용자'}
+                {user?.nickname || '사용자'}
               </span>
               <svg
                 className="w-4 h-4 hidden sm:inline"
@@ -227,6 +202,14 @@ export default function Navbar({ navigationItems }: NavbarProps) {
                   마이페이지
                 </Link>
               </li>
+              {user?.role === 'admin' && (
+                <li>
+                  <Link to="/my-store" className="text-base">
+                    <Store className="w-4 h-4" />
+                    내 매장 관리
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link to="/mypage/edit" className="text-base">
                   <Settings className="w-4 h-4" />

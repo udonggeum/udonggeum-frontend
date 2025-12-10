@@ -35,6 +35,7 @@ export { default as CartItem } from './CartItem';
 // Store Components
 export { default as StoreCard } from './StoreCard';
 export { default as StoresLoadingSkeleton } from './StoresLoadingSkeleton';
+export { default as StoreEditModal } from './modals/StoreEditModal';
 
 // Layout Components
 export { default as Navbar } from './Navbar';

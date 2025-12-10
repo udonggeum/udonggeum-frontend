@@ -8,6 +8,7 @@ import type {
   UpdateProfileRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest,
+  CheckNicknameRequest,
 } from '@/schemas/auth';
 
 /**
@@ -179,5 +180,19 @@ export function useForgotPassword() {
 export function useResetPassword() {
   return useMutation({
     mutationFn: (data: ResetPasswordRequest) => authService.resetPassword(data),
+  });
+}
+
+/**
+ * useCheckNickname mutation
+ * Checks if a nickname is available
+ *
+ * @example
+ * const { mutate: checkNickname, data, isPending } = useCheckNickname();
+ * checkNickname({ nickname: '골드킹' });
+ */
+export function useCheckNickname() {
+  return useMutation({
+    mutationFn: (data: CheckNicknameRequest) => authService.checkNickname(data),
   });
 }

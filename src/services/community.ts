@@ -12,6 +12,8 @@ import {
   CommentListResponseSchema,
   LikeResponseSchema,
   AcceptAnswerResponseSchema,
+  GenerateContentRequestSchema,
+  GenerateContentResponseSchema,
   CommunityPostSchema,
   CommunityCommentSchema,
 } from '@/schemas/community';
@@ -26,6 +28,8 @@ import type {
   PostDetailResponse,
   CommentListResponse,
   AcceptAnswerResponse,
+  GenerateContentRequest,
+  GenerateContentResponse,
   CommunityPost,
   CommunityComment,
 } from '@/schemas/community';
@@ -228,6 +232,26 @@ class CommunityService {
     try {
       const response = await apiClient.post(ENDPOINTS.COMMUNITY.POST_ACCEPT(postId, commentId));
       return AcceptAnswerResponseSchema.parse(response.data);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw ValidationError.fromZod(error);
+      }
+      throw error;
+    }
+  }
+
+  // ==================== AI Content Generation APIs ====================
+
+  /**
+   * Generate post content using AI
+   * @param data - Generation request (keywords, type, etc.)
+   * @returns Generated content
+   */
+  async generateContent(data: GenerateContentRequest): Promise<GenerateContentResponse> {
+    try {
+      const validatedInput = GenerateContentRequestSchema.parse(data);
+      const response = await apiClient.post(ENDPOINTS.COMMUNITY.GENERATE_CONTENT, validatedInput);
+      return GenerateContentResponseSchema.parse(response.data);
     } catch (error) {
       if (error instanceof ZodError) {
         throw ValidationError.fromZod(error);

@@ -20,6 +20,7 @@ export type StoreCategoryCounts =
  */
 export interface StoreDetail {
   id: number;
+  user_id?: number; // Owner user ID
   name: string;
   region?: string;
   district?: string;
@@ -35,9 +36,10 @@ export interface StoreDetail {
   image_url?: string;
   logo_url?: string;
   thumbnail_url?: string;
-  buying_gold?: boolean;
-  buying_platinum?: boolean;
-  buying_silver?: boolean;
+  tags?: string[]; // 매장 태그 (예: ["금 매입", "친절한 상담"])
+  buying_gold?: boolean; // Deprecated: use tags
+  buying_platinum?: boolean; // Deprecated: use tags
+  buying_silver?: boolean; // Deprecated: use tags
   category_counts?: StoreCategoryCounts;
   products?: unknown[];
 }
@@ -83,6 +85,21 @@ export interface StoresRequest {
   category?: string;
   page?: number;
   page_size?: number;
+}
+
+/**
+ * Update store request type
+ */
+export interface UpdateStoreRequest {
+  name: string;
+  region: string;
+  district: string;
+  description?: string;
+  address?: string;
+  phone?: string;
+  phone_number?: string;
+  tags?: string[];
+  image_url?: string;
 }
 
 /**
@@ -145,6 +162,23 @@ class StoresService {
     const response = await apiClient.get<{ store: StoreDetail }>(
       ENDPOINTS.STORES.DETAIL(id),
       { params: { include_products: includeProducts } }
+    );
+    return response.data.store;
+  }
+
+  /**
+   * Update store information
+   * @param id - Store ID
+   * @param data - Store data to update
+   * @returns Updated store detail
+   */
+  async updateStore(
+    id: number,
+    data: UpdateStoreRequest
+  ): Promise<StoreDetail> {
+    const response = await apiClient.put<{ store: StoreDetail }>(
+      ENDPOINTS.STORES.DETAIL(id),
+      data
     );
     return response.data.store;
   }

@@ -21,6 +21,7 @@ export const ENDPOINTS = {
     LOGOUT: '/api/v1/auth/logout',
     REFRESH: '/api/v1/auth/refresh',
     ME: '/api/v1/auth/me',
+    CHECK_NICKNAME: '/api/v1/auth/check-nickname',
     FORGOT_PASSWORD: '/api/v1/auth/forgot-password',
     RESET_PASSWORD: '/api/v1/auth/reset-password',
   },
@@ -108,8 +109,11 @@ export const ENDPOINTS = {
     },
   },
 
-  IMAGES: {
+  UPLOAD: {
     PRESIGNED_URL: '/api/v1/upload/presigned-url',
+  },
+
+  IMAGES: {
     OPTIMIZE: '/api/v1/images/optimize',
   },
 
@@ -122,6 +126,7 @@ export const ENDPOINTS = {
     COMMENTS: '/api/v1/community/comments',
     COMMENT_DETAIL: (id: number) => `/api/v1/community/comments/${id}`,
     COMMENT_LIKE: (id: number) => `/api/v1/community/comments/${id}/like`,
+    GENERATE_CONTENT: '/api/v1/community/generate-content',
   },
 
   REVIEWS: {

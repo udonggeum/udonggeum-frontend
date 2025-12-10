@@ -36,12 +36,11 @@ class ImageService {
 
       // Step 1: Get pre-signed URL from backend
       const presignedResponse = await apiClient.post<PresignedURLResponse>(
-        ENDPOINTS.IMAGES.PRESIGNED_URL,
+        ENDPOINTS.UPLOAD.PRESIGNED_URL,
         {
           filename: file.name,
           content_type: file.type,
-          file_size: file.size,
-          upload_type: uploadType,
+          folder: uploadType === 'store' ? 'stores' : 'products',
         }
       );
 
