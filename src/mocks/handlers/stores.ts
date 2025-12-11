@@ -368,7 +368,7 @@ export const storesHandlers = [
     }
 
     // Parse request body
-    const updates = await request.json();
+    const updates = (await request.json()) as Partial<StoreDetail>;
 
     // Update store fields
     const updatedStore = {

@@ -18,37 +18,10 @@ import {
 } from '@/hooks/queries/useReviewQueries';
 import { usePosts } from '@/hooks/queries/useCommunityQueries';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { getStoreStatus } from '@/utils/storeStatus';
 
 type TabType = 'news' | 'reviews' | 'gallery';
 type EditSections = { name: boolean; description: boolean; address: boolean; phone: boolean; hours: boolean };
-
-function getStoreStatus(open?: string | null, close?: string | null) {
-  if (!open || !close) {
-    return { statusLabel: '운영시간 미설정', statusClass: 'bg-gray-100 text-gray-500' };
-  }
-
-  const toMinutes = (t: string) => {
-    const [h, m] = t.split(':').map((v) => Number(v));
-    if (Number.isNaN(h) || Number.isNaN(m)) return null;
-    return h * 60 + m;
-  };
-
-  const openM = toMinutes(open);
-  const closeM = toMinutes(close);
-  const now = new Date();
-  const nowM = now.getHours() * 60 + now.getMinutes();
-
-  if (openM === null || closeM === null) {
-    return { statusLabel: '운영시간 미설정', statusClass: 'bg-gray-100 text-gray-500' };
-  }
-
-  const isOvernight = openM > closeM;
-  const isOpen = isOvernight ? nowM >= openM || nowM < closeM : nowM >= openM && nowM < closeM;
-
-  return isOpen
-    ? { statusLabel: '영업중', statusClass: 'bg-green-100 text-green-700' }
-    : { statusLabel: '영업종료', statusClass: 'bg-gray-200 text-gray-700' };
-}
 
 export default function StoreDetailPage() {
   const { storeId: storeIdParam } = useParams<{ storeId: string }>();

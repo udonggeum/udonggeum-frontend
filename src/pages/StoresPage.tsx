@@ -11,8 +11,10 @@ import {
   Clock,
   Star,
 } from 'lucide-react';
-import { useStores } from '@/hooks/queries/useStoresQueries';
+import { useStores, useStoreDetail } from '@/hooks/queries/useStoresQueries';
+import { useStoreStatistics } from '@/hooks/queries/useReviewQueries';
 import { mapStoreDetailToSummary } from '@/utils/storeAdapters';
+import { getStoreStatus } from '@/utils/storeStatus';
 import StoreMap from '@/components/StoreMap';
 import Navbar from '@/components/Navbar';
 import { NAVIGATION_ITEMS } from '@/constants/navigation';
@@ -29,6 +31,8 @@ interface StoreWithExtras extends StoreSummary {
   iconColor?: string;
   lat?: number;
   lng?: number;
+  open_time?: string;
+  close_time?: string;
 }
 
 /**
@@ -61,6 +65,15 @@ export default function StoresPage() {
     page_size: PAGE_SIZE,
   });
 
+  // Fetch detailed data for selected store
+  const {
+    data: selectedStoreDetail,
+  } = useStoreDetail(selectedStore?.id || 0, false, {
+    enabled: !!selectedStore?.id,
+  });
+
+  const { data: selectedStoreStats } = useStoreStatistics(selectedStore?.id || 0);
+
   // 백엔드 API에서 받은 데이터 변환
   const stores: StoreWithExtras[] = useMemo(() => {
     if (!storesData?.stores) {
@@ -86,11 +99,13 @@ export default function StoresPage() {
       return {
         ...mapStoreDetailToSummary(store, new Map()),
         distance: `${(Math.random() * 2 + 0.3).toFixed(1)}km`, // TODO: 실제 거리 계산
-        tags: ['24K', '18K', '수리'].slice(0, Math.floor(Math.random() * 3) + 1), // TODO: 백엔드에서 제공
+        tags: store.tags || ['24K', '18K', '수리'].slice(0, Math.floor(Math.random() * 3) + 1), // Use API tags if available
         iconBg: colorSet.bg,
         iconColor: colorSet.color,
         lat,
         lng,
+        open_time: store.open_time,
+        close_time: store.close_time,
       };
     });
 
@@ -353,14 +368,14 @@ export default function StoresPage() {
                       <h3 className="text-[16px] font-semibold text-gray-900 truncate">
                         {store.name}
                       </h3>
-                      <span className="px-1.5 py-0.5 bg-green-100 text-green-700 text-[11px] font-medium rounded flex-shrink-0">
-                        영업중
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-[13px] mb-2">
-                      <span className="text-yellow-500 font-semibold">★ 4.8</span>
-                      <span className="text-gray-300">|</span>
-                      <span className="text-gray-500">리뷰 128</span>
+                      {(() => {
+                        const status = getStoreStatus(store.open_time, store.close_time);
+                        return status.isOpen ? (
+                          <span className="px-1.5 py-0.5 bg-green-100 text-green-700 text-[11px] font-medium rounded flex-shrink-0">
+                            {status.statusLabel}
+                          </span>
+                        ) : null;
+                      })()}
                     </div>
                     <p className="text-[13px] text-gray-500 mb-2 truncate">
                       {store.address || '주소 정보 없음'}
@@ -413,7 +428,7 @@ export default function StoresPage() {
           isDetailPanelOpen ? 'w-[420px] lg:w-[480px]' : 'w-0'
         }`}
       >
-        {selectedStore && (
+        {selectedStore && selectedStoreDetail && (
           <div className={`transition-opacity duration-200 ${isDetailPanelOpen ? 'opacity-100' : 'opacity-0'}`}>
             {/* 헤더 */}
             <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3 z-10">
@@ -471,17 +486,19 @@ export default function StoresPage() {
                       className="hover:underline"
                     >
                       <h3 className="text-[20px] font-bold text-gray-900 mb-1">
-                        {selectedStore.name}
+                        {selectedStoreDetail.name}
                       </h3>
                     </button>
-                    <div className="flex items-center gap-2 text-[14px]">
-                      <span className="text-yellow-500 font-semibold flex items-center gap-1">
-                        <Star className="w-4 h-4 fill-current" />
-                        4.8
-                      </span>
-                      <span className="text-gray-300">·</span>
-                      <span className="text-gray-500">리뷰 128</span>
-                    </div>
+                    {selectedStoreStats && selectedStoreStats.review_count > 0 && (
+                      <div className="flex items-center gap-2 text-[14px]">
+                        <span className="text-yellow-500 font-semibold flex items-center gap-1">
+                          <Star className="w-4 h-4 fill-current" />
+                          {selectedStoreStats.average_rating.toFixed(1)}
+                        </span>
+                        <span className="text-gray-300">·</span>
+                        <span className="text-gray-500">리뷰 {selectedStoreStats.review_count}</span>
+                      </div>
+                    )}
                   </div>
                   <button
                     type="button"
@@ -491,53 +508,78 @@ export default function StoresPage() {
                   </button>
                 </div>
                 {/* 영업 상태 */}
-                <div className="flex items-center gap-2 text-[14px]">
-                  <span className="text-green-600 font-medium">영업중</span>
-                  <span className="text-gray-400">·</span>
-                  <span className="text-gray-500">20:00 마감</span>
-                </div>
+                {(() => {
+                  const status = getStoreStatus(selectedStoreDetail.open_time, selectedStoreDetail.close_time);
+                  return (
+                    <div className="flex items-center gap-2 text-[14px]">
+                      <span className={`font-medium ${status.isOpen ? 'text-green-600' : 'text-gray-500'}`}>
+                        {status.statusLabel}
+                      </span>
+                      {selectedStoreDetail.close_time && status.isOpen && (
+                        <>
+                          <span className="text-gray-400">·</span>
+                          <span className="text-gray-500">{selectedStoreDetail.close_time} 마감</span>
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
-              {/* 전문분야 */}
-              <div className="py-4 border-b border-gray-100">
-                <h4 className="text-[13px] font-medium text-gray-500 mb-2">전문분야</h4>
-                <div className="flex flex-wrap gap-2">
-                  <span className="px-3 py-1.5 bg-gray-900 text-white text-[13px] font-medium rounded-full">
-                    수리/리폼
-                  </span>
-                  <span className="px-3 py-1.5 bg-gray-100 text-gray-700 text-[13px] font-medium rounded-full">
-                    시세 매입
-                  </span>
-                  <span className="px-3 py-1.5 bg-gray-100 text-gray-700 text-[13px] font-medium rounded-full">
-                    선물포장
-                  </span>
+              {/* 매장 태그 */}
+              {selectedStoreDetail.tags && selectedStoreDetail.tags.length > 0 && (
+                <div className="py-4 border-b border-gray-100">
+                  <h4 className="text-[13px] font-medium text-gray-500 mb-2">매장 태그</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedStoreDetail.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="px-3 py-1.5 bg-yellow-50 text-yellow-800 text-[13px] font-medium rounded-full border border-yellow-200"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* 위치 & 연락처 */}
               <div className="py-4">
                 <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
+                  {selectedStoreDetail.address && (
+                    <div className="flex items-start gap-3">
+                      <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-[14px] text-gray-900">
+                          {selectedStoreDetail.address}
+                        </p>
+                        {selectedStore.distance && (
+                          <p className="text-[13px] text-blue-600 font-medium">
+                            {selectedStore.distance}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {selectedStoreDetail.phone_number && (
+                    <div className="flex items-center gap-3">
+                      <Phone className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                      <a
+                        href={`tel:${selectedStoreDetail.phone_number}`}
+                        className="text-[14px] text-blue-600 hover:underline"
+                      >
+                        {selectedStoreDetail.phone_number}
+                      </a>
+                    </div>
+                  )}
+                  {selectedStoreDetail.open_time && selectedStoreDetail.close_time && (
+                    <div className="flex items-center gap-3">
+                      <Clock className="w-5 h-5 text-gray-400 flex-shrink-0" />
                       <p className="text-[14px] text-gray-900">
-                        {selectedStore.address || '주소 정보 없음'}
-                      </p>
-                      <p className="text-[13px] text-blue-600 font-medium">
-                        {selectedStore.distance}
+                        {selectedStoreDetail.open_time} - {selectedStoreDetail.close_time}
                       </p>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Phone className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                    <p className="text-[14px] text-gray-900">
-                      {selectedStore.phone || '02-1234-5678'}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Clock className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                    <p className="text-[14px] text-gray-900">10:00 - 20:00</p>
-                  </div>
+                  )}
                 </div>
               </div>
 
